@@ -17,9 +17,8 @@ def example_raw() -> dict:
         return tomllib.load(fh)
 
 
-@pytest.fixture
-def raw(example_raw) -> dict:
-    """A mutable small copy of the example config (fast to simulate)."""
+def small_raw(example_raw: dict) -> dict:
+    """A small copy of the example config (fast to simulate)."""
     d = copy.deepcopy(example_raw)
     d["population"]["size"] = 400
     d["experiment"]["weeks"] = 20
@@ -32,6 +31,11 @@ def raw(example_raw) -> dict:
             if iv.get("end_week") is not None:
                 iv["end_week"] = min(iv["end_week"], 19)
     return d
+
+
+@pytest.fixture
+def raw(example_raw) -> dict:
+    return small_raw(example_raw)
 
 
 @pytest.fixture

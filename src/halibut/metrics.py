@@ -18,11 +18,38 @@ Definitions (N consumers, option 0 = no purchase):
   from their current product.
 - ``flow_<a>_to_<b>``: number of consumers whose last-week choice was a and
   this-week choice is b (a, b include ``none``).
+
+No-purchase causes (engine >= 0.2). Every consumer who buys nothing this week
+is assigned exactly one cause, tested in this order (so the causes are
+mutually exclusive and sum to ``consumers - purchasers``). "Current product"
+means the consumer's current product at the start of the week.
+
+1. ``np_nothing_affordable``: no product is affordable (price * consumption
+   > budget for every product), regardless of stock.
+2. ``np_nothing_in_stock``: at least one product is affordable, but every
+   affordable product is out of stock for this consumer this week.
+3. ``np_current_infeasible``: some product is feasible, but the consumer has
+   a current product and it is infeasible (out of stock or unaffordable).
+4. ``np_voluntary``: some product is feasible and the current product (if
+   any) is feasible too; the consumer chose not to buy.
+
+Stock-out metrics: ``current_out_of_stock`` (consumers whose current product
+is out of stock for them), ``current_unaffordable``, and
+``forced_substitution`` (purchasers whose current product was infeasible, so
+they necessarily bought a different product).
 """
 
 from __future__ import annotations
 
 import numpy as np
+
+
+NO_PURCHASE_CAUSES = (
+    "np_nothing_affordable",
+    "np_nothing_in_stock",
+    "np_current_infeasible",
+    "np_voluntary",
+)
 
 
 def _f(x) -> float:
@@ -42,6 +69,8 @@ def tick_metrics(
     consumption: np.ndarray,
     budget: np.ndarray,
     preference: np.ndarray,
+    available: np.ndarray | None = None,
+    affordable: np.ndarray | None = None,
 ) -> dict:
     n = len(choices)
     j_count = len(product_ids)
@@ -95,7 +124,34 @@ def tick_metrics(
     for a, name_a in enumerate(options):
         for b, name_b in enumerate(options):
             m[f"flow_{name_a}_to_{name_b}"] = int(flows[a, b])
+
+    if available is not None and affordable is not None:
+        m.update(_feasibility_metrics(choices, prev_current, available, affordable))
     return m
+
+
+def _feasibility_metrics(choices, prev_current, available, affordable) -> dict:
+    rows = np.arange(len(choices))
+    feasible = available & affordable
+    any_affordable = affordable.any(axis=1)
+    any_feasible = feasible.any(axis=1)
+    has_current = prev_current > 0
+    cur = np.maximum(prev_current - 1, 0)
+    current_available = has_current & available[rows, cur]
+    current_affordable = has_current & affordable[rows, cur]
+    current_feasible = current_available & current_affordable
+    none = choices == 0
+    causes = {
+        "np_nothing_affordable": none & ~any_affordable,
+        "np_nothing_in_stock": none & any_affordable & ~any_feasible,
+        "np_current_infeasible": none & any_feasible & has_current & ~current_feasible,
+        "np_voluntary": none & any_feasible & (~has_current | current_feasible),
+    }
+    out = {k: int(v.sum()) for k, v in causes.items()}
+    out["current_out_of_stock"] = int((has_current & ~current_available).sum())
+    out["current_unaffordable"] = int((has_current & ~current_affordable).sum())
+    out["forced_substitution"] = int((~none & has_current & ~current_feasible).sum())
+    return out
 
 
 def segment_metrics(

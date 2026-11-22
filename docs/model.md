@@ -1,4 +1,4 @@
-# Halibut simulation model, v0.1
+# Halibut simulation model (engine 0.2)
 
 > **Status:** synthetic. The model and every parameter in the example
 > configurations are illustrative assumptions. Nothing here has been calibrated
@@ -150,6 +150,88 @@ expansion   = max(gain − loss, 0)      # demand that entered the category
 Each quantity is computed per seed and then averaged, so the means of
 `contraction` and `expansion` can both be non-zero when seeds disagree on the
 sign. The 95% intervals use Student-t across seeds.
+
+## Warm-up (engine 0.2, optional)
+
+`experiment.warmup_weeks = W` (default 0) runs the **control** dynamics for
+`W` unrecorded weeks before week 0. The warm-up uses its own random streams
+(`warmup_choice`, `warmup_availability`). The resulting state (current
+products, last-week choices, drifted preferences) becomes the shared starting
+point for every scenario.
+
+Properties:
+- With `W = 0` the engine is bit-identical to 0.1.0. This is enforced by
+  golden tests.
+- The week-0+ random numbers are the same with or without warm-up.
+- Drift anchors (`π⁰`) remain the generated preferences, not the warmed-up
+  ones.
+
+Why it exists: when the configured initial shares are not a state the model
+can sustain, the control trends, and changes relative to week 0 then mix
+intervention effects with the model relaxing from its starting point. Paired
+treatment-vs-control comparisons stay valid either way, but they are measured
+around a different state. Report results with and without warm-up.
+
+Interventions are scheduled relative to week 0. They never act during warm-up.
+
+## No-purchase causes (engine 0.2)
+
+Each consumer who buys nothing in a week gets **exactly one** cause. The causes
+are tested in the order below, so they are mutually exclusive and sum to the
+number of non-buyers. "Current product" means the current product at the
+start of the week.
+
+1. `np_nothing_affordable`: no product is affordable (`p_j·q_i > B_i` for
+   all `j`), regardless of stock.
+2. `np_nothing_in_stock`: some product is affordable, but every affordable
+   product is out of stock for this consumer.
+3. `np_current_infeasible`: some product is feasible, but the consumer's
+   current product is not (it is out of stock or unaffordable).
+4. `np_voluntary`: some product is feasible, and so is the current product if
+   the consumer has one; the consumer chose not to buy.
+
+Cause 3 does not mean the stock-out *caused* the exit. A consumer with a
+feasible current product might also have chosen not to buy. The causal share
+is measured by the **stock-out counterfactual** (`halibut diagnose
+--stockout-counterfactual`). It reruns every scenario with the same random
+numbers but with all products always in stock, and compares the results.
+
+Related metrics:
+- `current_out_of_stock`: consumers whose current product is out of stock for
+  them.
+- `current_unaffordable`: consumers whose current product is unaffordable.
+- `forced_substitution`: purchasers whose current product was infeasible, so
+  they had to buy a different product.
+
+## Diagnostics (engine 0.2)
+
+Each run writes `diagnostics.json`.
+
+**Accounting invariants.** Status is `fail` on any violation. The checks are:
+- shares sum to 1;
+- adoption shares plus `non_adopter_share` sum to 1;
+- units and purchasers add up across products;
+- revenue equals price × units;
+- flows conserve the population and match this week's choices;
+- the flows out of week t equal the flows into week t−1 (skipped in seeding
+  weeks, which reassign last-week choices);
+- the no-purchase causes partition the non-buyers;
+- no consumer exceeds their budget.
+
+**Behavioural checks:**
+- `switching_churn`: gross vs net switching for each product pair.
+  `churn_ratio = (a→b + b→a) / |a→b − b→a|`.
+- `stockouts_and_no_purchase_causes`: stock-out exposure and the share of
+  no-purchases due to each cause.
+- `control_transient`: `warn` if the control's purchase share changes by more
+  than 0.01 (absolute), or its category units by more than 2% (relative),
+  between the first and last summary window.
+- `monte_carlo_precision`: the paired-effect 95% CIs. Recommended seeds are
+  `n·(ci95 / (0.1·|effect|))²`, the number needed for the CI half-width to
+  shrink to 10% of the effect.
+
+**Optional counterfactuals:** the stock-out counterfactual above, and
+population-size convergence (the same metrics at several population sizes).
 
 ## Limitations
 

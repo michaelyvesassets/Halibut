@@ -24,6 +24,7 @@ from pathlib import Path
 
 import numpy as np
 
+from .diagnostics import diagnostics_report, run_diagnostics
 from .experiment import ExperimentResult, aggregate_timeseries, summarize
 from .version import CONFIG_SCHEMA_VERSION, ENGINE_VERSION, RESULT_TYPE, SYNTHETIC_DISCLAIMER
 
@@ -33,6 +34,7 @@ FILES = {
     "timeseries.csv": "Weekly metrics for every scenario and seed.",
     "aggregate.csv": "Weekly metrics averaged across seeds with 95% CI half-widths.",
     "segments.csv": "Weekly metrics per consumer segment for every scenario and seed.",
+    "diagnostics.json": "Accounting invariants and behavioural diagnostics.",
 }
 
 
@@ -93,4 +95,5 @@ def write_results(result: ExperimentResult, out_dir: str | Path) -> Path:
     write_csv(path / "timeseries.csv", result.timeseries)
     write_csv(path / "aggregate.csv", aggregate_timeseries(result.timeseries))
     write_csv(path / "segments.csv", result.segment_timeseries)
+    write_json(path / "diagnostics.json", {**synthetic_label(), **diagnostics_report(run_diagnostics(result))})
     return path

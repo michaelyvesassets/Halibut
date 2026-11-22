@@ -1,18 +1,30 @@
 """Command-line interface.
 
     halibut validate CONFIG
-    halibut run CONFIG [--scenario NAME ...] [--replicates N | --seed S ...] [--out DIR]
+    halibut run CONFIG [--scenario NAME ...] [--replicates N | --seed S ...] [--warmup W] [--out DIR]
+    halibut diagnose CONFIG [--replicates N] [--warmup W] [--stockout-counterfactual]
+                            [--size-convergence 2000,5000] [--out DIR]
 """
 
 from __future__ import annotations
 
 import argparse
+import dataclasses
+import json
 import sys
+from pathlib import Path
 
 from .config import CONTROL, ConfigError, config_hash, load_config
 from .experiment import run_experiment, summarize
-from .export import write_results
+from .export import synthetic_label, write_json, write_results
 from .version import ENGINE_VERSION, SYNTHETIC_DISCLAIMER
+
+
+def _add_seed_args(p):
+    seeds = p.add_mutually_exclusive_group()
+    seeds.add_argument("--replicates", type=int, help="use the first N configured seeds")
+    seeds.add_argument("--seed", type=int, action="append", help="explicit seed (repeatable)")
+    p.add_argument("--warmup", type=int, help="override experiment.warmup_weeks")
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -26,12 +38,31 @@ def _parser() -> argparse.ArgumentParser:
     r = sub.add_parser("run", help="run an experiment")
     r.add_argument("config")
     r.add_argument("--scenario", action="append", help="scenario to run (repeatable; default: all)")
-    seeds = r.add_mutually_exclusive_group()
-    seeds.add_argument("--replicates", type=int, help="use the first N configured seeds")
-    seeds.add_argument("--seed", type=int, action="append", help="explicit seed (repeatable)")
+    _add_seed_args(r)
     r.add_argument("--out", default="results", help="output directory (default: results)")
     r.add_argument("--quiet", action="store_true")
+
+    d = sub.add_parser("diagnose", help="run an experiment and its diagnostics")
+    d.add_argument("config")
+    _add_seed_args(d)
+    d.add_argument("--stockout-counterfactual", action="store_true",
+                   help="also rerun every scenario with full availability (doubles cost)")
+    d.add_argument("--size-convergence", help="comma-separated population sizes to compare")
+    d.add_argument("--out", default="results")
+
+    from .analysis_cli import add_analysis_commands  # noqa: PLC0415
+    add_analysis_commands(sub)
     return p
+
+
+def _resolve_seeds(cfg, args):
+    if args.seed:
+        return args.seed
+    if args.replicates:
+        if args.replicates < 1 or args.replicates > len(cfg.seeds):
+            raise ValueError(f"--replicates must be between 1 and {len(cfg.seeds)}")
+        return cfg.seeds[: args.replicates]
+    return cfg.seeds
 
 
 def _print_summary(summary: dict) -> None:
@@ -56,10 +87,24 @@ def _print_summary(summary: dict) -> None:
     print(f"\nNOTE: {SYNTHETIC_DISCLAIMER}")
 
 
+def _print_checks(report: dict) -> None:
+    c = report["status_counts"]
+    print(f"\nDiagnostics: {c['fail']} fail, {c['warn']} warn, {c['pass']} pass, {c['info']} info")
+    for chk in report["checks"]:
+        if chk["status"] in ("fail", "warn"):
+            print(f"  [{chk['status'].upper()}] {chk['name']}: {chk['message']}")
+
+
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
+    if getattr(args, "handler", None):
+        return args.handler(args)
     try:
         cfg = load_config(args.config)
+        if getattr(args, "warmup", None) is not None:
+            if args.warmup < 0:
+                raise ConfigError("--warmup must be >= 0")
+            cfg = dataclasses.replace(cfg, warmup_weeks=args.warmup)
     except (ConfigError, OSError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
@@ -67,29 +112,38 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "validate":
         print(f"OK  {cfg.name}  hash={config_hash(cfg)}")
         print(f"    {cfg.population.size} consumers, {cfg.weeks} weeks, {len(cfg.seeds)} seeds, "
+              f"warmup={cfg.warmup_weeks}, drift={cfg.preference_drift.effective_model}, "
               f"products={list(cfg.product_ids)}, scenarios={cfg.scenario_names}")
         return 0
 
-    if args.seed:
-        seeds = args.seed
-    elif args.replicates:
-        if args.replicates < 1 or args.replicates > len(cfg.seeds):
-            print(f"error: --replicates must be between 1 and {len(cfg.seeds)}", file=sys.stderr)
-            return 2
-        seeds = cfg.seeds[: args.replicates]
-    else:
-        seeds = cfg.seeds
     try:
+        seeds = _resolve_seeds(cfg, args)
         result = run_experiment(
-            cfg, args.scenario, seeds, progress=None if args.quiet else lambda m: print(f"  {m}")
+            cfg, getattr(args, "scenario", None), seeds,
+            progress=None if getattr(args, "quiet", False) else lambda m: print(f"  {m}"),
         )
-    except KeyError as exc:
+    except (KeyError, ValueError) as exc:
         print(f"error: {exc.args[0]}", file=sys.stderr)
         return 2
     path = write_results(result, args.out)
     rt = result.runtime
-    if not args.quiet:
+    report = json.loads((path / "diagnostics.json").read_text())
+    if not getattr(args, "quiet", False):
         _print_summary(summarize(result))
+        _print_checks(report)
+
+    if args.command == "diagnose":
+        from .diagnostics import size_convergence, stockout_counterfactual  # noqa: PLC0415
+        if args.stockout_counterfactual:
+            data = stockout_counterfactual(cfg, seeds)
+            write_json(path / "stockout_counterfactual.json", {**synthetic_label(), **data})
+            print(f"  wrote {path / 'stockout_counterfactual.json'}")
+        if args.size_convergence:
+            sizes = [int(x) for x in args.size_convergence.split(",")]
+            data = size_convergence(cfg, sizes, seeds)
+            write_json(path / "size_convergence.json", {**synthetic_label(), **data})
+            print(f"  wrote {path / 'size_convergence.json'}")
+
     print(f"\n{rt['runs']} runs in {rt['total_seconds']:.2f}s "
           f"({rt['agent_weeks_per_second']:,.0f} agent-weeks/s). Results: {path}")
-    return 0
+    return 1 if report["status_counts"]["fail"] else 0

@@ -1,7 +1,8 @@
 """Version identifiers recorded in every run manifest."""
 
-ENGINE_VERSION = "0.1.0"
-CONFIG_SCHEMA_VERSION = "1.0"
+ENGINE_VERSION = "0.2.0"
+CONFIG_SCHEMA_VERSION = "1.1"  # current; older versions listed below stay loadable
+SUPPORTED_SCHEMA_VERSIONS = ("1.0", "1.1")
 
 RESULT_TYPE = "synthetic_simulation"
 SYNTHETIC_DISCLAIMER = (

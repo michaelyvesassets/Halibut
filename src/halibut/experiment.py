@@ -39,6 +39,7 @@ def run_experiment(
     scenarios: list[str] | None = None,
     seeds: list[int] | None = None,
     progress: Callable[[str], None] | None = None,
+    collect_segments: bool = True,
 ) -> ExperimentResult:
     names = list(scenarios) if scenarios else cfg.scenario_names
     for name in names:
@@ -56,7 +57,7 @@ def run_experiment(
         world = build_world(cfg, seed)
         world_seconds += time.perf_counter() - t0
         for name in names:
-            run = run_scenario(cfg, world, cfg.scenario(name))
+            run = run_scenario(cfg, world, cfg.scenario(name), collect_segments=collect_segments)
             scenario_seconds[name] += run.runtime_seconds
             rows.extend({"scenario": name, "seed": seed, **m} for m in run.metrics)
             seg_rows.extend({"scenario": name, "seed": seed, **m} for m in run.segment_metrics)

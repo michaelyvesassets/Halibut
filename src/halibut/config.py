@@ -29,7 +29,7 @@ from .interventions import (
     SeedAdopters,
 )
 from .population import CONSUMER_ATTRIBUTES
-from .version import CONFIG_SCHEMA_VERSION
+from .version import CONFIG_SCHEMA_VERSION, SUPPORTED_SCHEMA_VERSIONS
 
 NO_PRODUCT = "none"
 CONTROL = "control"
@@ -37,6 +37,16 @@ CONTROL = "control"
 
 class ConfigError(ValueError):
     """Raised for an invalid configuration, with the offending key path."""
+
+
+def since(version: str, default):
+    """A field added in a later schema version.
+
+    It is omitted from serialisation (and therefore from ``config_hash``) while
+    it holds its default, so configs written for older schemas keep their
+    original hashes.
+    """
+    return field(default=default, metadata={"since": version})
 
 
 @dataclass(frozen=True)
@@ -85,10 +95,20 @@ class SocialInfluenceConfig:
     weight: float = 1.0
 
 
+DRIFT_MODELS = ("none", "conformity", "baseline_reversion", "exposure_reinforcement")
+
+
 @dataclass(frozen=True)
 class PreferenceDriftConfig:
     enabled: bool = True
     rate: float = 0.02
+    model: str = since("1.1", "conformity")
+    reversion_rate: float = since("1.1", 0.05)  # kappa (baseline_reversion)
+    decay_rate: float = since("1.1", 0.05)  # delta (exposure_reinforcement)
+
+    @property
+    def effective_model(self) -> str:
+        return self.model if self.enabled else "none"
 
 
 @dataclass(frozen=True)
@@ -113,6 +133,7 @@ class ExperimentConfig:
     social_influence: SocialInfluenceConfig
     preference_drift: PreferenceDriftConfig
     scenarios: list[ScenarioConfig]
+    warmup_weeks: int = since("1.1", 0)
 
     @property
     def product_ids(self) -> tuple[str, ...]:
@@ -138,7 +159,10 @@ def _serialise(obj: Any) -> Any:
     if dataclasses.is_dataclass(obj):
         out = {"type": obj.TYPE} if hasattr(obj, "TYPE") else {}
         for f in dataclasses.fields(obj):
-            out[f.name] = _serialise(getattr(obj, f.name))
+            value = getattr(obj, f.name)
+            if f.metadata.get("since") and value == f.default:
+                continue
+            out[f.name] = _serialise(value)
         return out
     if isinstance(obj, dict):
         return {k: _serialise(v) for k, v in obj.items()}
@@ -232,10 +256,14 @@ def load_config(path: str | Path) -> ExperimentConfig:
 def parse_config(data: dict) -> ExperimentConfig:
     root = _Table(data, "")
     version = root.string("schema_version")
-    if version != CONFIG_SCHEMA_VERSION:
+    if version not in SUPPORTED_SCHEMA_VERSIONS:
         raise ConfigError(
-            f"schema_version: this engine supports {CONFIG_SCHEMA_VERSION!r}, got {version!r}"
+            f"schema_version: this engine supports {list(SUPPORTED_SCHEMA_VERSIONS)}, got {version!r}"
         )
+
+    def require_v11(table: _Table, key: str) -> None:
+        if version == "1.0" and key in table.data:
+            raise ConfigError(f"{table.at(key)}: requires schema_version = \"1.1\"")
 
     exp = root.table("experiment")
     name = exp.string("name")
@@ -243,6 +271,8 @@ def parse_config(data: dict) -> ExperimentConfig:
     weeks = exp.number("weeks", integer=True, lo=1)
     seeds = _parse_seeds(exp)
     window = exp.number("summary_window_weeks", 4, integer=True, lo=1, hi=weeks)
+    require_v11(exp, "warmup_weeks")
+    warmup = exp.number("warmup_weeks", 0, integer=True, lo=0)
     exp.done()
 
     products = _parse_products(root.tables("products"))
@@ -276,8 +306,14 @@ def parse_config(data: dict) -> ExperimentConfig:
     si.done()
 
     pd = root.table("preference_drift", {})
+    for key in ("model", "reversion_rate", "decay_rate"):
+        require_v11(pd, key)
     drift = PreferenceDriftConfig(
-        enabled=pd.boolean("enabled", True), rate=pd.number("rate", 0.02, lo=0.0, hi=1.0)
+        enabled=pd.boolean("enabled", True),
+        rate=pd.number("rate", 0.02, lo=0.0, hi=1.0),
+        model=pd.string("model", "conformity", choices=DRIFT_MODELS),
+        reversion_rate=pd.number("reversion_rate", 0.05, lo=0.0, hi=1.0),
+        decay_rate=pd.number("decay_rate", 0.05, lo=0.0, hi=1.0),
     )
     pd.done()
 
@@ -298,6 +334,7 @@ def parse_config(data: dict) -> ExperimentConfig:
         social_influence=influence,
         preference_drift=drift,
         scenarios=scenarios,
+        warmup_weeks=warmup,
     )
 
 

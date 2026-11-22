@@ -16,6 +16,10 @@ STREAMS = {
     "initial_state": 2,
     "choice": 3,
     "availability": 4,
+    # engine 0.2: warm-up draws come from their own streams, so enabling
+    # warm-up never shifts the numbers seen from week 0 onward
+    "warmup_choice": 5,
+    "warmup_availability": 6,
 }
 
 
