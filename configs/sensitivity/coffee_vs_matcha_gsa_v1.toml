@@ -1,0 +1,169 @@
+# Global sensitivity analysis of coffee_vs_matcha_v1.
+#
+# The parameter RANGES below are assumptions: plausible spans around the v1
+# values, chosen for exploration, not estimated from data. Indices are
+# conditional on these ranges and on the synthetic base model.
+#
+#   halibut sensitivity configs/sensitivity/coffee_vs_matcha_gsa_v1.toml --dry-run
+#   halibut sensitivity ... --set 'preference_drift.model="none"'
+
+schema_version = "1.0"
+
+[sensitivity]
+name = "coffee_vs_matcha_gsa_v1"
+description = "Which parameters drive matcha share, category demand and intervention effects?"
+base_config = "../experiments/coffee_vs_matcha_v1.toml"
+replicates = 3            # seeds per design point (common across points)
+base_seed = 7000
+method = "morris"
+sample_seed = 2026
+bootstrap = 500
+time_limit_minutes = 15
+outputs = [
+  "control.purchase_share_matcha",
+  "control.category_units",
+  "control.no_purchase_rate",
+  "transient.control.purchase_share_matcha",
+  "effect.price_war.purchase_share_matcha",
+  "effect.distribution_push.purchase_share_matcha",
+  "effect.influencer_campaign.purchase_share_matcha",
+  "effect.combined.purchase_share_matcha",
+  "effect.combined.category_units",
+]
+
+[sensitivity.morris]
+trajectories = 20
+levels = 4
+
+[sensitivity.sobol]
+n = 256
+# Filled in from the Morris screening (top drivers); others fixed at base values.
+parameters = ["outside_utility", "preference_weight", "price_sensitivity_scale", "matcha_price",
+              "matcha_availability", "drift_rate", "social_weight", "budget_scale"]
+
+[overrides]
+"schema_version" = "1.1"
+"population.size" = 2000
+# Explicit so they can be varied; inactive unless the matching drift model is selected
+# (under conformity they act as dummy parameters whose effects should be ~0).
+"preference_drift.reversion_rate" = 0.01
+"preference_drift.decay_rate" = 0.01
+
+[[parameters]]
+name = "outside_utility"
+path = "decision.outside_utility"
+range = [0.0, 2.0]
+
+[[parameters]]
+name = "preference_weight"
+path = "decision.preference_weight"
+range = [1.5, 4.5]
+
+[[parameters]]
+name = "quality_weight"
+path = "decision.quality_weight"
+range = [0.5, 1.5]
+
+[[parameters]]
+name = "temperature"
+path = "decision.temperature"
+range = [0.5, 1.5]
+
+[[parameters]]
+name = "social_weight"
+path = "social_influence.weight"
+range = [0.0, 3.0]
+
+[[parameters]]
+name = "drift_rate"
+path = "preference_drift.rate"
+range = [0.0, 0.06]
+
+[[parameters]]
+name = "reversion_rate"
+path = "preference_drift.reversion_rate"
+range = [0.0, 0.05]
+
+[[parameters]]
+name = "decay_rate"
+path = "preference_drift.decay_rate"
+range = [0.0, 0.05]
+
+[[parameters]]
+name = "rewire_prob"
+path = "network.rewire_prob"
+range = [0.01, 0.5]
+scale = "log"
+
+[[parameters]]
+name = "coffee_price"
+path = "products[coffee].price"
+range = [3.0, 4.0]
+
+[[parameters]]
+name = "matcha_price"
+path = "products[matcha].price"
+range = [4.0, 6.0]
+
+[[parameters]]
+name = "matcha_quality"
+path = "products[matcha].quality"
+range = [0.5, 0.9]
+
+[[parameters]]
+name = "matcha_availability"
+path = "products[matcha].availability"
+range = [0.5, 0.9]
+
+[[parameters]]
+name = "budget_scale"
+mode = "scale"
+scale = "log"
+range = [0.75, 1.333]
+paths = ["population.segments[0].attributes.budget.median",
+         "population.segments[1].attributes.budget.median",
+         "population.segments[2].attributes.budget.median"]
+
+[[parameters]]
+name = "consumption_scale"
+mode = "scale"
+scale = "log"
+range = [0.75, 1.333]
+paths = ["population.segments[0].attributes.consumption.median",
+         "population.segments[1].attributes.consumption.median",
+         "population.segments[2].attributes.consumption.median"]
+
+[[parameters]]
+name = "price_sensitivity_scale"
+mode = "scale"
+scale = "log"
+range = [0.5, 2.0]
+paths = ["population.segments[0].attributes.price_sensitivity.median",
+         "population.segments[1].attributes.price_sensitivity.median",
+         "population.segments[2].attributes.price_sensitivity.median"]
+
+[[parameters]]
+name = "loyalty_scale"
+mode = "scale"
+range = [0.5, 1.5]
+paths = ["population.segments[0].attributes.brand_loyalty.mean",
+         "population.segments[1].attributes.brand_loyalty.mean",
+         "population.segments[2].attributes.brand_loyalty.mean"]
+
+[[parameters]]
+name = "switching_resistance_scale"
+mode = "scale"
+range = [0.5, 1.5]
+paths = ["population.segments[0].attributes.switching_resistance.mean",
+         "population.segments[1].attributes.switching_resistance.mean",
+         "population.segments[2].attributes.switching_resistance.mean"]
+
+[[parameters]]
+name = "susceptibility_scale"
+mode = "scale"
+scale = "log"
+range = [0.5, 2.0]
+# scales beta 'a' (mean a/(a+b)) for each segment
+paths = ["population.segments[0].attributes.social_susceptibility.a",
+         "population.segments[1].attributes.social_susceptibility.a",
+         "population.segments[2].attributes.social_susceptibility.a"]
