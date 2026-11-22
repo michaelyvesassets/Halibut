@@ -244,13 +244,17 @@ class _Table:
             raise ConfigError(f"{self.path or '<root>'}: unknown keys {unknown}")
 
 
-def load_config(path: str | Path) -> ExperimentConfig:
+def load_raw(path: str | Path) -> dict:
+    """Read a TOML file without validating it (for overrides and analysis specs)."""
     with open(path, "rb") as fh:
         try:
-            data = tomllib.load(fh)
+            return tomllib.load(fh)
         except tomllib.TOMLDecodeError as exc:
             raise ConfigError(f"{path}: invalid TOML: {exc}") from exc
-    return parse_config(data)
+
+
+def load_config(path: str | Path) -> ExperimentConfig:
+    return parse_config(load_raw(path))
 
 
 def parse_config(data: dict) -> ExperimentConfig:
