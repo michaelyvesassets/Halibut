@@ -1,0 +1,67 @@
+# Assumption suite: drift model (4) x warm-up (cold start vs 52-week warm-up).
+# Separates intervention effects from effects of these modelling assumptions.
+# SYNTHETIC: all variants are illustrative assumption sets, not estimates.
+
+schema_version = "1.0"
+
+[suite]
+name = "drift_warmup_v1"
+description = "coffee_vs_matcha_v1 interventions under four preference-drift models, with and without warm-up."
+base_config = "../experiments/coffee_vs_matcha_v1.toml"
+replicates = 10
+base_seed = 20261122
+reference_variant = "conformity_cold"
+metrics = ["purchase_share_matcha", "adoption_share_matcha", "category_units", "no_purchase_rate", "category_revenue"]
+time_limit_minutes = 10
+
+# Applied to every variant. 2,000 agents for analysis (size convergence is
+# checked separately); schema 1.1 enables drift models and warm-up.
+[overrides]
+"schema_version" = "1.1"
+"population.size" = 2000
+
+[[variants]]
+name = "conformity_cold"
+description = "Phase 1 assumptions (v1 conformity drift, no warm-up)."
+
+[[variants]]
+name = "none_cold"
+[variants.overrides]
+"preference_drift.model" = "none"
+
+[[variants]]
+name = "reversion_cold"
+[variants.overrides]
+"preference_drift.model" = "baseline_reversion"
+"preference_drift.reversion_rate" = 0.01
+
+[[variants]]
+name = "exposure_cold"
+[variants.overrides]
+"preference_drift.model" = "exposure_reinforcement"
+"preference_drift.decay_rate" = 0.01
+
+[[variants]]
+name = "conformity_warm"
+[variants.overrides]
+"experiment.warmup_weeks" = 52
+
+[[variants]]
+name = "none_warm"
+[variants.overrides]
+"preference_drift.model" = "none"
+"experiment.warmup_weeks" = 52
+
+[[variants]]
+name = "reversion_warm"
+[variants.overrides]
+"preference_drift.model" = "baseline_reversion"
+"preference_drift.reversion_rate" = 0.01
+"experiment.warmup_weeks" = 52
+
+[[variants]]
+name = "exposure_warm"
+[variants.overrides]
+"preference_drift.model" = "exposure_reinforcement"
+"preference_drift.decay_rate" = 0.01
+"experiment.warmup_weeks" = 52
