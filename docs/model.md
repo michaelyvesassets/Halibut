@@ -79,13 +79,27 @@ Neighbours who did not buy count in the denominator.
 
 1. **Peer influence** (`[social_influence]`): adds the `w_soc·s_i·S_ij` term to
    utility. It is short-term and changes no state.
-2. **Preference drift** (`[preference_drift]`): after each week,
-   `π_ij ← π_ij + clip(rate·s_i, 0, 1)·(S_ij − π_ij)`. This is a conformity
-   rule in which tastes move toward what neighbours consume. It is persistent.
+2. **Preference drift** (`[preference_drift]`, persistent). It is applied
+   after each week. Let `a_i = rate·s_i` (clipped so each update is a convex
+   combination and preferences stay in [0, 1]), and let `π⁰` be the generated
+   preference. The rule is selected with `model` (schema 1.1):
 
-Either mechanism can be disabled while keeping the other. Note that conformity
-drift pulls preference for *any* minority product down, so it structurally
-favours incumbents (see Limitations).
+| `model` | Update | Fixed point | Character |
+|---|---|---|---|
+| `none` | no change | `π⁰` | static tastes |
+| `conformity` (v1 default) | `π += a(S − π)` | `S` | tastes copy neighbours' consumption; a minority product's preference is pulled down toward its low share, so this rule **structurally favours incumbents** |
+| `baseline_reversion` | `π += a(S − π) + κ(π⁰ − π)` | `(aS + κπ⁰)/(a + κ)` | conformity anchored to original taste (`reversion_rate` = κ) |
+| `exposure_reinforcement` | `π += aS(1 − π) − δ(π − π⁰)` | `(aS + δπ⁰)/(aS + δ)` | exposure only raises preference (mere-exposure), and it decays back to `π⁰` (`decay_rate` = δ); never pushed below baseline |
+
+   The step `a` is clipped to `[0, 1]` for conformity, to `[0, 1 − κ]` for
+   baseline reversion, and to `[0, 1 − δ]` for exposure reinforcement. With
+   these clips every update is a convex combination of values in [0, 1].
+   Tests verify the fixed points and the bounds.
+
+   `enabled = false` is equivalent to `model = "none"`. A schema 1.0 config
+   always uses `conformity`.
+
+Either mechanism can be disabled while keeping the other.
 
 ## Interventions
 
@@ -239,9 +253,9 @@ population-size convergence (the same metrics at several population sizes).
 - **Similar alternatives.** Plain logit tends to over-predict substitution
   between similar alternatives. A nested logit is the upgrade path once more
   products are added.
-- **Incumbent bias in drift.** The conformity drift rule systematically erodes
-  preference for minority products, and the choice of mechanism materially
-  affects results. In `coffee_vs_matcha_v1`, turning drift off raises matcha's
+- **Drift rule choice.** Conformity (the v1 default) systematically erodes
+  preference for minority products, and the choice of drift model materially
+  affects results. Phase 2 compares the alternatives. In `coffee_vs_matcha_v1`, turning drift off raises matcha's
   final share from about 2% to 5% in the control, and from about 6% to 14% in
   the combined scenario.
 - **Exogenous supply side.** There are no firm agents. Prices, positioning and
