@@ -34,6 +34,17 @@ def add_analysis_commands(sub) -> None:
                    help="extra base-config override, e.g. preference_drift.model='\"none\"' (repeatable)")
     g.set_defaults(handler=_sensitivity)
 
+    m = sub.add_parser("make-targets", help="generate SYNTHETIC twin-experiment targets from the model")
+    m.add_argument("spec")
+    m.add_argument("--template", required=True, help="targets file listing moments without values")
+    m.add_argument("--output", required=True)
+    m.add_argument("--workers", type=int, default=default_workers())
+    m.set_defaults(handler=_make_targets)
+
+    c = sub.add_parser("calibrate", help="fit parameters to targets (method of simulated moments + ABC)")
+    _common(c, "results/calibration")
+    c.set_defaults(handler=_calibrate)
+
 
 def parse_set(items: list[str]) -> dict:
     """Parse PATH=VALUE pairs; VALUE is a TOML literal (bare words are taken as strings)."""
@@ -109,5 +120,41 @@ def _sensitivity(args):
         top = ", ".join(f"{p}={d['indices'][p][key]:.3g}" for p in d["ranking"][:4])
         ns = res["noise_share"][o]
         print(f"  {o:<46} noise={ns if ns is None else round(ns, 3)}  top {key}: {top}")
+    print(f"Results: {path}")
+    return 0
+
+
+@_guard
+def _make_targets(args):
+    from .calibration import load_calibration, make_twin_targets  # noqa: PLC0415
+    spec = load_calibration(args.spec)
+    make_twin_targets(spec, args.template, args.output, workers=args.workers)
+    print(f"wrote SYNTHETIC targets to {args.output} (truth: {spec.twin_truth}, seeds {spec.twin_seeds})")
+    return 0
+
+
+@_guard
+def _calibrate(args):
+    from .calibration import calibrate, estimate_calibration, load_calibration, write_calibration  # noqa: PLC0415
+    spec = load_calibration(args.spec)
+    est = estimate_calibration(spec, args.workers)
+    print(f"{spec.name}: {spec.space.dimension} parameters, ~{est['objective_evaluations']} objective "
+          f"evaluations, {est['scenario_runs']} scenario runs; estimated {est['human']} on {args.workers} worker(s)")
+    if args.dry_run:
+        return 0
+    res = calibrate(spec, args.workers, args.cache or None, args.yes)
+    path = write_calibration(spec, res, args.out)
+    print(f"  status: {res['labels']['calibration_status']} (empirically_validated = false)")
+    for name, v in res["best_values"].items():
+        post = res["abc"].get("posterior", {}).get(name, {})
+        rec = res.get("recovery", {}).get(name)
+        extra = f" truth={rec['truth']:.4g}" if rec else ""
+        print(f"  {name:<26} best={v:.4g}  ABC 90%=[{post.get('q05', float('nan')):.4g}, "
+              f"{post.get('q95', float('nan')):.4g}]{extra}")
+    ident = res["identifiability"]
+    print(f"  objective={res['objective']:.3g}  Jacobian rank={ident['numerical_rank']}/"
+          f"{spec.space.dimension}  condition={ident['condition_number']}")
+    for r in res["moments"]:
+        print(f"    [{r['role']:<7}] {r['name']:<30} obs={r['observed']:.4g} sim={r['simulated']:.4g} z={r['z']:+.2f}")
     print(f"Results: {path}")
     return 0

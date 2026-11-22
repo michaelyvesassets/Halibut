@@ -1,0 +1,75 @@
+# Twin experiment: can calibration recover known parameters of the coffee vs
+# matcha model from model-generated (SYNTHETIC) targets?
+#
+#   halibut make-targets configs/calibration/coffee_vs_matcha_twin_v1.toml \
+#       --template configs/calibration/coffee_vs_matcha_twin_template.toml \
+#       --output configs/calibration/coffee_vs_matcha_twin_v1_targets.toml
+#   halibut calibrate configs/calibration/coffee_vs_matcha_twin_v1.toml --dry-run
+#
+# A successful twin experiment shows the METHOD works on this model. It is not
+# evidence that the model describes real markets.
+
+schema_version = "1.0"
+
+[calibration]
+name = "coffee_vs_matcha_twin_v1"
+description = "Recover 5 known parameters from 8 synthetic moments; 2 intervention effects held out."
+base_config = "../experiments/coffee_vs_matcha_v1.toml"
+targets = "coffee_vs_matcha_twin_v1_targets.toml"
+replicates = 3
+base_seed = 5000
+time_limit_minutes = 15
+
+[calibration.optimizer]
+popsize = 8
+maxiter = 12
+seed = 1
+nelder_mead_maxfev = 60
+
+[calibration.abc]
+samples = 300
+accept_quantile = 0.05
+seed = 2
+
+[calibration.identifiability]
+step = 0.05
+slice_points = 9
+
+[calibration.twin]
+replicates = 10
+base_seed = 9000
+rel_se_floor = 0.05     # stands in for measurement error on real data
+truth = { outside_utility = 1.2, preference_weight = 2.6, price_sensitivity_scale = 1.3, social_weight = 1.0, drift_rate = 0.02 }
+
+[overrides]
+"schema_version" = "1.1"
+"population.size" = 2000
+
+[[parameters]]
+name = "outside_utility"
+path = "decision.outside_utility"
+range = [0.0, 2.0]
+
+[[parameters]]
+name = "preference_weight"
+path = "decision.preference_weight"
+range = [1.5, 4.5]
+
+[[parameters]]
+name = "price_sensitivity_scale"
+mode = "scale"
+scale = "log"
+range = [0.5, 2.0]
+paths = ["population.segments[0].attributes.price_sensitivity.median",
+         "population.segments[1].attributes.price_sensitivity.median",
+         "population.segments[2].attributes.price_sensitivity.median"]
+
+[[parameters]]
+name = "social_weight"
+path = "social_influence.weight"
+range = [0.0, 3.0]
+
+[[parameters]]
+name = "drift_rate"
+path = "preference_drift.rate"
+range = [0.0, 0.06]

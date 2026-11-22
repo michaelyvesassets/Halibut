@@ -37,12 +37,14 @@ class Task:
     seed: int
     scenarios: tuple[str, ...]
     full_availability: bool = False
+    evaluator: str = "window"  # "window" (this module) or "moments" (calibration)
+    payload: tuple = ()
 
     def key(self) -> str:
         ident = {
             "config_hash": config_hash(self.cfg), "seed": self.seed, "scenarios": list(self.scenarios),
             "full_availability": self.full_availability, "engine": ENGINE_VERSION,
-            "evaluator": EVALUATOR_VERSION,
+            "evaluator": EVALUATOR_VERSION, "kind": self.evaluator, "payload": list(map(list, self.payload)),
         }
         return hashlib.sha256(json.dumps(ident, sort_keys=True).encode()).hexdigest()
 
@@ -55,6 +57,9 @@ def _window_means(rows: list[dict], weeks: range) -> dict[str, float]:
 
 def evaluate_task(task: Task) -> dict:
     """Run a task; return per-scenario start/end window means and cumulative flows."""
+    if task.evaluator == "moments":
+        from .calibration import evaluate_moment_task  # noqa: PLC0415
+        return evaluate_moment_task(task)
     cfg = task.cfg
     t0 = time.perf_counter()
     world = build_world(cfg, task.seed)
