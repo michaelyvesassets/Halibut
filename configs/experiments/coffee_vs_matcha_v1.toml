@@ -1,0 +1,202 @@
+# Coffee vs Matcha - competitive market displacement ("Trend Annihilation"), v1.
+#
+# SYNTHETIC EXPERIMENT. Every number below is an illustrative assumption chosen
+# to produce a plausible incumbent/challenger market. None has been calibrated
+# against real data; results describe model behaviour, not forecasts.
+#
+# Units: one tick = one week. Prices are per serving; budgets are weekly
+# spending capacity for the hot-caffeinated-beverage category; consumption is
+# servings bought in a purchase week.
+
+schema_version = "1.0"
+
+[experiment]
+name = "coffee_vs_matcha_v1"
+description = "Incumbent coffee vs challenger matcha under price, distribution and influencer interventions."
+weeks = 52
+replicates = 20
+base_seed = 20261122
+summary_window_weeks = 4
+
+[[products]]
+id = "coffee"
+category = "hot_caffeinated_beverage"
+price = 3.50
+quality = 0.75
+availability = 0.98
+
+[[products]]
+id = "matcha"
+category = "hot_caffeinated_beverage"
+price = 5.00
+quality = 0.70
+availability = 0.70
+
+[population]
+size = 5000
+
+# --- Segment 1: habitual coffee drinkers ----------------------------------
+[[population.segments]]
+name = "coffee_loyalists"
+weight = 0.45
+initial_product_shares = { none = 0.06, coffee = 0.93, matcha = 0.01 }
+
+[population.segments.attributes]
+budget = { dist = "lognormal", median = 40.0, sigma = 0.35, min = 5.0 }
+consumption = { dist = "lognormal", median = 6.0, sigma = 0.30, min = 1.0, max = 21.0 }
+price_sensitivity = { dist = "lognormal", median = 1.5, sigma = 0.30 }
+brand_loyalty = { dist = "normal", mean = 1.2, sd = 0.30, min = 0.0 }
+social_susceptibility = { dist = "beta", a = 2, b = 6 }
+switching_resistance = { dist = "normal", mean = 1.2, sd = 0.30, min = 0.0 }
+
+[population.segments.preferences]
+coffee = { dist = "beta", a = 8, b = 2 }
+matcha = { dist = "beta", a = 2, b = 8 }
+
+# --- Segment 2: mainstream consumers ---------------------------------------
+[[population.segments]]
+name = "mainstream"
+weight = 0.40
+initial_product_shares = { none = 0.15, coffee = 0.81, matcha = 0.04 }
+
+[population.segments.attributes]
+budget = { dist = "lognormal", median = 32.0, sigma = 0.40, min = 5.0 }
+consumption = { dist = "lognormal", median = 5.0, sigma = 0.35, min = 1.0, max = 21.0 }
+price_sensitivity = { dist = "lognormal", median = 2.0, sigma = 0.30 }
+brand_loyalty = { dist = "normal", mean = 0.7, sd = 0.25, min = 0.0 }
+social_susceptibility = { dist = "beta", a = 3, b = 4 }
+switching_resistance = { dist = "normal", mean = 0.7, sd = 0.25, min = 0.0 }
+
+[population.segments.preferences]
+coffee = { dist = "beta", a = 5, b = 3 }
+matcha = { dist = "beta", a = 3, b = 5 }
+
+# --- Segment 3: health-curious early adopters ------------------------------
+[[population.segments]]
+name = "health_curious"
+weight = 0.15
+initial_product_shares = { none = 0.12, coffee = 0.68, matcha = 0.20 }
+
+[population.segments.attributes]
+budget = { dist = "lognormal", median = 38.0, sigma = 0.40, min = 5.0 }
+consumption = { dist = "lognormal", median = 5.0, sigma = 0.35, min = 1.0, max = 21.0 }
+price_sensitivity = { dist = "lognormal", median = 1.2, sigma = 0.30 }
+brand_loyalty = { dist = "normal", mean = 0.4, sd = 0.20, min = 0.0 }
+social_susceptibility = { dist = "beta", a = 5, b = 3 }
+switching_resistance = { dist = "normal", mean = 0.3, sd = 0.15, min = 0.0 }
+
+[population.segments.preferences]
+coffee = { dist = "beta", a = 4, b = 4 }
+matcha = { dist = "beta", a = 6, b = 3 }
+
+[decision]
+model = "logit"
+temperature = 1.0          # Gumbel scale; 0 = deterministic utility maximisation
+outside_utility = 1.0      # V of the no-purchase option
+preference_weight = 3.0
+quality_weight = 1.0
+
+[network]
+type = "watts_strogatz"
+k = 10
+rewire_prob = 0.1
+
+[social_influence]
+enabled = true
+weight = 1.5
+
+[preference_drift]
+enabled = true
+rate = 0.03
+
+# --- Scenarios ---------------------------------------------------------------
+
+[[scenarios]]
+name = "control"
+description = "A. Baseline: no interventions."
+
+[[scenarios]]
+name = "price_war"
+description = "B. Matcha price cut 25% from week 10 onward."
+
+[[scenarios.interventions]]
+type = "product_change"
+product = "matcha"
+attribute = "price"
+op = "multiply"
+value = 0.75
+start_week = 10
+
+[[scenarios]]
+name = "distribution_push"
+description = "C. Matcha availability ramps from 0.70 to 0.95 over weeks 8-19, then holds."
+
+[[scenarios.interventions]]
+type = "product_change"
+product = "matcha"
+attribute = "availability"
+op = "set"
+value = 0.95
+start_week = 8
+ramp_weeks = 12
+
+[[scenarios]]
+name = "influencer_campaign"
+description = "D. Week 6: top-2% most-connected consumers seeded as matcha adopters; their social susceptibility doubled for 12 weeks."
+
+[[scenarios.interventions]]
+type = "seed_adopters"
+product = "matcha"
+week = 6
+target = "top_degree"
+fraction = 0.02
+preference = 0.85
+
+[[scenarios.interventions]]
+type = "population_change"
+attribute = "social_susceptibility"
+op = "multiply"
+value = 2.0
+start_week = 6
+end_week = 18
+target = "top_degree"
+fraction = 0.02
+
+[[scenarios]]
+name = "combined"
+description = "E. B + C + D together."
+
+[[scenarios.interventions]]
+type = "product_change"
+product = "matcha"
+attribute = "price"
+op = "multiply"
+value = 0.75
+start_week = 10
+
+[[scenarios.interventions]]
+type = "product_change"
+product = "matcha"
+attribute = "availability"
+op = "set"
+value = 0.95
+start_week = 8
+ramp_weeks = 12
+
+[[scenarios.interventions]]
+type = "seed_adopters"
+product = "matcha"
+week = 6
+target = "top_degree"
+fraction = 0.02
+preference = 0.85
+
+[[scenarios.interventions]]
+type = "population_change"
+attribute = "social_susceptibility"
+op = "multiply"
+value = 2.0
+start_week = 6
+end_week = 18
+target = "top_degree"
+fraction = 0.02
