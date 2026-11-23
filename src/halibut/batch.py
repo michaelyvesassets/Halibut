@@ -77,6 +77,17 @@ def evaluate_task(task: Task) -> dict:
     return {"seed": task.seed, "scenarios": out, "seconds": time.perf_counter() - t0}
 
 
+def _mp_context():
+    """Default start method, except when __main__ is not an importable file
+    (stdin, notebooks, REPL), where forkserver/spawn cannot re-import it."""
+    import multiprocessing as mp  # noqa: PLC0415
+    import sys  # noqa: PLC0415
+    main_file = getattr(sys.modules.get("__main__"), "__file__", None)
+    if (not main_file or not os.path.exists(main_file)) and "fork" in mp.get_all_start_methods():
+        return mp.get_context("fork")
+    return None
+
+
 class Runner:
     def __init__(self, workers: int = 1, cache_dir: str | Path | None = None):
         self.workers = max(1, int(workers))
@@ -116,7 +127,7 @@ class Runner:
                 store(i, evaluate_task(tasks[i]))
         else:
             chunk = max(1, len(todo) // (self.workers * 8))
-            with ProcessPoolExecutor(max_workers=self.workers) as pool:
+            with ProcessPoolExecutor(max_workers=self.workers, mp_context=_mp_context()) as pool:
                 for i, res in zip(todo, pool.map(evaluate_task, [tasks[i] for i in todo], chunksize=chunk)):
                     store(i, res)
         return results  # type: ignore[return-value]
@@ -137,19 +148,27 @@ def seconds_per_scenario_run(cfg: ExperimentConfig, sample_weeks: int = 12) -> f
     """
     weeks = min(sample_weeks, cfg.weeks)
     probe = replace(cfg, weeks=weeks, warmup_weeks=0, summary_window_weeks=min(cfg.summary_window_weeks, weeks))
-    t0 = time.perf_counter()
-    world = build_world(probe, probe.seeds[0])
-    t1 = time.perf_counter()
-    run_scenario(probe, world, probe.scenario(probe.scenario_names[0]), collect_segments=False)
-    t2 = time.perf_counter()
-    per_week = (t2 - t1) / weeks
-    return (t1 - t0) + per_week * (cfg.weeks + cfg.warmup_weeks)
+    samples = []
+    for _ in range(3):  # median of 3 probes: single timings are noisy
+        t0 = time.perf_counter()
+        world = build_world(probe, probe.seeds[0])
+        t1 = time.perf_counter()
+        run_scenario(probe, world, probe.scenario(probe.scenario_names[0]), collect_segments=False)
+        t2 = time.perf_counter()
+        samples.append((t1 - t0) + (t2 - t1) / weeks * (cfg.weeks + cfg.warmup_weeks))
+    return float(np.median(samples))
+
+
+# Measured on the Phase 2 analyses: base-point timing under-predicted
+# heterogeneous designs (config parsing, world builds, IPC, slower corners of
+# parameter space) by ~1.4x, so estimates include this overhead factor.
+DESIGN_OVERHEAD = 1.4
 
 
 def estimate_seconds(seconds_per_run: float, scenario_runs: int, workers: int) -> float:
     # Parallel efficiency on small machines is imperfect; assume 85%.
     eff = 1.0 if workers == 1 else 0.85
-    return seconds_per_run * scenario_runs / (workers * eff)
+    return DESIGN_OVERHEAD * seconds_per_run * scenario_runs / (workers * eff)
 
 
 def format_duration(seconds: float) -> str:

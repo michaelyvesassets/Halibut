@@ -236,10 +236,16 @@ def load_sensitivity(path, method: str | None = None, extra_overrides: dict | No
     st = t.table("sobol", {})
     sobol_n = st.number("n", 256, integer=True, lo=8)
     sobol_params = st.raw("parameters", []) or []
+    sobol_reps = st.optional_number("replicates", integer=True, lo=2)
     st.done()
     t.done()
     space = parse_parameters(root.tables("parameters"))
     root.done()
+    if method == "sobol" and sobol_reps is not None:
+        if sobol_reps > len(base.seeds):
+            raise ConfigError("sensitivity.sobol.replicates exceeds the configured seeds")
+        base = BaseSpec(base.spec_path, base.base_config_path, base.raw, base.config,
+                        base.seeds[:sobol_reps], base.time_limit_seconds, base.overrides)
     space.validate_against(base.raw)
     unknown = set(sobol_params) - set(space.names)
     if unknown:

@@ -80,7 +80,7 @@ def test_runner_cache(cfg, tmp_path):
 def test_estimates_and_budget(cfg):
     s = seconds_per_scenario_run(cfg)
     assert 0 < s < 5
-    assert estimate_seconds(1.0, 100, 2) == pytest.approx(100 / 1.7)
+    assert estimate_seconds(1.0, 100, 2) == pytest.approx(1.4 * 100 / 1.7)
     check_budget(10, 60, confirmed=False)
     with pytest.raises(BudgetExceeded):
         check_budget(100, 60, confirmed=False)

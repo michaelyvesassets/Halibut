@@ -1,66 +1,82 @@
 # Halibut
 
 Halibut AI is a long-term market-intelligence and socioeconomic simulation
-platform. This repository holds **Phase 1**: a reproducible, agent-based
-synthetic market simulation engine written in Python. Its first experiment is
-competitive displacement of coffee by matcha.
+platform. This repository holds an agent-based, reproducible **synthetic
+market simulation engine**:
+
+- **Phase 1** built the engine.
+- **Phase 2** added the infrastructure for validation, sensitivity analysis
+  and calibration.
+
+The first experiment is competitive displacement of coffee by matcha.
 
 > **All results produced by this engine are synthetic.** The parameters are
 > illustrative and have not been calibrated or validated against empirical
-> data. Every output file is labelled `"result_type": "synthetic_simulation"`
-> and `"empirically_validated": false`.
+> data. Every output is labelled `"result_type": "synthetic_simulation"` and
+> `"empirically_validated": false`. Calibration so far uses only
+> model-generated ("twin") targets, labelled `calibrated_to_synthetic`.
 
 ## Install
 
 ```bash
-pip install -e ".[dev]"     # runtime dependency: numpy; dev: pytest
+pip install -e ".[dev]"     # numpy, scipy; dev: pytest
+python -m pytest            # full test suite, including Phase 1 golden reproduction
 ```
 
-Requires Python 3.11 or later.
-
-## Use
+## Commands
 
 ```bash
-halibut validate configs/experiments/coffee_vs_matcha_v1.toml
-halibut run configs/experiments/coffee_vs_matcha_v1.toml --out results
-halibut run CONFIG --scenario price_war --replicates 5       # subset (control is always included)
-halibut run CONFIG --seed 1 --seed 2
-python -m pytest
+# Single experiments (Phase 1)
+halibut validate CONFIG
+halibut run CONFIG [--scenario S] [--replicates N | --seed S] [--warmup W] [--out DIR]
+
+# Diagnostics (accounting invariants, switching, stock-outs, transients, MC precision)
+halibut diagnose CONFIG [--warmup W] [--stockout-counterfactual] [--size-convergence 2000,5000]
+
+# Analyses. Each prints a measured runtime estimate first, refuses to start
+# above the spec's time limit without --yes, and supports --dry-run.
+halibut suite configs/suites/drift_warmup_v1.toml                         # assumptions vs interventions
+halibut sensitivity configs/sensitivity/coffee_vs_matcha_gsa_v1.toml      # Morris (default)
+halibut sensitivity SPEC --method sobol [--set 'preference_drift.model="none"']
+halibut make-targets configs/calibration/coffee_vs_matcha_twin_v1.toml \
+    --template configs/calibration/coffee_vs_matcha_twin_template.toml --output TARGETS.toml
+halibut calibrate configs/calibration/coffee_vs_matcha_twin_v1.toml
 ```
 
-A run writes `results/<experiment>_<config-hash>/` containing:
-
-- `manifest.json`: provenance, versions and the resolved config.
-- `summary.json`: per-scenario results and paired comparisons against control.
-- `timeseries.csv`: weekly metrics for every scenario and seed.
-- `aggregate.csv`: weekly means with 95% CIs across seeds.
-- `segments.csv`: weekly metrics per consumer segment.
+Analyses run in parallel (`--workers`) and cache every simulation under
+`.halibut_cache/`, keyed by config hash, seed, scenarios and engine version.
+Output is identical for any number of workers.
 
 ## Layout
 
 ```
-configs/experiments/   versioned TOML experiment definitions
-docs/model.md          the mathematical model, assumptions and limitations
+configs/experiments/   versioned experiment configs (schema 1.0 and 1.1)
+configs/suites/        assumption suites (variants x scenarios x seeds)
+configs/sensitivity/   parameter spaces and GSA specs
+configs/calibration/   calibration specs, moment templates, synthetic targets
+docs/model.md          the simulation model, assumptions, limitations
+docs/analysis.md       Phase 2 statistical methods and their caveats
+docs/phase2_report.md  Phase 2 findings (synthetic)
 src/halibut/
-  config.py            schema, validation, config hash
-  distributions.py     attribute distributions
-  population.py        synthetic consumers (columnar numpy arrays)
-  market.py            products
-  network.py           Watts–Strogatz social network
-  decision.py          multinomial logit choice with budget and stock constraints
-  influence.py         preference drift
-  interventions.py     scheduled price, availability, positioning, population and seeding changes
-  engine.py            weekly simulation loop (no I/O)
-  metrics.py           weekly market metrics
-  experiment.py        scenarios × seeds, paired statistics, displacement decomposition
-  export.py            JSON and CSV output
-  interfaces.py        protocols for future AI integrations (no implementations)
-  cli.py               command-line interface
-tests/
+  config.py  distributions.py  population.py  market.py  network.py
+  decision.py  influence.py  interventions.py  engine.py  metrics.py
+  experiment.py  export.py           # simulation core and Phase 1 pipeline
+  diagnostics.py                     # invariants, behavioural checks, counterfactuals
+  params.py  specs.py  batch.py      # overrides, parameter spaces, parallel cached runner
+  suite.py  sensitivity.py  calibration.py
+  interfaces.py                      # protocols for future AI integrations (no implementations)
+  cli.py  analysis_cli.py
+tests/                               # incl. golden fingerprints of engine 0.1.0
 ```
 
-The simulation core (`engine` and the modules it uses) does no I/O and makes no
-external calls. Storage, the CLI and future AI or visualisation layers sit
-outside it.
+The simulation core does no I/O and makes no external calls. Analyses
+interact with it only through configs (overrides are re-validated and hashed)
+and the batch runner. That leaves room to add business agents, geographic
+markets, AI reasoning and real-world data without changing the analysis layer.
 
-See [docs/model.md](docs/model.md) for the model.
+## Backward compatibility
+
+Schema 1.0 configs still load, keep their config hashes, and reproduce engine
+0.1.0 results exactly. Golden tests in `tests/golden/` enforce this. Features
+added in schema 1.1 (drift models, warm-up) default to the v1 behaviour, and
+while they hold their defaults they are left out of the config hash.
