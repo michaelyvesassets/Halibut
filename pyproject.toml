@@ -17,6 +17,10 @@ dependencies = [
 dev = [
     "pytest>=8",
 ]
+# official Anthropic SDK for the approval-gated Claude provider (configs/llm/anthropic.toml)
+anthropic = [
+    "anthropic>=2.13,<3",
+]
 
 [project.scripts]
 halibut = "halibut.cli:main"

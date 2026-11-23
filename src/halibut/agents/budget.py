@@ -2,11 +2,14 @@
 
 Rules:
 - Before EVERY attempt (including retries) a worst-case cost is RESERVED:
-  input tokens estimated conservatively (characters / 3, x1.1, +64) plus the
-  full ``max_output_tokens`` at the output price.
+  input tokens estimated conservatively (characters / 3, x1.1, +64; Anthropic
+  uses characters / 2 + 64 and the cache-write rate when caching is on) plus
+  the full ``max_output_tokens`` at the output price.
 - A reservation is refused if committed spend + outstanding reservations +
-  this reservation would exceed the total cap (all runs, all processes) or the
-  scope cap (e.g. one replay). The check-and-insert runs inside one SQLite
+  this reservation would exceed the total cap or the scope cap (e.g. one replay).
+  Both are APPLICATION-WIDE: they sum every provider (Qwen, Anthropic, ...), every
+  run and every process sharing the store, so switching providers never resets
+  the $5 budget. The check-and-insert runs inside one SQLite
   ``BEGIN IMMEDIATE`` transaction, so concurrent processes cannot overspend.
 - After a response, the reservation is settled at the cost computed from the
   provider's reported usage. If usage is missing, the reserved worst case is
@@ -40,8 +43,8 @@ class SpendGuard:
 
     def _committed(self, scope: str | None = None) -> float:
         q = """SELECT COALESCE(SUM(CASE WHEN status='settled' THEN actual_usd ELSE reserved_usd END), 0)
-               FROM llm_spend_ledger WHERE provider=? AND status IN ('reserved','settled','failed_charged')"""
-        args = [self.provider]
+               FROM llm_spend_ledger WHERE status IN ('reserved','settled','failed_charged')"""
+        args = []
         if scope:
             q += " AND run_id LIKE ?"
             args.append(scope + "%")
@@ -54,6 +57,8 @@ class SpendGuard:
         return self._committed(self.scope)
 
     def worst_case(self, prompt_text: str, max_output_tokens: int) -> float:
+        if hasattr(self.pricing, "worst_case"):
+            return self.pricing.worst_case(prompt_text, max_output_tokens)
         return self.pricing.cost(conservative_input_tokens(prompt_text), max_output_tokens)
 
     def reserve(self, prompt_text: str, max_output_tokens: int, run_id: str) -> tuple[int, float]:
@@ -90,6 +95,8 @@ class SpendGuard:
         self.store.conn.commit()
 
     def summary(self) -> dict:
-        return {"total_cap_usd": self.total_cap, "committed_total_usd": round(self.committed_total(), 6),
+        by = dict(self.store.conn.execute("""SELECT provider, COALESCE(SUM(CASE WHEN status='settled' THEN actual_usd
+            ELSE reserved_usd END), 0) FROM llm_spend_ledger GROUP BY provider""").fetchall())
+        return {"total_cap_usd": self.total_cap, "committed_by_provider_usd": {k: round(v, 6) for k, v in by.items()}, "committed_total_usd": round(self.committed_total(), 6),
                 "remaining_total_usd": round(self.total_cap - self.committed_total(), 6),
                 "scope": self.scope, "scope_cap_usd": self.scope_cap, "committed_scope_usd": round(self.committed_scope(), 6)}

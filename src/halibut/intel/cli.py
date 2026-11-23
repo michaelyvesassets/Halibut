@@ -31,19 +31,30 @@ def add_intel_commands(sub) -> None:
     inv.add_argument("--dry-run", action="store_true", help="print the plan and budget, then exit")
     rp = isub.add_parser("replay", help="historical replay: full learning cycle with publication-date cutoffs (offline)")
     rp.add_argument("market")
-    rp.add_argument("--agents", choices=("reference", "mock", "qwen"), default="reference")
+    rp.add_argument("--agents", choices=("reference", "mock", "qwen", "anthropic"), default="reference")
+    rp.add_argument("--model", help="Anthropic model id priced in configs/llm/anthropic.toml (default: its llm.model)")
     rp.add_argument("--faults", action="store_true", help="mock agents: inject citation/number faults")
     rp.add_argument("--origin", action="append", help="origin date (repeatable; default: 10 half-yearly origins)")
     rp.add_argument("--out", default="results/intel/replays")
     bm = isub.add_parser("benchmark", help="LLM agents vs fixed-rule reference on identical cutoffs and evidence")
     bm.add_argument("market")
-    bm.add_argument("--agents", choices=("qwen", "mock"), default="qwen")
+    bm.add_argument("--agents", choices=("anthropic", "qwen", "mock"), default="anthropic")
+    bm.add_argument("--model", help="Anthropic model id priced in configs/llm/anthropic.toml (default: its llm.model)")
     bm.add_argument("--origin", action="append")
     bm.add_argument("--dry-run", action="store_true", help="measure prompts and worst-case cost on a throwaway copy; no network")
+    bm.add_argument("--yes", action="store_true", help="required for a PAID run (qwen/anthropic), after reading the plan")
     bm.add_argument("--out", default="results/intel/benchmarks")
     cp = isub.add_parser("compare", help="compare replay summaries (quality, runtime, cost)")
     cp.add_argument("summaries", nargs="+")
     p.set_defaults(handler=_handle)
+
+
+def _agent_kind(args) -> str:
+    """'anthropic' + --model -> 'anthropic:<model>' (the model is part of the replay identity)."""
+    model = getattr(args, "model", None)
+    if model and args.agents != "anthropic":
+        raise SystemExit("--model applies only to --agents anthropic")
+    return f"anthropic:{model}" if model else args.agents
 
 
 def _handle(args) -> int:
@@ -139,11 +150,12 @@ def smoke(store, args) -> int:
 
 def _replay(store, args) -> int:
     from .replay import replay  # noqa: PLC0415
-    print(f"replay {args.market} with {args.agents} agents (offline; no paid calls unless --agents qwen is approved)")
-    r = replay(store, args.market, args.origin, args.agents, args.faults)
+    kind = _agent_kind(args)
+    print(f"replay {args.market} with {kind} agents (offline; paid calls only with an approved qwen/anthropic config)")
+    r = replay(store, args.market, args.origin, kind, args.faults)
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
-    path = out / f"{r['replay_id']}_{args.agents}.json"
+    path = out / f"{r['replay_id']}_{kind.replace(':', '_')}.json"
     path.write_text(json.dumps(r, indent=1, default=str) + "\n")
     _print_summary(r)
     for e in r["evaluations"]:
@@ -181,8 +193,9 @@ def _compare(args) -> int:
 def _benchmark(store, args) -> int:
     from . import benchmark as bm  # noqa: PLC0415
     from ..agents.llm import NotApproved, SpendLimitReached  # noqa: PLC0415
-    p = bm.plan(args.db, args.market, args.origin)
-    print(f"plan: {p['calls']} LLM calls {p['by_role']}; prompts {p['prompt_chars_total']:,} chars; worst case "
+    kind = _agent_kind(args)
+    p = bm.plan(args.db, args.market, args.origin, agents=kind)
+    print(f"plan ({p['provider']} {p['model']}): {p['calls']} LLM calls {p['by_role']}; prompts {p['prompt_chars_total']:,} chars; worst case "
           f"${p['worst_case_usd']:.4f} (${p['worst_case_with_retries_usd']:.4f} with retries) vs per-run cap "
           f"${p['per_run_cap_usd']} / total cap ${p['total_cap_usd']} -> {'fits' if p['fits_per_run_cap'] else 'EXCEEDS CAP'}")
     if args.dry_run:
@@ -190,14 +203,17 @@ def _benchmark(store, args) -> int:
     if not p["fits_per_run_cap"]:
         print("refused: worst case exceeds the per-run cap", file=sys.stderr)
         return 3
+    if kind != "mock" and not args.yes:
+        print("refused: a paid benchmark needs --yes (review the plan above first; use --dry-run to plan only)", file=sys.stderr)
+        return 3
     try:
-        r = bm.run(store, args.market, args.agents, args.origin)
+        r = bm.run(store, args.market, kind, args.origin)
     except (NotApproved, SpendLimitReached) as exc:
         print(f"refused: {exc}", file=sys.stderr)
         return 3
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
-    path = out / f"benchmark_{args.agents}_{r['results'][args.agents]['replay_id']}.json"
+    path = out / f"benchmark_{kind.replace(':', '_')}_{r['results'][kind]['replay_id']}.json"
     path.write_text(json.dumps({"plan": p, **r}, indent=1, default=str) + "\n")
     keys = ["hypotheses_valid", "rejected_by_validation", "scored", "supported", "refuted", "direction_hit_rate", "mae_pp",
             "coverage80", "llm_calls", "tokens_in", "tokens_out", "cost_usd", "cost_per_useful_validated_result_usd", "runtime_s"]
@@ -207,5 +223,9 @@ def _benchmark(store, args) -> int:
         print(f"| {k} | " + " | ".join(str(round(r["results"][n][k], 4)) if isinstance(r["results"][n][k], float)
                                       else str(r["results"][n][k]) for n in names) + " |")
     print(f"validation failure types: { {n: r['results'][n]['validation_failure_types'] for n in names} }")
+    llm_row = r["results"][kind]
+    print(f"{kind}: latency mean {llm_row.get('latency_mean_s')}s max {llm_row.get('latency_max_s')}s; failed LLM calls "
+          f"{llm_row.get('failed_llm_calls')}; paid attempts {llm_row.get('paid_attempts')} "
+          f"(failed, charged at reservation: {llm_row.get('failed_attempts_charged')})")
     print(f"note: {r['publication_dates']}\nreport: {path}")
     return 0

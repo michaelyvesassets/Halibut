@@ -17,9 +17,9 @@ import time
 from pathlib import Path
 
 from ..agents.budget import conservative_input_tokens
-from ..agents.llm import LLMResponse, Pricing, load_llm_config
+from ..agents.llm import LLMResponse, Pricing, pricing_from_config
 from ..data.store import Store
-from .replay import DEFAULT_ORIGINS, QWEN_CONFIG, replay
+from .replay import DEFAULT_ORIGINS, llm_config_for, replay
 
 
 class PlanningProvider:
@@ -30,7 +30,7 @@ class PlanningProvider:
 
     def complete(self, system, user, *, role, max_output_tokens=None, **_):
         mo = int(self.max_out.get(role, 1200))
-        cost = self.pricing.cost(conservative_input_tokens(system + user), mo)
+        cost = self.pricing.worst_case(system + user, mo)
         self.calls.append({"role": role, "chars": len(system + user), "worst_case_usd": cost})
         empty = {"research": {"actions": []}, "hypothesis": {"hypotheses": []}, "critic": {"critiques": []}}[role]
         return LLMResponse(json.dumps(empty), empty, conservative_input_tokens(system + user), 0, True, "planning",
@@ -41,9 +41,11 @@ def snapshot_hashes(store) -> list[str]:
     return sorted(f"{d}:{s}" for d, s in store.conn.execute("SELECT dataset_id, sha256 FROM snapshots"))
 
 
-def plan(db_path, market_path, origins=None, config_path=QWEN_CONFIG) -> dict:
-    cfg = load_llm_config(config_path)
-    pricing = Pricing(float(cfg["input_per_mtok_usd"]), float(cfg["output_per_mtok_usd"]))
+def plan(db_path, market_path, origins=None, agents: str = "qwen") -> dict:
+    """Worst-case cost of one benchmark replay for agent kind ``agents`` ('qwen', 'anthropic[:model]'; 'mock' is
+    priced with the Qwen config). Prices, caps and per-role output limits come from that provider's config."""
+    cfg = llm_config_for(agents)
+    pricing = pricing_from_config(cfg)
     tmp = Path(tempfile.mkdtemp(prefix="halibut_plan_")) / "plan.sqlite"
     src = sqlite3.connect(db_path)
     dst = sqlite3.connect(tmp)
@@ -65,18 +67,22 @@ def plan(db_path, market_path, origins=None, config_path=QWEN_CONFIG) -> dict:
     # hypothesis prompts plus room for the hypotheses themselves (one per origin)
     hyp = [c for c in pp.calls if c["role"] == "hypothesis"]
     critic = [{"role": "critic", "chars": c["chars"] + 6000,
-               "worst_case_usd": pricing.cost(conservative_input_tokens("x" * (c["chars"] + 6000)),
-                                              int(cfg["max_output_tokens"]["critic"]))} for c in hyp]
+               "worst_case_usd": pricing.worst_case("x" * (c["chars"] + 6000), int(cfg["max_output_tokens"]["critic"]))}
+              for c in hyp]
     calls = pp.calls + critic
     worst = sum(c["worst_case_usd"] for c in calls)
     with_retry = worst * (1 + int(cfg.get("retries", 1)))
-    return {"model": cfg["model"], "origins": origins or DEFAULT_ORIGINS, "calls": len(calls),
+    return {"provider": cfg["provider"], "model": cfg["model"], "origins": origins or DEFAULT_ORIGINS, "calls": len(calls),
             "by_role": {r: sum(1 for c in calls if c["role"] == r) for r in ("research", "hypothesis", "critic")},
             "prompt_chars_total": sum(c["chars"] for c in calls), "worst_case_usd": worst,
             "worst_case_with_retries_usd": with_retry, "per_run_cap_usd": cfg["max_spend_usd_per_run"],
             "total_cap_usd": cfg["max_spend_usd_total"],
             "fits_per_run_cap": with_retry <= float(cfg["max_spend_usd_per_run"]),
+            "smoke_cap_usd": cfg.get("max_spend_usd_smoke"),
             "pricing": {"input_per_mtok": pricing.input_per_mtok, "output_per_mtok": pricing.output_per_mtok,
+                        "cache_write_5m_per_mtok": cfg.get("cache_write_5m_per_mtok_usd"),
+                        "cache_read_per_mtok": cfg.get("cache_read_per_mtok_usd"),
+                        "worst_case_rule": "conservative input tokens at the highest applicable input rate + full max_output_tokens",
                         "source": cfg.get("pricing_source")}}
 
 
@@ -108,6 +114,11 @@ def run(store, market_path, agents: str, origins=None) -> dict:
                              "WHERE run_id LIKE ? AND cache_hit=0", (llm["replay_id"] + "%",)).fetchone()
     spend = store.conn.execute("""SELECT COALESCE(SUM(CASE WHEN status='settled' THEN actual_usd ELSE reserved_usd END),0)
         FROM llm_spend_ledger WHERE run_id LIKE ?""", (llm["replay_id"] + "%",)).fetchone()[0]
+    failed = dict(store.conn.execute("""SELECT CASE WHEN outcome LIKE 'unparseable%' THEN 'unparseable_or_refused'
+        WHEN outcome LIKE 'error%' THEN 'error' ELSE 'other' END, COUNT(*) FROM agent_calls
+        WHERE run_id LIKE ? AND outcome != 'ok' GROUP BY 1""", (llm["replay_id"] + "%",)).fetchall())
+    attempts = store.conn.execute("SELECT COUNT(*), SUM(status='failed_charged') FROM llm_spend_ledger WHERE run_id LIKE ?",
+                                  (llm["replay_id"] + "%",)).fetchone()
     rows = {}
     for name, s in (("reference", ref), (agents, llm)):
         cost = spend if name == agents else 0.0
@@ -120,6 +131,8 @@ def run(store, market_path, agents: str, origins=None) -> dict:
                       "cost_usd": cost, "cost_per_useful_validated_result_usd": (cost / s["supported"]) if s["supported"] else None}
     rows[agents]["latency_total_s"], rows[agents]["latency_max_s"] = round(lat[1], 2), round(lat[2], 2)
     rows[agents]["latency_mean_s"] = round(lat[1] / lat[0], 3) if lat[0] else None
+    rows[agents]["failed_llm_calls"] = failed
+    rows[agents]["paid_attempts"], rows[agents]["failed_attempts_charged"] = attempts[0], attempts[1] or 0
     return {"identical_cutoffs": True, "origins": ref["origins"], "evidence_snapshots": len(before),
             "publication_dates": "history before the first retrieval uses ESTIMATED publication dates (quarter end + 120 days)",
             "results": rows, "seconds": round(time.monotonic() - t0, 1),

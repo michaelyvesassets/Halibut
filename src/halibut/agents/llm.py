@@ -1,4 +1,4 @@
-"""Shared LLM provider interface: mock (offline), cache wrapper, Qwen (approval-gated).
+"""Shared LLM provider interface: mock (offline), cache wrapper, Qwen and Anthropic (approval-gated).
 
 Token counts from the mock are ESTIMATES (characters / 4) and flagged as such.
 Costs use the prices in the provider config; the Qwen provider refuses to run
@@ -59,6 +59,10 @@ class Pricing:
             return None
         return tin / 1e6 * self.input_per_mtok + tout / 1e6 * self.output_per_mtok
 
+    def worst_case(self, prompt_text: str, max_output_tokens: int) -> float | None:
+        from .budget import conservative_input_tokens  # noqa: PLC0415
+        return self.cost(conservative_input_tokens(prompt_text), max_output_tokens)
+
 
 class NotApproved(ConfigError):
     pass
@@ -88,7 +92,11 @@ class MockProvider:
 
 
 class CachedProvider:
-    """Prompt-level cache in the shared store: identical (provider, model, system, user) -> stored response."""
+    """Prompt-level cache in the shared store: identical (provider, model, settings, role, system, user) -> stored response.
+
+    Replies that could not be parsed (refusals, truncation, invalid JSON) are NOT cached, so a
+    later run can retry them; they are still charged and recorded.
+    """
 
     def __init__(self, inner: LLMProvider, store):
         self.inner, self.store = inner, store
@@ -96,7 +104,11 @@ class CachedProvider:
         self.hits = self.misses = 0
 
     def key(self, system: str, user: str, role: str) -> str:
-        return hashlib.sha256(json.dumps([self.name, self.model, role, system, user]).encode()).hexdigest()
+        parts = [self.name, self.model, role, system, user]
+        salt = getattr(self.inner, "cache_salt", None)
+        if salt:  # request settings (thinking, effort, ...) of providers that declare them
+            parts.append(salt)
+        return hashlib.sha256(json.dumps(parts).encode()).hexdigest()
 
     def complete(self, system: str, user: str, *, role: str, max_output_tokens: int | None = None,
                  run_id: str = "unscoped") -> LLMResponse:
@@ -109,8 +121,10 @@ class CachedProvider:
             return LLMResponse(**{**d, "cached": True, "latency_seconds": 0.0, "estimated_cost_usd": 0.0,
                                   "actual_cost_usd": 0.0 if d.get("actual_cost_usd") is not None else None})
         self.misses += 1
-        kw = {"run_id": run_id} if isinstance(self.inner, QwenProvider) else {}
-        r = self.inner.complete(system, user, role=role, max_output_tokens=max_output_tokens or 1500, **kw)
+        kw = {"run_id": run_id} if getattr(self.inner, "accepts_run_id", False) else {}
+        r = self.inner.complete(system, user, role=role, max_output_tokens=max_output_tokens, **kw)
+        if r.data is None:
+            return r
         rec = {f: getattr(r, f) for f in ("text", "data", "input_tokens", "output_tokens", "tokens_estimated", "model",
                                           "provider", "latency_seconds", "cached", "estimated_cost_usd", "actual_cost_usd")}
         self.store.conn.execute("INSERT OR REPLACE INTO llm_cache VALUES (?,?,?,?,?,?,?)",
@@ -130,6 +144,7 @@ class QwenProvider:
     """
 
     name = "qwen"
+    accepts_run_id = True
     RETRY_STATUSES = (429, 500, 502, 503, 504)
 
     def __init__(self, cfg: dict, store, scope: str, transport=None, environ=None):
@@ -221,26 +236,61 @@ def conservative_tokens(text: str) -> int:
     return conservative_input_tokens(text)
 
 
-def load_llm_config(path) -> dict:
+PRICE_KEYS = ("input_per_mtok_usd", "output_per_mtok_usd", "cache_write_5m_per_mtok_usd", "cache_write_1h_per_mtok_usd",
+              "cache_read_per_mtok_usd")
+MODEL_KEYS = PRICE_KEYS + ("thinking", "effort", "pricing_source", "long_context_threshold_tokens", "long_context")
+
+
+def load_llm_config(path, model: str | None = None) -> dict:
+    """Read ``[llm]``. Anthropic configs carry one priced ``[llm.models.<id>]`` table per model;
+    ``model`` (or ``llm.model``) selects it and its prices/settings are flattened into the result."""
     root = _Table(load_raw(path), "")
     t = root.table("llm")
     cfg = {k: t.raw(k, None) for k in ("provider", "region", "base_url", "workspace_id_env", "model", "api_key_env",
                                        "input_per_mtok_usd", "output_per_mtok_usd", "pricing_source", "pricing_note",
-                                       "max_spend_usd_total", "max_spend_usd_per_run", "temperature", "enable_thinking",
-                                       "retries", "timeout_seconds", "max_output_tokens", "approved", "approved_by",
-                                       "approved_on")}
-    for secretish in ("api_key", "key", "token", "secret"):
+                                       "max_spend_usd_total", "max_spend_usd_per_run", "max_spend_usd_smoke", "temperature",
+                                       "enable_thinking", "prompt_cache", "worst_case_chars_per_token", "retries",
+                                       "timeout_seconds", "max_output_tokens", "approved", "approved_by", "approved_on")}
+    models = t.raw("models", None)
+    for secretish in ("api_key", "key", "token", "secret", "auth_token"):
         if secretish in t.data:
             raise ConfigError(f"llm.{secretish}: secrets must not be stored in config files; use an environment variable")
     t.done()
     root.done()
-    if cfg["provider"] not in ("qwen", "mock"):
-        raise ConfigError("llm.provider must be 'qwen' or 'mock'")
+    if cfg["provider"] not in ("qwen", "mock", "anthropic"):
+        raise ConfigError("llm.provider must be 'qwen', 'anthropic' or 'mock'")
+    if cfg["provider"] == "anthropic":
+        cfg["model"] = model or cfg["model"]
+        if not isinstance(models, dict) or cfg["model"] not in models:
+            raise ConfigError(f"llm.models: no priced entry for model {cfg['model']!r} (add one from the official pricing page)")
+        m = models[cfg["model"]]
+        unknown = set(m) - set(MODEL_KEYS)
+        if unknown:
+            raise ConfigError(f"llm.models.{cfg['model']}: unknown keys {sorted(unknown)}")
+        for k in PRICE_KEYS:
+            v = m.get(k)
+            if isinstance(v, bool) or not isinstance(v, (int, float)) or v < 0:
+                raise ConfigError(f"llm.models.{cfg['model']}.{k}: required non-negative price")
+        if cfg.get("prompt_cache") not in (None, "off", "5m", "1h"):
+            raise ConfigError("llm.prompt_cache must be 'off', '5m' or '1h'")
+        cfg.update({k: m.get(k) for k in MODEL_KEYS})
+        cfg["models_available"] = sorted(models)
+    elif model is not None and model != cfg["model"]:
+        raise ConfigError(f"model override is only supported for Anthropic configs (got {model!r})")
     return cfg
+
+
+def pricing_from_config(cfg: dict) -> Pricing:
+    if cfg.get("provider") == "anthropic":
+        from .anthropic_provider import pricing_from_config as anthropic_pricing  # noqa: PLC0415
+        return anthropic_pricing(cfg)
+    return Pricing(cfg.get("input_per_mtok_usd"), cfg.get("output_per_mtok_usd"), cfg.get("pricing_source") or "")
 
 
 def record_call(store, run_id, agent: str, role: str, r: LLMResponse | None, prompt_hash: str, *,
                 tool_calls: list | None = None, duplicates: int = 0, outcome: str = "ok", provider="", model="") -> None:
+    if r is not None and r.data is None and outcome == "ok":  # refusal, truncation or invalid JSON: a failed call
+        outcome = f"unparseable: stop_reason={getattr(r, 'stop_reason', None)}"
     store.conn.execute(
         """INSERT INTO agent_calls (run_id, agent, role, provider, model, input_tokens, output_tokens, tokens_estimated,
            estimated_cost_usd, actual_cost_usd, latency_seconds, cache_hit, prompt_hash, tool_calls_json,

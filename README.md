@@ -54,10 +54,16 @@ halibut intel smoke                                              # one live requ
 halibut intel investigate configs/intel/markets/uk_cars_bev_v1.toml --dry-run
 halibut intel investigate configs/intel/markets/uk_cars_bev_v1.toml [--offline]
 
-# Closed learning loop and agents (Phase 5; offline, mock LLM; Qwen requires approval)
+# Closed learning loop and agents (Phase 5; offline, mock LLM; Anthropic/Qwen require approval)
 halibut intel replay configs/intel/markets/uk_cars_bev_v1.toml --agents reference
 halibut intel replay configs/intel/markets/uk_cars_bev_v1.toml --agents mock --faults
 halibut intel compare results/intel/replays/*.json
+
+# Claude agents vs the fixed-rule reference (pip install -e '.[anthropic]'; key from ANTHROPIC_API_KEY)
+halibut agents smoke --dry-run                       # Haiku 5.5 request settings and worst case; nothing sent
+halibut agents spend                                 # application-wide ledger (all providers)
+halibut intel benchmark configs/intel/markets/uk_cars_bev_v1.toml --agents anthropic --dry-run
+halibut intel benchmark configs/intel/markets/uk_cars_bev_v1.toml --agents anthropic --model claude-sonnet-5-5 --dry-run
 halibut learn score [--as-of DATE]        # score predictions whose outcomes are published
 
 # Learning memory and evaluation (Phase 4)
@@ -87,7 +93,8 @@ configs/data/          data catalogue, provider registry, sourced events, cross-
 configs/intel/markets/ market investigation specs
 docs/phase4_intelligence.md   components, providers, competitor model, learning engine, results
 docs/phase5_agents_learning.md  scorer, replay, agents, cost accounting, audit, demonstration
-configs/llm/qwen.example.toml   LLM provider template (inactive until approved)
+configs/llm/anthropic.toml      Claude provider: models, official prices, caps (inactive until approved)
+configs/llm/qwen.toml           Qwen provider (inactive until approved)
 src/halibut/
   config.py  distributions.py  population.py  market.py  network.py
   decision.py  influence.py  interventions.py  engine.py  metrics.py

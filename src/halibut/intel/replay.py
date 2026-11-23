@@ -31,6 +31,7 @@ from .market import load_market
 from .workflow import analyse
 
 QWEN_CONFIG = "configs/llm/qwen.toml"
+ANTHROPIC_CONFIG = "configs/llm/anthropic.toml"
 DEFAULT_ORIGINS = ["2021-11-23", "2022-05-23", "2022-11-23", "2023-05-23", "2023-11-23",
                    "2024-05-23", "2024-11-23", "2025-05-23", "2025-11-23", "2026-05-23"]
 
@@ -47,7 +48,19 @@ def make_agents(kind: str, store, run_id: str, faults: bool):
         from ..agents.llm import QwenProvider, load_llm_config  # noqa: PLC0415
         cfg = load_llm_config(QWEN_CONFIG)
         return LLMAgentSet(QwenProvider(cfg, store, scope=run_id.split(":")[0]), store, run_id)
+    if kind == "anthropic" or kind.startswith("anthropic:"):
+        from ..agents.anthropic_provider import AnthropicProvider  # noqa: PLC0415
+        return LLMAgentSet(AnthropicProvider(llm_config_for(kind), store, scope=run_id.split(":")[0]), store, run_id)
     raise ValueError(f"unknown agent set {kind!r}")
+
+
+def llm_config_for(kind: str) -> dict:
+    """LLM config for an agent kind: 'qwen', 'anthropic' (config default model) or 'anthropic:<model id>'.
+    'mock' and 'planning' are priced with the Qwen config, as before."""
+    from ..agents.llm import load_llm_config  # noqa: PLC0415
+    if kind == "anthropic" or kind.startswith("anthropic:"):
+        return load_llm_config(ANTHROPIC_CONFIG, model=kind.split(":", 1)[1] if ":" in kind else None)
+    return load_llm_config(QWEN_CONFIG)
 
 
 def replay(store, market_path, origins=None, agents: str = "reference", faults: bool = False, final_as_of: str | None = None,
@@ -188,7 +201,8 @@ def summarize(store, replay_id, per, agents, seconds) -> dict:
             "hypothesis_coverage80": float(np.mean([r["in_interval80"] for r in hyp])) if hyp else None,
             "llm": {"calls": calls, "input_tokens": tin, "output_tokens": tout, "estimated_cost_usd": cost,
                     "cache_hit_rate": float(np.mean(hits)) if hits else None, "duplicate_tool_calls": dups,
-                    "llm_latency_seconds": round(lat, 3)},
+                    "llm_latency_seconds": round(lat, 3),
+                    "failed_calls": sum(p["costs"].get("failed_calls", 0) for p in per)},
             "useful_validated_results": len(supported),
             "cost_per_useful_result_usd": (cost / len(supported)) if supported else None,
             "explanations_proposed": store.conn.execute(

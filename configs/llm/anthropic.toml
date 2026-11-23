@@ -1,0 +1,57 @@
+# Anthropic (Claude) agent configuration: INACTIVE until the project owner sets approved = true.
+# Contains no secrets: the API key is read from the environment variable named below
+# (ANTHROPIC_API_KEY) and is never written to disk, logs, the store or error messages.
+#
+# Verified 2026-11-23:
+# - pricing: https://platform.claude.com/docs/en/about-claude/pricing (Model pricing table, USD per 1M tokens)
+# - model ids / behaviour: Claude API model migration guide (Haiku 5.5, Sonnet 5.5) and models overview
+#   * claude-haiku-5-5: adaptive thinking ON by default; {type: "disabled"} accepted at effort low/medium/high;
+#     temperature/top_p/top_k and assistant prefill are rejected (none are sent); safeguard refusals return
+#     stop_reason "refusal" with no server-side fallback (counted as a failed call); newer tokenizer
+#     (~30% more tokens than older models for the same text); minimum cacheable prefix 512 tokens.
+#   * claude-sonnet-5-5: {type: "disabled"} is rejected; {type: "between_tools"} turns thinking off at
+#     effort <= high (default effort high).
+#
+# Caps are APPLICATION-WIDE (every provider sharing the store counts against them).
+# Prompt caching is off: Halibut's system prompts (~100-200 tokens) are below the 512-token minimum and
+# evidence bundles differ per origin, so cache writes (1.25x input) would add cost without reads.
+
+[llm]
+provider = "anthropic"
+base_url = "https://api.anthropic.com"
+api_key_env = "ANTHROPIC_API_KEY"
+model = "claude-haiku-5-5"
+max_spend_usd_total = 5.0
+max_spend_usd_per_run = 1.0
+max_spend_usd_smoke = 0.01
+prompt_cache = "off"
+worst_case_chars_per_token = 2.0
+retries = 1
+timeout_seconds = 120
+# output caps include headroom for the newer tokenizer; thinking (if ever enabled) counts toward them
+max_output_tokens = { research = 600, hypothesis = 2000, critic = 1600, smoke = 20 }
+approved = false
+approved_by = ""
+approved_on = ""
+
+[llm.models.claude-haiku-5-5]
+# prompts up to 100,000 input tokens (uncached + cache writes + cache reads)
+input_per_mtok_usd = 0.10
+cache_write_5m_per_mtok_usd = 0.125
+cache_write_1h_per_mtok_usd = 0.20
+cache_read_per_mtok_usd = 0.01
+output_per_mtok_usd = 0.50
+long_context_threshold_tokens = 100000
+long_context = { input_per_mtok_usd = 0.50, cache_write_5m_per_mtok_usd = 0.625, cache_write_1h_per_mtok_usd = 1.0, cache_read_per_mtok_usd = 0.05, output_per_mtok_usd = 2.50 }
+thinking = "disabled"
+pricing_source = "https://platform.claude.com/docs/en/about-claude/pricing (Claude Haiku 5.5 rows, verified 2026-11-23)"
+
+[llm.models.claude-sonnet-5-5]
+# for a later benchmark: halibut intel benchmark MARKET --agents anthropic --model claude-sonnet-5-5
+input_per_mtok_usd = 2.0
+cache_write_5m_per_mtok_usd = 2.50
+cache_write_1h_per_mtok_usd = 4.0
+cache_read_per_mtok_usd = 0.10
+output_per_mtok_usd = 10.0
+thinking = "between_tools"
+pricing_source = "https://platform.claude.com/docs/en/about-claude/pricing (Claude Sonnet 5.5 row, verified 2026-11-23)"
