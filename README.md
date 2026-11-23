@@ -41,6 +41,13 @@ halibut sensitivity SPEC --method sobol [--set 'preference_drift.model="none"']
 halibut make-targets configs/calibration/coffee_vs_matcha_twin_v1.toml \
     --template configs/calibration/coffee_vs_matcha_twin_template.toml --output TARGETS.toml
 halibut calibrate configs/calibration/coffee_vs_matcha_twin_v1.toml
+
+# Real-world data (Phase 3): provenance catalogue, bitemporal store, quality checks
+halibut data init
+halibut data ingest                       # network: Statistics Norway (CC BY 4.0), no key
+halibut data events configs/data/events_norway_ev.toml
+halibut data quality                      # writes data/quality_report.json
+halibut data rebuild --into NEW.sqlite    # recreate a store from raw snapshots only
 ```
 
 Analyses run in parallel (`--workers`) and cache every simulation under
@@ -57,6 +64,8 @@ configs/calibration/   calibration specs, moment templates, synthetic targets
 docs/model.md          the simulation model, assumptions, limitations
 docs/analysis.md       Phase 2 statistical methods and their caveats
 docs/phase2_report.md  Phase 2 findings (synthetic)
+docs/m15_source_verification.md, docs/phase3_data.md   real-world sources and data quality
+configs/data/          data catalogue, sourced events, cross-table checks
 src/halibut/
   config.py  distributions.py  population.py  market.py  network.py
   decision.py  influence.py  interventions.py  engine.py  metrics.py
@@ -64,6 +73,7 @@ src/halibut/
   diagnostics.py                     # invariants, behavioural checks, counterfactuals
   params.py  specs.py  batch.py      # overrides, parameter spaces, parallel cached runner
   suite.py  sensitivity.py  calibration.py
+  data/                              # catalogue, SQLite store, SSB adapter, events, quality (no engine coupling)
   interfaces.py                      # protocols for future AI integrations (no implementations)
   cli.py  analysis_cli.py
 tests/                               # incl. golden fingerprints of engine 0.1.0

@@ -30,6 +30,10 @@ def add_data_commands(sub) -> None:
     e = dsub.add_parser("events", help="load a sourced event file into the store")
     e.add_argument("file")
     dsub.add_parser("status", help="summarise datasets, snapshots and coverage")
+    rb = dsub.add_parser("rebuild", help="rebuild a store from raw snapshots only (no network)")
+    rb.add_argument("--into", required=True, help="path of the NEW store to create")
+    q = dsub.add_parser("quality", help="run data-quality checks and write a JSON report")
+    q.add_argument("--out", default=str(DEFAULT_DIR / "quality_report.json"))
     p.set_defaults(handler=_handle)
 
 
@@ -42,7 +46,22 @@ def _open(args):
     return cat, store
 
 
+def _rebuild(args) -> int:
+    from .catalogue import load_catalogue  # noqa: PLC0415
+    from .ssb import rebuild  # noqa: PLC0415
+    if Path(args.into).exists():
+        print(f"error: {args.into} exists; rebuild only creates new stores", file=sys.stderr)
+        return 2
+    for r in rebuild(load_catalogue(args.catalogue), args.raw, args.into):
+        print(f"  {r['dataset']} snapshot {r['snapshot_id']} ({r['file']}): new={r['new']} "
+              f"revised={r['revised']} unchanged={r['unchanged']}")
+    print(f"rebuilt {args.into} from {args.raw}")
+    return 0
+
+
 def _handle(args) -> int:
+    if args.data_command == "rebuild":
+        return _rebuild(args)
     try:
         cat, store = _open(args)
     except (ConfigError, OSError) as exc:
@@ -73,6 +92,15 @@ def _handle(args) -> int:
             events = load_events(args.file)
             store.upsert_events(events)
             print(f"loaded {len(events)} events from {args.file}")
+        elif args.data_command == "quality":
+            import json  # noqa: PLC0415
+            from .quality import run_quality_checks  # noqa: PLC0415
+            report = run_quality_checks(store, cat)
+            Path(args.out).parent.mkdir(parents=True, exist_ok=True)
+            Path(args.out).write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n")
+            for chk in report["checks"]:
+                print(f"  [{chk['status'].upper():<4}] {chk['name']}: {chk['message']}")
+            print(f"report: {args.out}")
         elif args.data_command == "status":
             from .quality import status_rows  # noqa: PLC0415
             for row in status_rows(store):

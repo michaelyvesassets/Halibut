@@ -1,0 +1,47 @@
+# Cross-table consistency checks for the Norway pilot. These are data, not
+# code: other pilots supply their own check files.
+# Each check compares annual sums of `left` series (monthly sums when the
+# left dataset is monthly) with `right` series over the common years.
+
+schema_version = "1.0"
+
+[[consistency]]
+name = "new_private_cars_total_14020_vs_12906"
+geo = "NO"
+tolerance_rel = 0.02
+left = ["ssb_14020_private_cars:TypeRegistrering=N:DrivstoffType=19", "ssb_14020_private_cars:TypeRegistrering=N:DrivstoffType=20",
+        "ssb_14020_private_cars:TypeRegistrering=N:DrivstoffType=21", "ssb_14020_private_cars:TypeRegistrering=N:DrivstoffType=6"]
+right = ["ssb_12906_private_cars_regional:TypeRegistrering=N:DrivstoffType=1", "ssb_12906_private_cars_regional:TypeRegistrering=N:DrivstoffType=2",
+         "ssb_12906_private_cars_regional:TypeRegistrering=N:DrivstoffType=3", "ssb_12906_private_cars_regional:TypeRegistrering=N:DrivstoffType=4",
+         "ssb_12906_private_cars_regional:TypeRegistrering=N:DrivstoffType=5", "ssb_12906_private_cars_regional:TypeRegistrering=N:DrivstoffType=13",
+         "ssb_12906_private_cars_regional:TypeRegistrering=N:DrivstoffType=14", "ssb_12906_private_cars_regional:TypeRegistrering=N:DrivstoffType=15",
+         "ssb_12906_private_cars_regional:TypeRegistrering=N:DrivstoffType=16", "ssb_12906_private_cars_regional:TypeRegistrering=N:DrivstoffType=17",
+         "ssb_12906_private_cars_regional:TypeRegistrering=N:DrivstoffType=6"]
+
+[[consistency]]
+name = "new_private_cars_electric_14020_vs_12906_electricity"
+geo = "NO"
+tolerance_rel = 0.02
+left = ["ssb_14020_private_cars:TypeRegistrering=N:DrivstoffType=19"]
+right = ["ssb_12906_private_cars_regional:TypeRegistrering=N:DrivstoffType=5"]
+
+[[consistency]]
+name = "new_private_cars_hybrid_14020_vs_12906_hybrids"
+geo = "NO"
+tolerance_rel = 0.02
+left = ["ssb_14020_private_cars:TypeRegistrering=N:DrivstoffType=21"]
+right = ["ssb_12906_private_cars_regional:TypeRegistrering=N:DrivstoffType=14", "ssb_12906_private_cars_regional:TypeRegistrering=N:DrivstoffType=15",
+         "ssb_12906_private_cars_regional:TypeRegistrering=N:DrivstoffType=16", "ssb_12906_private_cars_regional:TypeRegistrering=N:DrivstoffType=17"]
+
+[[consistency]]
+name = "used_import_private_cars_total_14020_vs_12906"
+geo = "NO"
+tolerance_rel = 0.02
+left = ["ssb_14020_private_cars:TypeRegistrering=B:DrivstoffType=19", "ssb_14020_private_cars:TypeRegistrering=B:DrivstoffType=20",
+        "ssb_14020_private_cars:TypeRegistrering=B:DrivstoffType=21", "ssb_14020_private_cars:TypeRegistrering=B:DrivstoffType=6"]
+right = ["ssb_12906_private_cars_regional:TypeRegistrering=B:DrivstoffType=1", "ssb_12906_private_cars_regional:TypeRegistrering=B:DrivstoffType=2",
+         "ssb_12906_private_cars_regional:TypeRegistrering=B:DrivstoffType=3", "ssb_12906_private_cars_regional:TypeRegistrering=B:DrivstoffType=4",
+         "ssb_12906_private_cars_regional:TypeRegistrering=B:DrivstoffType=5", "ssb_12906_private_cars_regional:TypeRegistrering=B:DrivstoffType=13",
+         "ssb_12906_private_cars_regional:TypeRegistrering=B:DrivstoffType=14", "ssb_12906_private_cars_regional:TypeRegistrering=B:DrivstoffType=15",
+         "ssb_12906_private_cars_regional:TypeRegistrering=B:DrivstoffType=16", "ssb_12906_private_cars_regional:TypeRegistrering=B:DrivstoffType=17",
+         "ssb_12906_private_cars_regional:TypeRegistrering=B:DrivstoffType=6"]

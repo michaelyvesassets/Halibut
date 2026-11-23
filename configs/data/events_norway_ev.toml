@@ -1,0 +1,200 @@
+# Norwegian passenger-car powertrain policy and context events (pilot).
+#
+# OBSERVED vs ASSUMED. Each event records:
+# - `observed`: what the cited sources document (that a rule existed, its date
+#   and parameters);
+# - `assumed_effect`: a HYPOTHESIS about how it might influence purchases.
+#   This is never treated as data. Any effect must be estimated, not assumed.
+#
+# `verification`:
+#   primary      the rule is stated by a Norwegian government body (regjeringen.no,
+#                Skatteetaten, Stortinget)
+#   secondary    stated by reputable secondary sources that agree
+#   conflicting  sources disagree on dates or terms; listed with the
+#                disagreement in `notes`
+#
+# `available_at` is the date from which a backtest may know the event.
+# Announcement dates are used where verified; otherwise the effective date
+# (conservative: it delays knowledge and so cannot leak).
+#
+# Compiled 2026-11-23 from web sources listed per event. Dates marked
+# secondary or conflicting must be confirmed against primary documents before
+# being used as model inputs.
+
+schema_version = "1.0"
+geo = "NO"
+
+[[events]]
+id = "no_ev_registration_tax_exemption_1990"
+category = "purchase_tax"
+title = "Battery-electric cars exempt from one-off registration (purchase/import) tax"
+effective_date = "1990-01-01"
+status = "modified"
+verification = "secondary"
+observed = "Secondary sources date a full exemption of battery-electric cars from the one-off registration tax to 1990."
+assumed_effect = "Lowers BEV purchase price relative to combustion cars; magnitude depends on the tax a comparable combustion car pays."
+notes = "Exact effective date not confirmed in a primary source. Partially replaced by the 2023 weight component."
+sources = ["https://alternative-fuels-observatory.ec.europa.eu/transport-mode/road/norway/incentives-legislations",
+           "https://oecd.org/climate-action/ipac/practices/norway-s-evolving-incentives-for-zero-emission-vehicles-22d2485b"]
+
+[[events]]
+id = "no_ev_annual_tax_reduction_1996"
+category = "annual_tax"
+title = "Reduced or zero annual road tax for battery-electric cars"
+effective_date = "1996-01-01"
+status = "ended"
+end_date = "2021-12-31"
+verification = "conflicting"
+observed = "Sources agree an annual road-tax advantage existed from the mid-1990s and ended around 2021–2022; they disagree on the start (1996 vs 1997) and on whether it was a full exemption throughout."
+assumed_effect = "Lowers BEV ownership cost; plausibly a small effect on purchase choice."
+notes = "EAFO: 1996–1997 exemption lasting until 2021; MDPI: exemption 1996–2003 then reduction from 2004."
+sources = ["https://alternative-fuels-observatory.ec.europa.eu/transport-mode/road/norway/incentives-legislations",
+           "https://mdpi.com/2032-6653/15/2/37"]
+
+[[events]]
+id = "no_ev_toll_exemption_1997"
+category = "road_toll"
+title = "Battery-electric cars exempt from road tolls"
+effective_date = "1997-01-01"
+status = "modified"
+verification = "secondary"
+observed = "Secondary timelines (incl. one attributed to the Norwegian EV Association) report toll exemption from 1997; from 2018 toll operators could charge BEVs up to 50% of the fossil rate, later raised to 70%."
+assumed_effect = "Lowers operating cost for commuters in tolled areas; effect likely regionally heterogeneous."
+notes = "Toll policy is set by local toll companies; national caps changed over time. Confirm caps and dates in primary sources."
+sources = ["https://dpac.tas.gov.au/divisions/archived-climatechange/Climate_Change_Priorities/reducing_emissions/transport/electric_vehicles_in_tasmania_-_current_state_of_play/attachment_2"]
+
+[[events]]
+id = "no_ev_free_parking_1999"
+category = "parking"
+title = "Free municipal parking for battery-electric cars"
+effective_date = "1999-01-01"
+status = "modified"
+verification = "secondary"
+observed = "Secondary timelines report free municipal parking from 1999, later left to municipal discretion (around 2017)."
+assumed_effect = "Small operating-cost and convenience benefit, concentrated in cities."
+sources = ["https://dpac.tas.gov.au/divisions/archived-climatechange/Climate_Change_Priorities/reducing_emissions/transport/electric_vehicles_in_tasmania_-_current_state_of_play/attachment_2"]
+
+[[events]]
+id = "no_ev_vat_zero_rate_2001"
+category = "vat"
+title = "Zero VAT (25% standard rate) on purchase of battery-electric cars"
+effective_date = "2001-01-01"
+status = "modified"
+verification = "secondary"
+observed = "Multiple secondary sources agree that sales of battery-electric cars were zero-rated for VAT from 2001."
+assumed_effect = "Large relative price reduction for BEVs at purchase."
+notes = "Capped from 2023 (NOK 500,000 threshold) and 2026 (NOK 300,000); see later events."
+sources = ["https://mdpi.com/2032-6653/15/2/37",
+           "https://alternative-fuels-observatory.ec.europa.eu/transport-mode/road/norway/incentives-legislations"]
+
+[[events]]
+id = "no_ev_bus_lane_access_2005"
+category = "access"
+title = "Battery-electric cars allowed in bus lanes"
+effective_date = "2005-01-01"
+status = "modified"
+verification = "secondary"
+observed = "Secondary timelines report bus-lane access from 2005; access later restricted locally (e.g. passenger requirements in some areas)."
+assumed_effect = "Time saving for commuters on congested routes; regionally heterogeneous."
+sources = ["https://dpac.tas.gov.au/divisions/archived-climatechange/Climate_Change_Priorities/reducing_emissions/transport/electric_vehicles_in_tasmania_-_current_state_of_play/attachment_2"]
+
+[[events]]
+id = "no_ev_ferry_exemption_2009"
+category = "ferry"
+title = "Battery-electric cars exempt from (or reduced) fares on national road ferries"
+effective_date = "2009-01-01"
+status = "modified"
+verification = "secondary"
+observed = "Secondary timelines report free national road ferries for BEVs from 2009, later replaced by reduced fares."
+assumed_effect = "Operating-cost benefit in coastal regions."
+sources = ["https://dpac.tas.gov.au/divisions/archived-climatechange/Climate_Change_Priorities/reducing_emissions/transport/electric_vehicles_in_tasmania_-_current_state_of_play/attachment_2"]
+
+[[events]]
+id = "no_ev_vat_leasing_2015"
+category = "vat"
+title = "VAT exemption extended to leasing of battery-electric cars"
+effective_date = "2015-01-01"
+status = "modified"
+verification = "secondary"
+observed = "A peer-reviewed paper lists a VAT exemption on BEV leasing from 2015."
+assumed_effect = "Lowers leasing cost; relevant to private leasing and company cars."
+sources = ["https://mdpi.com/2032-6653/15/2/37"]
+
+[[events]]
+id = "no_target_zero_emission_new_cars_2025"
+category = "target"
+title = "National goal: all new passenger cars sold from 2025 should be zero-emission"
+effective_date = "2025-01-01"
+status = "target"
+verification = "secondary"
+observed = "The goal is restated in the Norwegian government's 2023 budget communication; secondary sources trace it to the National Transport Plan 2018–2029 (2017)."
+assumed_effect = "Signals policy continuity to buyers and manufacturers; not a binding sales mandate."
+notes = "A goal, not a regulation. available_at uses 2017-12-31 as a conservative 'known by' date pending primary confirmation of the 2017 white paper date."
+available_at = "2017-12-31"
+sources = ["https://www.regjeringen.no/no/statsbudsjett/2023/statsbudsjettet-2023-skatter-og-avgifter/statsbudsjettet-2023-samlede-skatte-og-avgiftsendringer/id2930125/"]
+
+[[events]]
+id = "no_ev_vat_threshold_500k_2023"
+category = "vat"
+title = "VAT applies to battery-electric car prices above NOK 500,000"
+effective_date = "2023-01-01"
+status = "modified"
+verification = "primary"
+observed = "Skatteetaten issued a principle statement on the introduction of VAT on electric cars from 1 January 2023 (timing of delivery); the VAT-free amount is capped at NOK 500,000."
+assumed_effect = "Raises the price of BEVs above the threshold; anticipation may pull purchases forward into December 2022."
+notes = "The data show a registration spike in December 2022 (39,499 new private cars, robust z = 5.6). That is an observed association consistent with pull-forward; it is not by itself an estimate of the policy's effect."
+sources = ["https://www.skatteetaten.no/en/rettskilder/type/uttalelser/prinsipputtalelser/innforing-av-merverdiavgift-pa-elbiler-fra-1.-januar-2023---narmere-om-tidspunkt-for-levering/",
+           "https://www.regjeringen.no/no/statsbudsjett/2023/statsbudsjettet-2023-skatter-og-avgifter/statsbudsjettet-2023-samlede-skatte-og-avgiftsendringer/id2930125/"]
+
+[[events]]
+id = "no_registration_tax_weight_component_2023"
+category = "purchase_tax"
+title = "Weight-based one-off registration tax component introduced, including for electric cars"
+effective_date = "2023-01-01"
+status = "in_force"
+verification = "primary"
+observed = "The 2023 state budget introduced a weight component in the one-off registration tax that also applies to electric cars (NOK 12.5 per kg above 500 kg in 2023; Skatteetaten lists NOK 12.71/kg currently). Electric cars pay only this component; fossil cars additionally pay CO2 and other components."
+assumed_effect = "Narrows, but does not remove, the BEV purchase-price advantage; larger for heavy BEVs."
+sources = ["https://www.regjeringen.no/no/statsbudsjett/2023/statsbudsjettet-2023-skatter-og-avgifter/statsbudsjettet-2023-samlede-skatte-og-avgiftsendringer/id2930125/",
+           "https://www.skatteetaten.no/person/avgifter/bil/importere/engangsavgift/hva-er-engangsavgiften/"]
+
+[[events]]
+id = "no_ev_vat_threshold_300k_2026"
+category = "vat"
+title = "VAT-free amount for battery-electric cars reduced from NOK 500,000 to NOK 300,000"
+effective_date = "2026-01-01"
+status = "in_force"
+verification = "primary"
+observed = "Government budget 2026 proposed phasing down EV VAT advantages; the reduction to NOK 300,000 from 1 January 2026 is listed among legal changes from that date."
+assumed_effect = "Raises BEV prices above NOK 300,000; anticipation may pull purchases into December 2025."
+notes = "The data show a registration spike in December 2025 (35,156, robust z = 3.8): observed association only. available_at uses the effective date pending a verified announcement date."
+sources = ["https://regjeringen.no/no/aktuelt/foreslar-nedtrapping-av-elbilsubsidier/id3124394",
+           "https://www.regjeringen.no/no/dokument/lover_regler/endringer-i-lover-og-regler/endringer-i-lover-og-regler-fra-1.-januar-2026/id3141571/"]
+
+[[events]]
+id = "no_ev_vat_phaseout_2027_2028_proposed"
+category = "vat"
+title = "Proposed: VAT-free amount NOK 150,000 from 2027, full VAT from 2028"
+effective_date = "2027-01-01"
+status = "proposed"
+verification = "secondary"
+observed = "Stortinget asked the government to lower the threshold to NOK 150,000 from 1 January 2027 and to zero from 1 January 2028 (subject to ESA approval); the 2027 budget proposal discusses this. Not in force as of 2026-11-23."
+assumed_effect = "Possible further pull-forward before each step."
+notes = "Status must be rechecked once the 2027 budget is adopted."
+available_at = "2026-11-23"
+sources = ["https://stortinget.no/no/Saker-og-publikasjoner/Publikasjoner/Innstillinger/Stortinget/2025-2026/inns-202526-004l/?m=9",
+           "https://www.regjeringen.no/no/dokumenter/prop.-1-ls-20262027/id3176120/?ch=9"]
+
+# --------------------------------------------------------------------------- data gaps recorded as events-to-measure
+
+[[events]]
+id = "no_charging_infrastructure_gap"
+category = "infrastructure"
+title = "Charging infrastructure expansion: NOT yet measured"
+effective_date = "2024-01-01"
+status = "data_gap"
+verification = "secondary"
+observed = "SSB table 14725 covers public charging points only for 2024–2025 (with a note on incomplete operator reporting to NOBIL). NOBIL's API requires a key; its licence is reported as CC BY (3.0 or 4.0, unconfirmed)."
+assumed_effect = "Charging availability plausibly matters for adoption, but no historical series is ingested, so its effect cannot be estimated yet."
+sources = ["https://www.ssb.no/en/statbank1/table/14725/",
+           "https://wiki.openstreetmap.org/wiki/EV_charging_stations_in_Norway"]

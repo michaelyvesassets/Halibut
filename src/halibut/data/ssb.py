@@ -159,3 +159,29 @@ def ingest(store: Store, catalogue: Catalogue, dataset_id: str, raw_dir, fetcher
                            (utc_now(), "failed", str(exc)[:500], run_id))
         store.conn.commit()
         raise
+
+
+def rebuild(catalogue: Catalogue, raw_dir, into) -> list[dict]:
+    """Recreate a store purely from raw snapshots (chronological per dataset).
+
+    File names carry the retrieval timestamp (``YYYYMMDDTHHMMSSZ_<sha>.json``),
+    so availability is reconstructed exactly as at first ingestion, under the
+    *current* catalogue (e.g. corrected publication lags).
+    """
+    from pathlib import Path  # noqa: PLC0415
+    store = Store(into)
+    store.register_catalogue(catalogue)
+    out = []
+    try:
+        for ds in sorted(catalogue.datasets):
+            d = Path(raw_dir) / ds
+            if not d.is_dir():
+                continue
+            for f in sorted(d.glob("*.json")):
+                stamp = f.name.split("_")[0]
+                retrieved = f"{stamp[0:4]}-{stamp[4:6]}-{stamp[6:8]}T{stamp[9:11]}:{stamp[11:13]}:{stamp[13:15]}Z"
+                out.append(ingest(store, catalogue, ds, raw_dir, raw=f.read_bytes(),
+                                  retrieved_at=retrieved) | {"file": f.name})
+    finally:
+        store.close()
+    return out
