@@ -203,6 +203,69 @@ CREATE TABLE hypotheses (
     record_json TEXT NOT NULL
 );
 """),
+    (3, """
+CREATE TABLE experiments (
+    experiment_id TEXT PRIMARY KEY,
+    kind TEXT NOT NULL,
+    title TEXT NOT NULL,
+    status TEXT NOT NULL CHECK (status IN ('planned','running','completed','failed')),
+    produced_by TEXT NOT NULL,
+    baseline_id TEXT REFERENCES experiments(experiment_id),
+    rationale TEXT,
+    expected_improvement_json TEXT,
+    change_json TEXT,
+    lineage_json TEXT NOT NULL,
+    metrics_json TEXT,
+    created_at TEXT NOT NULL,
+    finished_at TEXT
+);
+CREATE TABLE knowledge (
+    knowledge_id TEXT PRIMARY KEY,
+    kind TEXT NOT NULL CHECK (kind IN ('hypothesis','prediction','outcome','lesson','critique','question','proposal')),
+    statement TEXT NOT NULL,
+    status TEXT NOT NULL CHECK (status IN ('proposed','tested','validated','rejected','inconclusive','superseded')),
+    produced_by TEXT NOT NULL,
+    experiment_id TEXT REFERENCES experiments(experiment_id),
+    evaluation_id TEXT,
+    scope_json TEXT NOT NULL,
+    evidence_json TEXT NOT NULL,
+    confidence TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    record_json TEXT NOT NULL
+);
+CREATE TABLE knowledge_links (
+    from_id TEXT NOT NULL,
+    relation TEXT NOT NULL CHECK (relation IN ('supports','contradicts','critiques','derived_from','tests','supersedes','considered')),
+    to_id TEXT NOT NULL,
+    produced_by TEXT NOT NULL,
+    note TEXT,
+    created_at TEXT NOT NULL,
+    PRIMARY KEY (from_id, relation, to_id, produced_by)
+);
+CREATE TABLE evaluations (
+    evaluation_id TEXT PRIMARY KEY,
+    candidate_id TEXT NOT NULL REFERENCES experiments(experiment_id),
+    baseline_id TEXT NOT NULL REFERENCES experiments(experiment_id),
+    rule_json TEXT NOT NULL,
+    result TEXT NOT NULL CHECK (result IN ('improved','degraded','inconclusive')),
+    decision TEXT NOT NULL CHECK (decision IN ('eligible_for_promotion','reject','hold')),
+    details_json TEXT NOT NULL,
+    decided_at TEXT NOT NULL,
+    decided_by TEXT NOT NULL
+);
+CREATE TABLE promotions (
+    promotion_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    component TEXT NOT NULL,
+    experiment_id TEXT NOT NULL REFERENCES experiments(experiment_id),
+    evaluation_id TEXT NOT NULL REFERENCES evaluations(evaluation_id),
+    status TEXT NOT NULL CHECK (status IN ('active','rolled_back')),
+    approved_by TEXT NOT NULL,
+    previous_promotion_id INTEGER,
+    at TEXT NOT NULL,
+    note TEXT
+);
+"""),
 ]
 
 
