@@ -317,6 +317,33 @@ CREATE TABLE agent_calls (
     at TEXT NOT NULL
 );
 """),
+    (5, """
+CREATE TABLE knowledge_status_history (
+    knowledge_id TEXT NOT NULL,
+    status TEXT NOT NULL,
+    effective_at TEXT NOT NULL,
+    recorded_at TEXT NOT NULL,
+    changed_by TEXT NOT NULL,
+    evaluation_id TEXT,
+    basis TEXT NOT NULL
+);
+CREATE INDEX ksh_lookup ON knowledge_status_history(knowledge_id, effective_at);
+INSERT INTO knowledge_status_history (knowledge_id, status, effective_at, recorded_at, changed_by, evaluation_id, basis)
+    SELECT knowledge_id, status, COALESCE(available_at, created_at), updated_at, 'migration_5', evaluation_id, 'backfilled_current_status'
+    FROM knowledge;
+CREATE TABLE llm_spend_ledger (
+    entry_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    provider TEXT NOT NULL,
+    model TEXT NOT NULL,
+    run_id TEXT NOT NULL,
+    reserved_usd REAL NOT NULL,
+    actual_usd REAL,
+    status TEXT NOT NULL CHECK (status IN ('reserved','settled','failed_charged','released')),
+    created_at TEXT NOT NULL,
+    settled_at TEXT,
+    note TEXT
+);
+"""),
 ]
 
 

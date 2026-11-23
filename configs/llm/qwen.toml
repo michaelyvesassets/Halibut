@@ -1,0 +1,36 @@
+# Qwen benchmark configuration: INACTIVE until the project owner sets approved = true.
+# Contains no secrets: the API key and workspace id are read from environment
+# variables named below and are never written to disk, logs or the store.
+#
+# Verified 2026-11-23 against official Alibaba Cloud Model Studio docs:
+# - model page: https://www.alibabacloud.com/help/en/model-studio/qwen3-7-plus
+#   (model id qwen3.7-plus; snapshot qwen3.7-plus-2026-05-26; Singapore / International;
+#    original price <=256K input: $0.40 in / $1.60 out per 1M tokens; console may show promotions)
+# - endpoints: https://www.alibabacloud.com/help/en/model-studio/compatibility-of-openai-with-dashscope
+#   (workspace-specific Singapore domain recommended; API keys are region-bound)
+# - thinking: https://www.alibabacloud.com/help/en/model-studio/deep-thinking
+#   (qwen3.7-plus thinks BY DEFAULT; thinking is billed as output) -> disabled below
+# - JSON mode: https://www.alibabacloud.com/help/en/model-studio/json-mode
+#   (response_format json_object; the prompt must contain "JSON")
+
+[llm]
+provider = "qwen"
+region = "ap-southeast-1 (Singapore, International)"
+base_url = "https://{workspace_id}.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1"
+workspace_id_env = "DASHSCOPE_WORKSPACE_ID"
+api_key_env = "DASHSCOPE_API_KEY"
+model = "qwen3.7-plus"
+input_per_mtok_usd = 0.40
+output_per_mtok_usd = 1.60
+pricing_source = "https://www.alibabacloud.com/help/en/model-studio/qwen3-7-plus (original price, input <= 256K, verified 2026-11-23)"
+pricing_note = "Original (non-promotional) list price is used for all caps; promotions can only lower actual spend."
+max_spend_usd_total = 5.0
+max_spend_usd_per_run = 1.0
+enable_thinking = false
+temperature = 0
+retries = 1
+timeout_seconds = 120
+max_output_tokens = { research = 400, hypothesis = 1500, critic = 1200, smoke = 20 }
+approved = false
+approved_by = ""
+approved_on = ""

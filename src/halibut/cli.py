@@ -58,6 +58,8 @@ def _parser() -> argparse.ArgumentParser:
     add_intel_commands(sub)
     from .learning.cli import add_learn_commands  # noqa: PLC0415
     add_learn_commands(sub)
+    from .agents.cli import add_agents_commands  # noqa: PLC0415
+    add_agents_commands(sub)
     return p
 
 

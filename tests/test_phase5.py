@@ -133,21 +133,23 @@ def test_cache_hits_avoid_repeat_calls(world):
     assert (cp.hits, cp.misses) == (1, 1)
 
 
-def test_qwen_provider_is_gated(monkeypatch):
+def test_qwen_provider_is_gated(tmp_path):
+    """Phase 5 gate (signature updated in the readiness step): approval, prices, key and caps are required."""
+    store = Store(tmp_path / "q.sqlite")
     base = {"base_url": "https://example.invalid/v1", "model": "qwen-x", "api_key_env": "HALIBUT_TEST_KEY",
-            "input_per_mtok_usd": 1.0, "output_per_mtok_usd": 2.0, "max_spend_usd": 0.01}
+            "input_per_mtok_usd": 1.0, "output_per_mtok_usd": 2.0, "max_spend_usd_total": 0.01, "max_spend_usd_per_run": 0.01}
     with pytest.raises(NotApproved, match="not approved"):
-        QwenProvider({**base, "approved": False})
+        QwenProvider({**base, "approved": False}, store, "s", environ={"HALIBUT_TEST_KEY": "k"})
     with pytest.raises(NotApproved, match="input_per_mtok_usd"):
-        QwenProvider({**base, "approved": True, "input_per_mtok_usd": ""})
-    monkeypatch.delenv("HALIBUT_TEST_KEY", raising=False)
+        QwenProvider({**base, "approved": True, "input_per_mtok_usd": ""}, store, "s", environ={"HALIBUT_TEST_KEY": "k"})
     with pytest.raises(NotApproved, match="HALIBUT_TEST_KEY"):
-        QwenProvider({**base, "approved": True})
-    monkeypatch.setenv("HALIBUT_TEST_KEY", "k")
-    q = QwenProvider({**base, "approved": True}, spent_so_far=lambda: 0.009)
+        QwenProvider({**base, "approved": True}, store, "s", environ={})
+    q = QwenProvider({**base, "approved": True}, store, "s", environ={"HALIBUT_TEST_KEY": "k"},
+                     transport=lambda *a: (_ for _ in ()).throw(AssertionError("must not be called")))
     with pytest.raises(SpendLimitReached):
-        q.complete("s" * 4000, "u" * 4000, role="hypothesis", max_output_tokens=4000)
+        q.complete("JSON " + "s" * 4000, "u" * 4000, role="hypothesis", max_output_tokens=4000, run_id="s:1")
     assert Pricing(1.0, 2.0).cost(1_000_000, 500_000) == pytest.approx(2.0)
+    store.close()
 
 
 def test_audit_decomposition_is_exact(world):

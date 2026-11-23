@@ -13,6 +13,7 @@ import json
 import math
 import os
 import time
+import urllib.error
 import urllib.request
 from dataclasses import dataclass, field
 from typing import Callable, Protocol
@@ -76,7 +77,7 @@ class MockProvider:
     model: str = "mock-structured-v1"
     pricing: Pricing = field(default_factory=Pricing)
 
-    def complete(self, system: str, user: str, *, role: str, max_output_tokens: int = 1500) -> LLMResponse:
+    def complete(self, system: str, user: str, *, role: str, max_output_tokens: int = 1500, **_) -> LLMResponse:
         t0 = time.perf_counter()
         payload = json.loads(user.split("BUNDLE:", 1)[1])
         data = self.responder(role, payload)
@@ -97,77 +98,140 @@ class CachedProvider:
     def key(self, system: str, user: str, role: str) -> str:
         return hashlib.sha256(json.dumps([self.name, self.model, role, system, user]).encode()).hexdigest()
 
-    def complete(self, system: str, user: str, *, role: str, max_output_tokens: int = 1500) -> LLMResponse:
+    def complete(self, system: str, user: str, *, role: str, max_output_tokens: int | None = None,
+                 run_id: str = "unscoped") -> LLMResponse:
         k = self.key(system, user, role)
         row = self.store.conn.execute("SELECT response_json FROM llm_cache WHERE cache_key=?", (k,)).fetchone()
         if row:
             self.hits += 1
             d = json.loads(row[0])
+            d.pop("reasoning_tokens", None)
             return LLMResponse(**{**d, "cached": True, "latency_seconds": 0.0, "estimated_cost_usd": 0.0,
                                   "actual_cost_usd": 0.0 if d.get("actual_cost_usd") is not None else None})
         self.misses += 1
-        r = self.inner.complete(system, user, role=role, max_output_tokens=max_output_tokens)
+        kw = {"run_id": run_id} if isinstance(self.inner, QwenProvider) else {}
+        r = self.inner.complete(system, user, role=role, max_output_tokens=max_output_tokens or 1500, **kw)
+        rec = {f: getattr(r, f) for f in ("text", "data", "input_tokens", "output_tokens", "tokens_estimated", "model",
+                                          "provider", "latency_seconds", "cached", "estimated_cost_usd", "actual_cost_usd")}
         self.store.conn.execute("INSERT OR REPLACE INTO llm_cache VALUES (?,?,?,?,?,?,?)",
-                                (k, r.provider, r.model, json.dumps(r.__dict__), r.input_tokens, r.output_tokens, utc_now()))
+                                (k, r.provider, r.model, json.dumps(rec), r.input_tokens, r.output_tokens, utc_now()))
         self.store.conn.commit()
         return r
 
 
 class QwenProvider:
-    """OpenAI-compatible chat-completions client for Qwen (Alibaba Cloud Model Studio).
+    """OpenAI-compatible chat-completions client for Qwen on Alibaba Cloud Model Studio (Singapore).
 
-    Disabled by default. Requires a config with ``approved = true``, explicit
-    prices from the official pricing page, ``max_spend_usd``, and the API key in
-    the environment variable named by ``api_key_env``. Not used in tests.
+    Disabled unless the config is approved, priced and capped, and the API key and
+    workspace id are present in the environment. Every attempt is reserved against
+    the fail-closed ``SpendGuard`` before the request is sent. Thinking mode (on by
+    default for qwen3.7-plus, billed as output) is disabled per request. The API key
+    is only placed in the Authorization header: never logged, stored or printed.
     """
 
     name = "qwen"
+    RETRY_STATUSES = (429, 500, 502, 503, 504)
 
-    def __init__(self, cfg: dict, spent_so_far: Callable[[], float] = lambda: 0.0):
+    def __init__(self, cfg: dict, store, scope: str, transport=None, environ=None):
+        from .budget import SpendGuard  # noqa: PLC0415
+        env = os.environ if environ is None else environ
         if not cfg.get("approved"):
             raise NotApproved("Qwen provider is not approved: set approved = true in the LLM config after review")
-        for k in ("base_url", "model", "api_key_env", "input_per_mtok_usd", "output_per_mtok_usd", "max_spend_usd"):
+        for k in ("base_url", "model", "api_key_env", "input_per_mtok_usd", "output_per_mtok_usd",
+                  "max_spend_usd_total", "max_spend_usd_per_run"):
             if cfg.get(k) in (None, ""):
                 raise NotApproved(f"LLM config missing {k!r}")
-        self.key = os.environ.get(cfg["api_key_env"])
-        if not self.key:
+        self._key = env.get(cfg["api_key_env"])
+        if not self._key:
             raise NotApproved(f"environment variable {cfg['api_key_env']} is not set")
+        base = cfg["base_url"]
+        if "{workspace_id}" in base:
+            ws = env.get(cfg.get("workspace_id_env") or "")
+            if not ws:
+                raise NotApproved(f"environment variable {cfg.get('workspace_id_env')} (workspace id) is not set")
+            base = base.replace("{workspace_id}", ws)
+        self.url = base.rstrip("/") + "/chat/completions"
         self.cfg, self.model = cfg, cfg["model"]
-        self.pricing = Pricing(cfg["input_per_mtok_usd"], cfg["output_per_mtok_usd"], cfg.get("pricing_source", "config"))
-        self.spent = spent_so_far
+        self.pricing = Pricing(float(cfg["input_per_mtok_usd"]), float(cfg["output_per_mtok_usd"]), cfg.get("pricing_source", ""))
+        self.guard = SpendGuard(store, "qwen", self.model, self.pricing, float(cfg["max_spend_usd_total"]),
+                                float(cfg["max_spend_usd_per_run"]), scope)
+        self.transport = transport or self._urllib
+        self.retries = min(int(cfg.get("retries", 1)), 2)
 
-    def complete(self, system: str, user: str, *, role: str, max_output_tokens: int = 1500) -> LLMResponse:
-        worst = self.pricing.cost(estimate_tokens(system + user), max_output_tokens) or 0.0
-        if self.spent() + worst > self.cfg["max_spend_usd"]:
-            raise SpendLimitReached(f"next call could exceed max_spend_usd={self.cfg['max_spend_usd']}")
-        body = json.dumps({"model": self.model, "messages": [{"role": "system", "content": system},
-                                                               {"role": "user", "content": user}],
-                           "temperature": self.cfg.get("temperature", 0), "max_tokens": max_output_tokens,
-                           "response_format": {"type": "json_object"}}).encode()
-        req = urllib.request.Request(self.cfg["base_url"].rstrip("/") + "/chat/completions", data=body, method="POST",
-                                     headers={"Authorization": f"Bearer {self.key}", "Content-Type": "application/json"})
-        t0 = time.perf_counter()
-        with urllib.request.urlopen(req, timeout=self.cfg.get("timeout_seconds", 120)) as resp:
-            d = json.loads(resp.read())
-        text = d["choices"][0]["message"]["content"]
-        usage = d.get("usage", {})
-        tin, tout = usage.get("prompt_tokens"), usage.get("completion_tokens")
-        estimated = tin is None or tout is None
-        tin, tout = tin or estimate_tokens(system + user), tout or estimate_tokens(text)
+    def _urllib(self, url, body, headers, timeout):
+        req = urllib.request.Request(url, data=body, method="POST", headers=headers)
         try:
-            data = json.loads(text)
-        except json.JSONDecodeError:
-            data = None
-        return LLMResponse(text, data, tin, tout, estimated, self.model, self.name, time.perf_counter() - t0,
-                           estimated_cost_usd=self.pricing.cost(tin, tout))
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                return resp.status, resp.read()
+        except urllib.error.HTTPError as exc:
+            return exc.code, exc.read() or b""
+
+    def request_body(self, system: str, user: str, max_output_tokens: int) -> dict:
+        return {"model": self.model, "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
+                "temperature": self.cfg.get("temperature", 0), "max_tokens": max_output_tokens,
+                "response_format": {"type": "json_object"},
+                "enable_thinking": bool(self.cfg.get("enable_thinking", False))}
+
+    def complete(self, system: str, user: str, *, role: str, max_output_tokens: int | None = None,
+                 run_id: str = "unscoped") -> LLMResponse:
+        if "json" not in (system + user).lower():
+            raise ValueError("JSON mode requires the word 'JSON' in the prompt")
+        max_out = int(max_output_tokens or self.cfg.get("max_output_tokens", {}).get(role, 1200))
+        body = json.dumps(self.request_body(system, user, max_out)).encode()
+        headers = {"Authorization": f"Bearer {self._key}", "Content-Type": "application/json"}
+        last = None
+        for attempt in range(self.retries + 1):
+            ledger_run = run_id if run_id.startswith(self.guard.scope) else f"{self.guard.scope}:{run_id}"
+            entry, worst = self.guard.reserve(system + user, max_out, ledger_run)
+            t0 = time.perf_counter()
+            try:
+                status, raw = self.transport(self.url, body, headers, self.cfg.get("timeout_seconds", 120))
+            except Exception as exc:  # network failure: may or may not have been billed -> keep charged
+                self.guard.charge_failed(entry, f"attempt {attempt}: {type(exc).__name__}")
+                last = RuntimeError(f"Qwen request failed ({type(exc).__name__})")
+                continue
+            latency = time.perf_counter() - t0
+            if status != 200:
+                self.guard.charge_failed(entry, f"attempt {attempt}: HTTP {status}")
+                last = RuntimeError(f"Qwen HTTP {status}: {raw[:200].decode('utf-8', 'replace')}")
+                if status in self.RETRY_STATUSES:
+                    time.sleep(min(2 ** attempt, 5))
+                    continue
+                break
+            d = json.loads(raw)
+            usage = d.get("usage") or {}
+            tin, tout = usage.get("prompt_tokens"), usage.get("completion_tokens")
+            reasoning = (usage.get("completion_tokens_details") or {}).get("reasoning_tokens") or 0
+            actual = self.pricing.cost(tin, tout) if tin is not None and tout is not None else None
+            self.guard.settle(entry, actual, f"reasoning_tokens={reasoning}" if reasoning else "")
+            text = d["choices"][0]["message"].get("content") or ""
+            try:
+                data = json.loads(text)
+            except json.JSONDecodeError:
+                data = None
+            r = LLMResponse(text, data, tin or conservative_tokens(system + user), tout or max_out, tin is None or tout is None,
+                            d.get("model", self.model), self.name, latency, estimated_cost_usd=worst, actual_cost_usd=actual)
+            r.reasoning_tokens = reasoning
+            return r
+        raise last
+
+
+def conservative_tokens(text: str) -> int:
+    from .budget import conservative_input_tokens  # noqa: PLC0415
+    return conservative_input_tokens(text)
 
 
 def load_llm_config(path) -> dict:
     root = _Table(load_raw(path), "")
     t = root.table("llm")
-    cfg = {k: t.raw(k, None) for k in ("provider", "base_url", "model", "api_key_env", "input_per_mtok_usd",
-                                       "output_per_mtok_usd", "pricing_source", "max_spend_usd", "temperature",
-                                       "timeout_seconds", "approved", "approved_by", "approved_on")}
+    cfg = {k: t.raw(k, None) for k in ("provider", "region", "base_url", "workspace_id_env", "model", "api_key_env",
+                                       "input_per_mtok_usd", "output_per_mtok_usd", "pricing_source", "pricing_note",
+                                       "max_spend_usd_total", "max_spend_usd_per_run", "temperature", "enable_thinking",
+                                       "retries", "timeout_seconds", "max_output_tokens", "approved", "approved_by",
+                                       "approved_on")}
+    for secretish in ("api_key", "key", "token", "secret"):
+        if secretish in t.data:
+            raise ConfigError(f"llm.{secretish}: secrets must not be stored in config files; use an environment variable")
     t.done()
     root.done()
     if cfg["provider"] not in ("qwen", "mock"):

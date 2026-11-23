@@ -133,6 +133,18 @@ def candidate_explanations(pred: dict, score: dict, retr_eval, retr_origin) -> l
     return out
 
 
+def _estimated(store, q: dict) -> bool:
+    """True if the realised data's availability dates are estimates (history found in a first retrieval)."""
+    qs = [q] if q["kind"] == "share" else [q["a"], q["b"]]
+    for x in qs:
+        s = x["denominator"][0]
+        r = store.conn.execute("""SELECT COUNT(*) FROM observations WHERE series_id=? AND period IN (%s)
+            AND availability_basis='estimated_lag'""" % ",".join("?" * len(x["periods"])), [s, *x["periods"]]).fetchone()[0]
+        if r:
+            return True
+    return False
+
+
 def score_due(store, memory: LearningMemory, eval_as_of: str, tags: list[str] | None = None,
               produced_by: str = "engine:prediction_scorer") -> list[dict]:
     """Score every open v2 prediction whose quantity is fully observable at ``eval_as_of``."""
@@ -151,15 +163,17 @@ def score_due(store, memory: LearningMemory, eval_as_of: str, tags: list[str] | 
         retr_origin = StoreEvidenceRetriever(store, pred["origin_as_of"])
         # candidate explanations only for hypothesis predictions (shadow policy forecasts are scored, not explained)
         expl = candidate_explanations(pred, sc, retr_eval, retr_origin) if failed and pred.get("hypothesis_id") else []
+        basis = "approximate (estimated publication lag)" if _estimated(store, pred["quantity"]) else "published"
         statement = (f"Prediction {k['knowledge_id']} ({pred['method']}): point {100 * sc['point']:.2f}% vs realized "
                      f"{100 * y:.2f}% (error {100 * sc['error']:+.2f} pp); 80% interval "
                      f"{'covered' if sc['in_interval80'] else 'missed'}"
                      + ("" if sc["direction_hit"] is None else f"; direction {'held' if sc['direction_hit'] else 'failed'}") + ".")
         oid = memory.submit("outcome", statement, produced_by, {"tags": list(k["scope"].get("tags", [])) + ["outcome:prediction"]},
                             [k["knowledge_id"]], experiment_id=k["experiment_id"], status="tested",
-                            record={"score": sc, "prediction": pred, "explanations": expl}, available_at=published)
+                            record={"score": sc, "prediction": pred, "explanations": expl,
+                                    "outcome_publication_date_basis": basis}, available_at=published)
         memory.link(oid, "tests", k["knowledge_id"], produced_by)
-        memory.set_status(k["knowledge_id"], "tested", produced_by)
+        memory.set_status(k["knowledge_id"], "tested", produced_by, effective_at=published)
         store.conn.execute("INSERT OR REPLACE INTO prediction_scores VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                            (k["knowledge_id"], to_timestamp(eval_as_of), y, sc["point"], sc["error"], sc["abs_error"],
                             int(sc["in_interval80"]), sc["interval_score80"],
@@ -168,7 +182,8 @@ def score_due(store, memory: LearningMemory, eval_as_of: str, tags: list[str] | 
                             json.dumps({"quantity_kind": pred["quantity"]["kind"], "hypothesis_id": pred.get("hypothesis_id"),
                                         "subject": pred.get("subject"), "interval_method": pred.get("interval_method"),
                                         "replay_id": pred.get("replay_id"), "hypothesis_mode": pred.get("hypothesis_mode"),
-                                        "produced_by": pred.get("produced_by")})))
+                                        "produced_by": pred.get("produced_by"),
+                                        "outcome_publication_date_basis": basis})))
         for e in expl:
             eid = memory.submit("hypothesis", f"Candidate explanation for {k['knowledge_id']}: {e['statement']}", produced_by,
                                 {"tags": list(k["scope"].get("tags", [])) + ["explanation", f"explanation:{e['code']}"]},
@@ -178,7 +193,7 @@ def score_due(store, memory: LearningMemory, eval_as_of: str, tags: list[str] | 
             memory.link(eid, "derived_from", oid, produced_by)
         hyp = pred.get("hypothesis_knowledge_id")
         if hyp:
-            memory.set_status(hyp, "rejected" if failed else "tested", produced_by)
+            memory.set_status(hyp, "rejected" if failed else "tested", produced_by, effective_at=published)
             memory.link(oid, "contradicts" if failed else "supports", hyp, produced_by)
         store.conn.commit()
         results.append({"prediction": k["knowledge_id"], "outcome": oid, "failed": failed, **sc,

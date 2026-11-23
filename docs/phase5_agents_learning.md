@@ -200,3 +200,39 @@ conflict with each other.
 - Normalise run-specific IDs in Critic prompts, to raise cache hits on
   repeated runs.
 - Run multi-market replays so lessons can generalise across markets.
+
+## 8. Qwen benchmark readiness (no paid calls made)
+
+**Verified 2026-11-23 against official Alibaba Cloud Model Studio documentation:**
+
+| Item | Verified value | Source |
+|---|---|---|
+| Model | `qwen3.7-plus` (snapshot `qwen3.7-plus-2026-05-26`), Singapore / International | [model page](https://www.alibabacloud.com/help/en/model-studio/qwen3-7-plus) |
+| Price (original, ≤ 256K input) | $0.40 in / $1.60 out per 1M tokens. Promotions may apply in the console; caps use the original price | model page |
+| Endpoint | `https://{WorkspaceId}.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1/chat/completions` (workspace-specific, recommended over legacy `dashscope-intl`); API keys are **region-bound** | [OpenAI compatibility](https://www.alibabacloud.com/help/en/model-studio/compatibility-of-openai-with-dashscope) |
+| Thinking | **On by default** for qwen3.7-plus and billed as output, so Halibut sends `enable_thinking: false` and flags any reasoning tokens | [deep thinking](https://www.alibabacloud.com/help/en/model-studio/deep-thinking) |
+| JSON mode | `response_format: {"type": "json_object"}`; the prompt must contain "JSON" (enforced) | [structured output](https://www.alibabacloud.com/help/en/model-studio/json-mode) |
+
+**Fail-closed spending** (`halibut.agents.budget.SpendGuard`, `llm_spend_ledger`):
+- every attempt, including retries, reserves its worst case: characters ÷ 3 × 1.1 + 64 input tokens plus the full `max_output_tokens`, priced at the original list price;
+- the check and insert happen in one `BEGIN IMMEDIATE` transaction, against the $5 total across all processes and the $1 per replay, counting outstanding reservations;
+- failed attempts stay charged at their reservation, and missing usage is charged at the worst case;
+- missing prices or caps cause a refusal;
+- `halibut agents spend` shows the ledger.
+
+**Planned first benchmark** (`halibut intel benchmark … --dry-run`, prompts measured on a throwaway copy):
+
+| Calls | Prompt size | Worst case | Worst case, every call retried | Per-replay cap |
+|---|---|---|---|---|
+| 30 (10 research, 10 hypothesis, 10 critic) | ≈ 309k characters | **$0.096** | $0.19 | $1 |
+
+**Status timestamping.** `knowledge_status_history` records when each status change became knowable in data time. `retrieve(as_of=…)` returns the status as of that date, so a replay cannot see a lesson validated or rejected later. Rows that existed before migration 5 are back-filled from their current status and marked `backfilled_current_status`.
+
+**Approximations stay labelled.** Outcomes record `outcome_publication_date_basis`, which is "approximate (estimated publication lag)" for DfT history found in the first retrieval. Benchmark reports carry the same note.
+
+**Secrets:**
+- the key and workspace ID are read only from `DASHSCOPE_API_KEY` and `DASHSCOPE_WORKSPACE_ID`;
+- the key goes only into the outgoing `Authorization` header;
+- configs that contain a key are rejected;
+- tests assert the key never appears in the store, ledger or error messages;
+- `.env` files are git-ignored.

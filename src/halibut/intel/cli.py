@@ -35,6 +35,12 @@ def add_intel_commands(sub) -> None:
     rp.add_argument("--faults", action="store_true", help="mock agents: inject citation/number faults")
     rp.add_argument("--origin", action="append", help="origin date (repeatable; default: 10 half-yearly origins)")
     rp.add_argument("--out", default="results/intel/replays")
+    bm = isub.add_parser("benchmark", help="LLM agents vs fixed-rule reference on identical cutoffs and evidence")
+    bm.add_argument("market")
+    bm.add_argument("--agents", choices=("qwen", "mock"), default="qwen")
+    bm.add_argument("--origin", action="append")
+    bm.add_argument("--dry-run", action="store_true", help="measure prompts and worst-case cost on a throwaway copy; no network")
+    bm.add_argument("--out", default="results/intel/benchmarks")
     cp = isub.add_parser("compare", help="compare replay summaries (quality, runtime, cost)")
     cp.add_argument("summaries", nargs="+")
     p.set_defaults(handler=_handle)
@@ -56,6 +62,8 @@ def _handle(args) -> int:
             return _replay(store, args)
         if args.intel_command == "compare":
             return _compare(args)
+        if args.intel_command == "benchmark":
+            return _benchmark(store, args)
         from .workflow import investigate_cli  # noqa: PLC0415
         return investigate_cli(store, args)
     finally:
@@ -167,4 +175,37 @@ def _compare(args) -> int:
     for k in ("calls", "input_tokens", "output_tokens", "estimated_cost_usd", "cache_hit_rate", "duplicate_tool_calls"):
         print(f"| llm {k} | " + " | ".join(str(r["llm"][k]) for r in rows) + " |")
     print("| cost per useful validated result (USD) | " + " | ".join(str(r["cost_per_useful_result_usd"]) for r in rows) + " |")
+    return 0
+
+
+def _benchmark(store, args) -> int:
+    from . import benchmark as bm  # noqa: PLC0415
+    from ..agents.llm import NotApproved, SpendLimitReached  # noqa: PLC0415
+    p = bm.plan(args.db, args.market, args.origin)
+    print(f"plan: {p['calls']} LLM calls {p['by_role']}; prompts {p['prompt_chars_total']:,} chars; worst case "
+          f"${p['worst_case_usd']:.4f} (${p['worst_case_with_retries_usd']:.4f} with retries) vs per-run cap "
+          f"${p['per_run_cap_usd']} / total cap ${p['total_cap_usd']} -> {'fits' if p['fits_per_run_cap'] else 'EXCEEDS CAP'}")
+    if args.dry_run:
+        return 0
+    if not p["fits_per_run_cap"]:
+        print("refused: worst case exceeds the per-run cap", file=sys.stderr)
+        return 3
+    try:
+        r = bm.run(store, args.market, args.agents, args.origin)
+    except (NotApproved, SpendLimitReached) as exc:
+        print(f"refused: {exc}", file=sys.stderr)
+        return 3
+    out = Path(args.out)
+    out.mkdir(parents=True, exist_ok=True)
+    path = out / f"benchmark_{args.agents}_{r['results'][args.agents]['replay_id']}.json"
+    path.write_text(json.dumps({"plan": p, **r}, indent=1, default=str) + "\n")
+    keys = ["hypotheses_valid", "rejected_by_validation", "scored", "supported", "refuted", "direction_hit_rate", "mae_pp",
+            "coverage80", "llm_calls", "tokens_in", "tokens_out", "cost_usd", "cost_per_useful_validated_result_usd", "runtime_s"]
+    names = list(r["results"])
+    print("| metric | " + " | ".join(names) + " |\n|---|" + "---|" * len(names))
+    for k in keys:
+        print(f"| {k} | " + " | ".join(str(round(r["results"][n][k], 4)) if isinstance(r["results"][n][k], float)
+                                      else str(r["results"][n][k]) for n in names) + " |")
+    print(f"validation failure types: { {n: r['results'][n]['validation_failure_types'] for n in names} }")
+    print(f"note: {r['publication_dates']}\nreport: {path}")
     return 0

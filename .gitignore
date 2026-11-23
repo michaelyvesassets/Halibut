@@ -10,3 +10,7 @@ results/
 data/raw/
 data/*.sqlite
 data/*.sqlite-journal
+.env
+.env.*
+*.key
+configs/llm/*.local.toml

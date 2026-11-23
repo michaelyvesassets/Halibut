@@ -111,7 +111,7 @@ class LLMAgentSet:
         user = "BUNDLE:" + json.dumps(payload, sort_keys=True, default=str)
         ph = hashlib.sha256((system + user).encode()).hexdigest()[:16]
         try:
-            r = self.provider.complete(system, user, role=role)
+            r = self.provider.complete(system, user, role=role, run_id=self.run_id)
         except Exception as exc:
             record_call(self.store, self.run_id, agent, role, None, ph, outcome=f"error: {exc}"[:200],
                         provider=self.provider.name, model=self.provider.model)

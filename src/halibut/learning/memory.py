@@ -85,6 +85,9 @@ class LearningMemory:
             (kid, kind, statement, status, produced_by, experiment_id, json.dumps(scope, sort_keys=True),
              json.dumps(sorted(evidence)), confidence, now, now, json.dumps(record or {}, sort_keys=True, default=str),
              available_at))
+        if self.store.conn.execute("SELECT 1 FROM knowledge_status_history WHERE knowledge_id=?", (kid,)).fetchone() is None:
+            self.store.conn.execute("INSERT INTO knowledge_status_history VALUES (?,?,?,?,?,?,?)",
+                                    (kid, status, available_at or now, now, produced_by, None, "created"))
         self.store.conn.commit()
         return kid
 
@@ -93,7 +96,11 @@ class LearningMemory:
                                 (from_id, relation, to_id, produced_by, note, utc_now()))
         self.store.conn.commit()
 
-    def set_status(self, kid: str, status: str, by: str, evaluation_id: str | None = None) -> None:
+    def set_status(self, kid: str, status: str, by: str, evaluation_id: str | None = None,
+                   effective_at: str | None = None) -> None:
+        """Change status. ``effective_at`` is when the change became knowable in data time (e.g. the
+        publication date of the outcome that tested it); it defaults to now. Replays see status as of
+        their simulated date via the status history."""
         if status not in STATUSES:
             raise ConfigError(f"unknown status {status!r}")
         if status == "validated":
@@ -106,8 +113,12 @@ class LearningMemory:
                 raise TrustViolation("only an evaluation with decision 'eligible_for_promotion' can validate knowledge")
             if k is None or k["experiment_id"] != ev["candidate_id"]:
                 raise TrustViolation("the evaluation must concern the experiment the knowledge belongs to")
+        from ..data.store import to_timestamp  # noqa: PLC0415
         self.store.conn.execute("UPDATE knowledge SET status=?, evaluation_id=COALESCE(?, evaluation_id), updated_at=? WHERE knowledge_id=?",
                                 (status, evaluation_id, utc_now(), kid))
+        self.store.conn.execute("INSERT INTO knowledge_status_history VALUES (?,?,?,?,?,?,?)",
+                                (kid, status, to_timestamp(effective_at) if effective_at else utc_now(), utc_now(), by,
+                                 evaluation_id, "explicit" if effective_at else "recorded_now"))
         self.link(kid, "tests" if evaluation_id else "derived_from", evaluation_id or kid, by, f"status -> {status}")
         self.store.conn.commit()
 
@@ -128,6 +139,11 @@ class LearningMemory:
         for r in rows:
             if cutoff and (r["available_at"] or r["created_at"]) > cutoff:
                 continue
+            status_now = r["status"]
+            if cutoff:
+                h = self.store.conn.execute("""SELECT status FROM knowledge_status_history WHERE knowledge_id=? AND
+                    effective_at<=? ORDER BY effective_at DESC, rowid DESC LIMIT 1""", (r["knowledge_id"], cutoff)).fetchone()
+                status_now = h["status"] if h else "proposed"
             scope = json.loads(r["scope_json"])
             if tags and not set(tags) & set(scope.get("tags", [])):
                 continue
@@ -135,9 +151,12 @@ class LearningMemory:
                 continue
             if kinds and r["kind"] not in kinds:
                 continue
-            if statuses and r["status"] not in statuses:
+            if statuses and status_now not in statuses:
                 continue
             d = dict(r)
+            d["status"] = status_now
+            if cutoff and status_now != r["status"]:
+                d["status_now"] = r["status"]
             d["scope"], d["evidence"] = scope, json.loads(r["evidence_json"])
             d["record"] = json.loads(r["record_json"])
             d["links"] = [dict(x) for x in self.store.conn.execute(

@@ -30,6 +30,7 @@ from ..learning.predictions import score_due
 from .market import load_market
 from .workflow import analyse
 
+QWEN_CONFIG = "configs/llm/qwen.toml"
 DEFAULT_ORIGINS = ["2021-11-23", "2022-05-23", "2022-11-23", "2023-05-23", "2023-11-23",
                    "2024-05-23", "2024-11-23", "2025-05-23", "2025-11-23", "2026-05-23"]
 
@@ -44,10 +45,8 @@ def make_agents(kind: str, store, run_id: str, faults: bool):
         return LLMAgentSet(MockProvider(responder), store, run_id, faults=faults)
     if kind == "qwen":
         from ..agents.llm import QwenProvider, load_llm_config  # noqa: PLC0415
-        cfg = load_llm_config("configs/llm/qwen.toml")
-        spent = lambda: store.conn.execute("SELECT COALESCE(SUM(estimated_cost_usd),0) FROM agent_calls WHERE run_id LIKE ?",  # noqa: E731
-                                           (run_id.split(":")[0] + "%",)).fetchone()[0]
-        return LLMAgentSet(QwenProvider(cfg, spent), store, run_id)
+        cfg = load_llm_config(QWEN_CONFIG)
+        return LLMAgentSet(QwenProvider(cfg, store, scope=run_id.split(":")[0]), store, run_id)
     raise ValueError(f"unknown agent set {kind!r}")
 
 
@@ -156,9 +155,9 @@ def evaluate_policies(store, memory, replay_id, origins, dev_fraction, market_id
                             [f"evaluation:{evid}"], experiment_id=cexp, confidence="medium" if status == "validated" else "low",
                             record={"verdict": verdict, "candidate": cparams, "baseline": bparams}, available_at=avail)
         if status == "validated":
-            memory.set_status(kid, "validated", "engine:learning_evaluator", evaluation_id=evid)
+            memory.set_status(kid, "validated", "engine:learning_evaluator", evaluation_id=evid, effective_at=avail)
         else:
-            memory.set_status(kid, status, "engine:learning_evaluator")
+            memory.set_status(kid, status, "engine:learning_evaluator", effective_at=avail)
         out.append({"comparison": title, "metric": metric, "origins": len(common), "dev": len(dev), "holdout": len(hold),
                     "baseline_mean_pp": 100 * bm, "candidate_mean_pp": 100 * cm, "result": verdict["result"],
                     "decision": verdict["decision"], "reasons": verdict["reasons"], "evaluation_id": evid,
