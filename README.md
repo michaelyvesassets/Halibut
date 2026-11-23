@@ -93,6 +93,9 @@ configs/data/          data catalogue, provider registry, sourced events, cross-
 configs/intel/markets/ market investigation specs
 docs/phase4_intelligence.md   components, providers, competitor model, learning engine, results
 docs/phase5_agents_learning.md  scorer, replay, agents, cost accounting, audit, demonstration
+docs/benchmark_haiku_v1_diagnostic.md  first live Claude benchmark: diagnosis and limitations
+docs/architecture/     Master Architecture v1.0 (proposed): layers, capability matrix, world model,
+                       agents, simulation and learning, operating loop, roadmap, decisions
 configs/llm/anthropic.toml      Claude provider: models, official prices, caps (inactive until approved)
 configs/llm/qwen.toml           Qwen provider (inactive until approved)
 src/halibut/
