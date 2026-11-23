@@ -1,0 +1,45 @@
+# Mechanism test for the Phase 1 "category contraction" (see docs/phase2_report.md).
+# Does contraction depend on habit structure? Loyalty / switching resistance switched off.
+# SYNTHETIC assumption variants.
+
+schema_version = "1.0"
+
+[suite]
+name = "switching_cost_mechanism_v1"
+description = "Category-units effects with loyalty and/or switching resistance removed."
+base_config = "../experiments/coffee_vs_matcha_v1.toml"
+seeds = [100, 101, 102, 103, 104, 105, 106, 107, 108, 109]
+scenarios = ["price_war", "combined"]
+reference_variant = "v1"
+metrics = ["category_units", "no_purchase_rate", "purchase_share_matcha"]
+time_limit_minutes = 5
+
+[overrides]
+"population.size" = 2000
+
+[[variants]]
+name = "v1"
+
+[[variants]]
+name = "no_loyalty"
+[variants.overrides]
+"population.segments[0].attributes.brand_loyalty.mean" = 0.0
+"population.segments[1].attributes.brand_loyalty.mean" = 0.0
+"population.segments[2].attributes.brand_loyalty.mean" = 0.0
+
+[[variants]]
+name = "no_resistance"
+[variants.overrides]
+"population.segments[0].attributes.switching_resistance.mean" = 0.0
+"population.segments[1].attributes.switching_resistance.mean" = 0.0
+"population.segments[2].attributes.switching_resistance.mean" = 0.0
+
+[[variants]]
+name = "neither"
+[variants.overrides]
+"population.segments[0].attributes.brand_loyalty.mean" = 0.0
+"population.segments[1].attributes.brand_loyalty.mean" = 0.0
+"population.segments[2].attributes.brand_loyalty.mean" = 0.0
+"population.segments[0].attributes.switching_resistance.mean" = 0.0
+"population.segments[1].attributes.switching_resistance.mean" = 0.0
+"population.segments[2].attributes.switching_resistance.mean" = 0.0
