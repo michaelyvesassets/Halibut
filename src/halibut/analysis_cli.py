@@ -45,6 +45,16 @@ def add_analysis_commands(sub) -> None:
     _common(c, "results/calibration")
     c.set_defaults(handler=_calibrate)
 
+    b = sub.add_parser("backtest", help="rolling-origin empirical backtest against baselines")
+    b.add_argument("spec")
+    b.add_argument("--origin", action="append", help="origin date YYYY-MM-DD (repeatable; default: spec origins)")
+    b.add_argument("--workers", type=int, default=default_workers())
+    b.add_argument("--cache", default=".halibut_cache")
+    b.add_argument("--out", default="results/backtests")
+    b.add_argument("--yes", action="store_true")
+    b.add_argument("--dry-run", action="store_true")
+    b.set_defaults(handler=_backtest)
+
 
 def parse_set(items: list[str]) -> dict:
     """Parse PATH=VALUE pairs; VALUE is a TOML literal (bare words are taken as strings)."""
@@ -158,3 +168,36 @@ def _calibrate(args):
         print(f"    [{r['role']:<7}] {r['name']:<30} obs={r['observed']:.4g} sim={r['simulated']:.4g} z={r['z']:+.2f}")
     print(f"Results: {path}")
     return 0
+
+
+@_guard
+def _backtest(args):
+    from .batch import check_budget, format_duration  # noqa: PLC0415
+    from .data.store import Store  # noqa: PLC0415
+    from .empirical.backtest import estimate_backtest, run_backtest  # noqa: PLC0415
+    from .empirical.report import write_backtest  # noqa: PLC0415
+    from .empirical.spec import load_pilot  # noqa: PLC0415
+    spec = load_pilot(args.spec)
+    store = Store(spec.store)
+    try:
+        est = estimate_backtest(spec, store, args.origin)
+        par = est["seconds_serial"] / (args.workers * (0.85 if args.workers > 1 else 1.0))
+        print(f"{spec.name}: {len(est['origins'])} origin(s), ~{est['evaluations_per_origin']} objective evaluations each; "
+              f"estimated {format_duration(par)} on {args.workers} worker(s) (cached work is skipped)")
+        if args.dry_run:
+            return 0
+        check_budget(par, spec.time_limit_seconds, args.yes)
+        res = run_backtest(spec, store, args.out, args.origin, args.workers, args.cache or None)
+        path = write_backtest(spec, res)
+        ev = res["evaluation"]
+        print(f"\nMAE (percentage points) of {spec.target_product} share, all horizons:")
+        for m in ev["ranking_by_mae"]:
+            a = ev["summary"][m]["all"]
+            print(f"  {m:<14} MAE={a['mae_pp']:6.2f}  RMSE={a['rmse_pp']:6.2f}  bias={a['bias_pp']:+6.2f}  "
+                  f"MASE={a['mase']:6.2f}  cov80={a['coverage80']:.2f}  n={a['n']}")
+        if ev["baselines_better_than_halibut"]:
+            print(f"BASELINES BETTER THAN HALIBUT (overall MAE): {', '.join(ev['baselines_better_than_halibut'])}")
+        print(f"Results: {path}")
+        return 0
+    finally:
+        store.close()
