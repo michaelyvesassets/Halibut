@@ -54,6 +54,8 @@ def _parser() -> argparse.ArgumentParser:
     add_analysis_commands(sub)
     from .data.cli import add_data_commands  # noqa: PLC0415
     add_data_commands(sub)
+    from .intel.cli import add_intel_commands  # noqa: PLC0415
+    add_intel_commands(sub)
     return p
 
 

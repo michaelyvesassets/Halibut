@@ -28,6 +28,8 @@ EVIDENCE_CLASSES = (
     "policy",
     "infrastructure",
     "macro",
+    "reference",  # entity reference data (identities, ownership, classification)
+    "presence",  # mapped physical footprint (e.g. outlets in OSM)
     "proxy_attention",  # search interest, page views
     "proxy_media",  # news coverage
 )
@@ -117,7 +119,7 @@ def load_catalogue(path: str | Path) -> Catalogue:
             raise ConfigError(f"duplicate source {s.id!r}")
         sources[s.id] = s
     datasets = {}
-    for t in root.tables("datasets"):
+    for t in root.tables("datasets", []):
         query = []
         for qt in t.tables("query"):
             vals = qt.raw("values")
@@ -127,7 +129,7 @@ def load_catalogue(path: str | Path) -> Catalogue:
             qt.done()
         d = Dataset(
             id=t.string("id"), source=t.string("source", choices=tuple(sources)),
-            adapter=t.string("adapter", choices=("ssb_pxweb",)), table=t.string("table"),
+            adapter=t.string("adapter", choices=("ssb_pxweb", "dft_csv")), table=t.string("table"),
             title=t.string("title"), frequency=t.string("frequency", choices=FREQUENCIES),
             evidence_class=t.string("evidence_class", choices=EVIDENCE_CLASSES),
             unit=t.string("unit"), measure=t.string("measure"), definition=t.string("definition"),

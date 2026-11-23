@@ -122,6 +122,87 @@ CREATE TABLE ingest_runs (
     message TEXT
 );
 """),
+    (2, """
+CREATE TABLE fetch_log (
+    fetch_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    provider TEXT NOT NULL,
+    method TEXT NOT NULL,
+    url TEXT NOT NULL,
+    status INTEGER,
+    bytes INTEGER NOT NULL DEFAULT 0,
+    seconds REAL NOT NULL DEFAULT 0,
+    at TEXT NOT NULL,
+    outcome TEXT NOT NULL,
+    run_id TEXT
+);
+CREATE TABLE entities (
+    entity_id TEXT PRIMARY KEY,
+    kind TEXT NOT NULL CHECK (kind IN ('company','brand','product','product_line','location','place','industry','market','segment')),
+    name TEXT NOT NULL,
+    epistemic_status TEXT NOT NULL CHECK (epistemic_status IN ('observed','derived','asserted')),
+    produced_by TEXT NOT NULL,
+    record_json TEXT NOT NULL
+);
+CREATE TABLE entity_identifiers (
+    entity_id TEXT NOT NULL REFERENCES entities(entity_id),
+    scheme TEXT NOT NULL,
+    value TEXT NOT NULL,
+    produced_by TEXT NOT NULL,
+    PRIMARY KEY (scheme, value, entity_id)
+);
+CREATE TABLE relationships (
+    rel_id TEXT PRIMARY KEY,
+    subject_id TEXT NOT NULL REFERENCES entities(entity_id),
+    predicate TEXT NOT NULL,
+    object_id TEXT NOT NULL REFERENCES entities(entity_id),
+    valid_from TEXT,
+    valid_to TEXT,
+    epistemic_status TEXT NOT NULL CHECK (epistemic_status IN ('observed','derived','asserted')),
+    produced_by TEXT NOT NULL,
+    snapshot_id INTEGER REFERENCES snapshots(snapshot_id),
+    available_at TEXT NOT NULL,
+    record_json TEXT NOT NULL
+);
+CREATE TABLE documents (
+    doc_id TEXT PRIMARY KEY,
+    url TEXT NOT NULL,
+    source_domain TEXT,
+    published_at TEXT NOT NULL,
+    available_at TEXT NOT NULL,
+    tone REAL,
+    snapshot_id INTEGER REFERENCES snapshots(snapshot_id),
+    evidence_class TEXT NOT NULL,
+    record_json TEXT NOT NULL
+);
+CREATE TABLE document_entities (
+    doc_id TEXT NOT NULL REFERENCES documents(doc_id),
+    entity_id TEXT NOT NULL REFERENCES entities(entity_id),
+    matched_alias TEXT NOT NULL,
+    PRIMARY KEY (doc_id, entity_id)
+);
+CREATE TABLE entity_observations (
+    series_id TEXT NOT NULL REFERENCES series(series_id),
+    entity_id TEXT NOT NULL REFERENCES entities(entity_id),
+    role TEXT NOT NULL,
+    PRIMARY KEY (series_id, entity_id, role)
+);
+CREATE TABLE intel_runs (
+    run_id TEXT PRIMARY KEY,
+    market_id TEXT NOT NULL,
+    as_of TEXT NOT NULL,
+    started_at TEXT NOT NULL,
+    finished_at TEXT,
+    status TEXT NOT NULL,
+    record_json TEXT NOT NULL
+);
+CREATE TABLE hypotheses (
+    hypothesis_id TEXT PRIMARY KEY,
+    run_id TEXT NOT NULL REFERENCES intel_runs(run_id),
+    status TEXT NOT NULL CHECK (status IN ('proposed','rejected','accepted_for_testing','tested_supported','tested_refuted')),
+    produced_by TEXT NOT NULL,
+    record_json TEXT NOT NULL
+);
+"""),
 ]
 
 

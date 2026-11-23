@@ -59,7 +59,27 @@ def test_migrations_idempotent(tmp_path):
     assert s.migrate() == []
     s.close()
     s2 = Store(tmp_path / "m.sqlite")
-    assert [r[0] for r in s2.conn.execute("SELECT version FROM schema_migrations")] == [1]
+    assert [r[0] for r in s2.conn.execute("SELECT version FROM schema_migrations")] == [1, 2]
+
+
+def test_v1_store_upgrades_in_place(tmp_path):
+    import sqlite3
+    from halibut.data import store as st
+    path = tmp_path / "old.sqlite"
+    saved = st.MIGRATIONS
+    st.MIGRATIONS = saved[:1]
+    try:
+        old = Store(path)
+        old.register_catalogue(load_catalogue(CATALOGUE))
+        n_sources = old.conn.execute("SELECT COUNT(*) FROM sources").fetchone()[0]
+        old.close()
+    finally:
+        st.MIGRATIONS = saved
+    new = Store(path)
+    assert [r[0] for r in new.conn.execute("SELECT version FROM schema_migrations")] == [1, 2]
+    assert new.conn.execute("SELECT COUNT(*) FROM sources").fetchone()[0] == n_sources
+    assert new.conn.execute("SELECT COUNT(*) FROM entities").fetchone()[0] == 0
+    new.close()
 
 
 def test_periods():

@@ -1,0 +1,129 @@
+# Intelligence providers (Phase 4). Sources carry licence and attribution;
+# provider datasets carry evidence class, frequency and availability lag.
+# Verified 2026-11-23 from this environment (see docs/phase4_intelligence.md).
+
+schema_version = "1.0"
+
+[[sources]]
+id = "worldbank"
+publisher = "World Bank"
+title = "World Development Indicators (API v2)"
+url = "https://data.worldbank.org"
+api = "https://api.worldbank.org/v2/"
+licence = "CC-BY-4.0"
+licence_url = "https://datacatalog.worldbank.org/public-licenses"
+attribution = "Source: World Bank, World Development Indicators (CC BY 4.0 unless otherwise noted per series)."
+redistribution_allowed = true
+access = "Open, no key. Halibut spaces requests >= 1 s."
+verified = "2026-11-23"
+notes = "Licence applies to most WDI series; some third-party series carry their own terms."
+
+[[sources]]
+id = "wikidata"
+publisher = "Wikimedia Foundation / Wikidata contributors"
+title = "Wikidata (wbsearchentities API and SPARQL query service)"
+url = "https://www.wikidata.org"
+api = "https://query.wikidata.org/sparql"
+licence = "CC0-1.0"
+licence_url = "https://creativecommons.org/publicdomain/zero/1.0/"
+attribution = "Entity data from Wikidata (CC0)."
+redistribution_allowed = true
+access = "Open, no key. Descriptive User-Agent with project URL; SPARQL 60 s query limit; Halibut spaces requests >= 2 s."
+verified = "2026-11-23"
+notes = "Community-edited: an assertion source, not ground truth. Halibut stores resolution method and candidates."
+
+[[sources]]
+id = "osm"
+publisher = "OpenStreetMap contributors (via Overpass API, overpass-api.de)"
+title = "OpenStreetMap features via Overpass API"
+url = "https://www.openstreetmap.org/copyright"
+api = "https://overpass-api.de/api/interpreter"
+licence = "ODbL-1.0"
+licence_url = "https://opendatacommons.org/licenses/odbl/1-0/"
+attribution = "© OpenStreetMap contributors, ODbL. Derived databases must be shared under ODbL."
+redistribution_allowed = true
+access = "Open, no key. Public instance: few concurrent slots; Halibut spaces requests >= 10 s, max few queries per run."
+verified = "2026-11-23"
+notes = "SHARE-ALIKE: any published database derived from OSM data must be ODbL. OSM is a current snapshot with uneven completeness."
+
+[[sources]]
+id = "gdelt"
+publisher = "The GDELT Project"
+title = "GDELT 2.0 Global Knowledge Graph (15-minute bulk files)"
+url = "https://www.gdeltproject.org"
+api = "http://data.gdeltproject.org/gdeltv2/"
+licence = "GDELT-open (free, unrestricted use with citation)"
+licence_url = "https://www.gdeltproject.org/about.html"
+attribution = "Source: The GDELT Project (https://www.gdeltproject.org)."
+redistribution_allowed = true
+access = "Bulk files open; DOC 2.0 API limited to 1 request per 5 s and returned HTTP 429 from this environment, so Halibut uses sampled bulk files only."
+verified = "2026-11-23"
+notes = "Metadata of news coverage (a media proxy), not sales. Halibut stores matched record metadata and URLs, not article text."
+
+[[sources]]
+id = "dft"
+publisher = "UK Department for Transport (DVLA data)"
+title = "Vehicle licensing statistics data files"
+url = "https://www.gov.uk/government/statistical-data-sets/vehicle-licensing-statistics-data-files"
+api = "https://www.gov.uk/api/content/government/statistical-data-sets/vehicle-licensing-statistics-data-files"
+licence = "OGL-UK-3.0"
+licence_url = "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
+attribution = "Contains public sector information licensed under the Open Government Licence v3.0 (Department for Transport)."
+redistribution_allowed = true
+access = "Open, no key."
+verified = "2026-11-23"
+notes = "Fallback for brand-level transactions because RDW Open Data (opendata.rdw.nl) had no public DNS record on 2026-11-23."
+
+[[datasets]]
+id = "worldbank_wdi"
+source = "worldbank"
+evidence_class = "macro"
+frequency = "A"
+unit = "indicator units (per series)"
+definition = "World Development Indicators fetched by indicator code and country (ISO); series id worldbank:<indicator>."
+publication_lag_days = 270
+
+[[datasets]]
+id = "wikidata_entities"
+source = "wikidata"
+evidence_class = "reference"
+frequency = "A"
+unit = "n/a"
+definition = "Entity search results and SPARQL claims (instance of, parent organisation, country, industry) used for entity resolution."
+publication_lag_days = 0
+
+[[datasets]]
+id = "osm_footprint"
+source = "osm"
+evidence_class = "presence"
+frequency = "A"
+unit = "mapped features"
+definition = "OpenStreetMap features matching tag filters within an ISO 3166-1 country area, as mapped at the query's OSM timestamp."
+publication_lag_days = 0
+
+[[datasets]]
+id = "gdelt_gkg_sample"
+source = "gdelt"
+evidence_class = "proxy_media"
+frequency = "M"
+unit = "matched news records"
+definition = "GKG 2.1 records from an explicit, reproducible sample of 15-minute files whose Organizations field contains a competitor alias as a whole organisation name."
+publication_lag_days = 1
+
+[[datasets]]
+id = "dft_veh0160_makes"
+source = "dft"
+evidence_class = "transaction"
+frequency = "Q"
+unit = "vehicles"
+definition = "DfT df_VEH0160_UK: vehicles registered for the first time, by body type, make, generic model, model and fuel, quarterly. DfT: 'New registration vehicles refer to vehicles that are registered with the DVLA for the first time. This includes both new vehicles and vehicles imported into the UK at the point of first UK registration.' Aggregated by Halibut to make x fuel for body type 'Cars'."
+publication_lag_days = 120
+
+[[datasets]]
+id = "dft_veh0160_models"
+source = "dft"
+evidence_class = "transaction"
+frequency = "Q"
+unit = "vehicles"
+definition = "As dft_veh0160_makes, aggregated to make x generic model (all fuels) for body type 'Cars', for competitor makes only."
+publication_lag_days = 120
