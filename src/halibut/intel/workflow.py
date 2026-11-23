@@ -153,13 +153,20 @@ def active_prediction_method(memory) -> tuple[str, dict | None]:
 
 def track_record(store, as_of: str, replay_id: str | None = None) -> dict:
     """Accuracy of previously scored predictions whose outcomes were published by ``as_of``."""
-    rows = store.conn.execute("""SELECT method, abs_error, in_interval80, direction_hit, interval_score80, record_json
-        FROM prediction_scores WHERE outcome_available_at<=?""", (to_timestamp(as_of),)).fetchall()
+    rows = store.conn.execute("""SELECT method, abs_error, in_interval80, direction_hit, interval_score80, record_json,
+        origin_as_of FROM prediction_scores WHERE outcome_available_at<=? ORDER BY origin_as_of""", (to_timestamp(as_of),)).fetchall()
     out: dict = {}
+    seen = set()
     for r in rows:
         rec = json.loads(r["record_json"])
         if replay_id is not None and rec.get("replay_id") != replay_id:
             continue
+        # identical forecasts from repeated replays count once
+        ident = (rec.get("produced_by"), rec.get("subject"), rec.get("hypothesis_mode"), r["method"],
+                 rec.get("interval_method"), rec.get("quantity_kind"), round(r["abs_error"], 12))
+        if ident in seen:
+            continue
+        seen.add(ident)
         key = (f"hypothesis:{rec['hypothesis_mode']}" if rec.get("hypothesis_id") and rec.get("hypothesis_mode")
                else f"{r['method']}/{rec.get('interval_method', 'naive')}/{rec.get('quantity_kind')}")
         e = out.setdefault(key, {"n": 0, "abs": [], "cov": [], "hit": [], "iscore": []})
@@ -195,8 +202,17 @@ def analyse(store, market, memory, run_id, exp_id, resolutions, *, agents=None, 
     audit = audit_transactions(retr, market, tx) if tx.get("available") else {"available": False}
     check_action("read_knowledge")
     tags = ["domain:share_forecasting", "domain:competitive_displacement", f"market:{market.id}"]
-    lessons = memory.retrieve(tags=tags, kinds=["lesson", "outcome", "question"], as_of=market.as_of)
-    lessons = [k for k in lessons if "outcome:prediction" not in k["scope"].get("tags", [])][:20]
+    raw_lessons = memory.retrieve(tags=tags, kinds=["lesson", "outcome", "question"], as_of=market.as_of, limit=500,
+                                  exclude_tags=["outcome:prediction"])
+    lessons, by_text = [], {}
+    for k in raw_lessons:  # identical statements from repeated runs on the same data are NOT independent evidence
+        if k["statement"] in by_text:
+            by_text[k["statement"]]["same_data_repetitions"] += 1
+            continue
+        k["same_data_repetitions"] = 1
+        by_text[k["statement"]] = k
+        lessons.append(k)
+    lessons = lessons[:20]
     prior_hypotheses = memory.retrieve(tags=[f"market:{market.id}"], kinds=["hypothesis"], as_of=market.as_of)
     record = track_record(store, market.as_of, replay_id)
     method, promotion = active_prediction_method(memory)

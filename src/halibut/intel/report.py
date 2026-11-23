@@ -63,7 +63,26 @@ def write_report(r: dict, out_dir) -> Path:
           "", "**Macro (World Bank):** " + ("; ".join(f"{k} {v['latest_period']}: {v['latest']:,.2f}" for k, v in mc.get("indicators", {}).items())
                                             if mc.get("available") else "unavailable")]
     L += ["", "## 4. Prior lessons considered", ""]
-    L += [f"- [{k['status']}] {k['kind']}: {k['statement']} (`{k['knowledge_id']}`)" for k in r["lessons"]] or ["- none"]
+    L += [f"- [{k['status']}] {k['kind']}: {k['statement']} (`{k['knowledge_id']}`"
+          + (f"; seen {k['same_data_repetitions']}x from repeated runs on the same data, not independent" if k.get("same_data_repetitions", 1) > 1 else "")
+          + ")" for k in r["lessons"]] or ["- none"]
+    tr = {k: v for k, v in r.get("track_record", {}).items() if k.startswith("hypothesis:")}
+    if tr:
+        L += ["", "**Track record of earlier hypothesis predictions (outcomes published by the as-of date):** "
+              + "; ".join(f"{k.split(':')[1]} n={v['n']}, direction held {100 * (v['direction_hit_rate'] or 0):.0f}%, "
+                          f"80% coverage {100 * v['coverage80']:.0f}%" for k, v in tr.items())]
+    au = r.get("audit", {})
+    if au.get("available"):
+        L += ["", "**Evidence audit:** " + ("all checks passed" if au["all_passed"] else "SOME CHECKS FAILED") + "; "
+              + "; ".join(f"{c['check']}: {'ok' if c['pass'] else 'FAIL'}" for c in au["checks"])]
+        for cid, d in au["decomposition"].items():
+            if cid in (r["market"]["focal"], r["market"]["target"]):
+                L.append(f"- {cid}: share change {d['delta_pp']:+.2f} pp = segment-mix {d['mix_effect_pp']:+.2f} + within-segment "
+                         f"{d['within_segment_effect_pp']:+.2f} + interaction {d['interaction_pp']:+.2f}; units {d['units_P4']:,.0f} -> {d['units_L4']:,.0f}")
+        dp = au.get("displacement")
+        if dp:
+            L.append(f"- Within {dp['segment']}: " + ", ".join(f"{c} {v:+.2f} pp" for c, v in dp["within_segment_share_changes_pp"].items())
+                     + f". {dp['assessment']}")
     pol = next((h.get("forecast_policy") for h in r["hypotheses"] if h.get("forecast_policy")), None)
     if pol:
         L += ["", f"**Effect on this run:** predictions use `{pol['method']}`; simulation use: `{pol['simulation_use']}`. {pol['note']}"

@@ -80,7 +80,8 @@ def empirical_halfwidth(store, method: str, as_of: str, replay_id: str | None, m
     errs = [r["abs_error"] for r in rows
             if json.loads(r["record_json"]).get("quantity_kind") == "share"
             and (replay_id is None or json.loads(r["record_json"]).get("replay_id") == replay_id)
-            and json.loads(r["record_json"]).get("interval_method") == "naive"]
+            and json.loads(r["record_json"]).get("interval_method") == "naive"
+            and json.loads(r["record_json"]).get("hypothesis_id") is None]  # policy forecasts only, not hypothesis predictions
     if len(errs) < min_n:
         return None
     return float(np.quantile(errs, 0.8))

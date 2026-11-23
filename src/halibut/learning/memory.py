@@ -112,7 +112,8 @@ class LearningMemory:
         self.store.conn.commit()
 
     def retrieve(self, *, tags: list[str] | None = None, kinds: list[str] | None = None,
-                 statuses: list[str] | None = None, limit: int = 50, as_of: str | None = None) -> list[dict]:
+                 statuses: list[str] | None = None, limit: int = 50, as_of: str | None = None,
+                 exclude_tags: list[str] | None = None) -> list[dict]:
         """Lessons and other knowledge whose scope tags overlap ``tags``. Includes
         contradicting and superseded items, with their links, so disagreement is visible.
 
@@ -129,6 +130,8 @@ class LearningMemory:
                 continue
             scope = json.loads(r["scope_json"])
             if tags and not set(tags) & set(scope.get("tags", [])):
+                continue
+            if exclude_tags and set(exclude_tags) & set(scope.get("tags", [])):
                 continue
             if kinds and r["kind"] not in kinds:
                 continue

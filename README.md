@@ -54,6 +54,12 @@ halibut intel smoke                                              # one live requ
 halibut intel investigate configs/intel/markets/uk_cars_bev_v1.toml --dry-run
 halibut intel investigate configs/intel/markets/uk_cars_bev_v1.toml [--offline]
 
+# Closed learning loop and agents (Phase 5; offline, mock LLM; Qwen requires approval)
+halibut intel replay configs/intel/markets/uk_cars_bev_v1.toml --agents reference
+halibut intel replay configs/intel/markets/uk_cars_bev_v1.toml --agents mock --faults
+halibut intel compare results/intel/replays/*.json
+halibut learn score [--as-of DATE]        # score predictions whose outcomes are published
+
 # Learning memory and evaluation (Phase 4)
 halibut learn demo                        # baseline -> change -> evaluation -> lesson -> informed next experiment
 halibut learn lessons --tag domain:share_forecasting
@@ -80,6 +86,8 @@ docs/m15_source_verification.md, docs/phase3_data.md   real-world sources and da
 configs/data/          data catalogue, provider registry, sourced events, cross-table checks
 configs/intel/markets/ market investigation specs
 docs/phase4_intelligence.md   components, providers, competitor model, learning engine, results
+docs/phase5_agents_learning.md  scorer, replay, agents, cost accounting, audit, demonstration
+configs/llm/qwen.example.toml   LLM provider template (inactive until approved)
 src/halibut/
   config.py  distributions.py  population.py  market.py  network.py
   decision.py  influence.py  interventions.py  engine.py  metrics.py
@@ -90,7 +98,8 @@ src/halibut/
   data/                              # catalogue, SQLite store, SSB adapter, events, quality (no engine coupling)
   data/providers/                    # World Bank, Wikidata, OSM/Overpass, GDELT, DfT (budgeted, logged)
   intel/                             # market specs, retrieval, signals, reference agents, workflow, reports
-  learning/                          # learning memory, lineage, evaluation rules, promotions, demo
+  learning/                          # learning memory, lineage, evaluation rules, promotions, prediction scorer
+  agents/                            # LLM provider interface, cache, accounting; Research/Hypothesis/Critic
   validation.py                      # validation/safety engine
   interfaces.py                      # protocols for future AI integrations (no implementations)
   cli.py  analysis_cli.py
