@@ -7,3 +7,6 @@ build/
 dist/
 results/
 .halibut_cache/
+data/raw/
+data/*.sqlite
+data/*.sqlite-journal

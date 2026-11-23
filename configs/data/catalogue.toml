@@ -1,0 +1,168 @@
+# Halibut real-world data catalogue.
+#
+# Provenance rules:
+# - Every dataset names its source, licence, evidence class and the
+#   publisher's definition (verbatim labels and statements, see M15/M16 docs).
+# - `universe_dims` define populations that must never be mixed in a share
+#   (e.g. new vs second-hand imported vehicles).
+# - `publication_lag_days` is a CONSERVATIVE availability estimate used only
+#   for history present in the first retrieval (observed lags are shorter).
+# Industry knowledge lives here and in event files, never in engine code.
+
+schema_version = "1.0"
+
+[[sources]]
+id = "ssb"
+publisher = "Statistics Norway (Statistisk sentralbyrå, SSB)"
+title = "StatBank Norway (PxWeb API v0)"
+url = "https://www.ssb.no/en/statbank"
+api = "https://data.ssb.no/api/v0/en/table/"
+licence = "CC-BY-4.0"
+licence_url = "https://www.ssb.no/en/diverse/lisens"
+attribution = "Source: Statistics Norway (SSB), https://www.ssb.no, licensed under CC BY 4.0. Halibut may aggregate or transform the data."
+redistribution_allowed = true
+access = "Open, no registration or key. Rate limit reported as ~30 queries per 60 s; Halibut waits >= 2.5 s between requests."
+verified = "2026-11-23"
+notes = "SSB is migrating to PxWebApi v2; v0 endpoints may be retired. SSB does not publish data vintages."
+
+# --------------------------------------------------------------------------- vehicles
+
+[[datasets]]
+id = "ssb_14020_private_cars"
+source = "ssb"
+adapter = "ssb_pxweb"
+table = "14020"
+title = "First time registered vehicles, by type of registration and type of fuel: private cars, monthly"
+frequency = "M"
+evidence_class = "transaction"
+unit = "vehicles"
+measure = "count of first-time registrations during the month"
+definition = """SSB table 14020 'First time registered vehicles, by type of registration, type of fuel, contents and month' (Norwegian: 'Førstegangsregistrerte kjøretøy'). Type of registration: 'N' = 'New vehicles' (Nye kjøretøy), 'B' = 'Second-hand imported vehicles' (Bruktimporterte kjøretøy). Fuel groups: '19' Electric/zero-emission (Elektrisk/nullutslipp), '20' Fossil, '21' Hybrid, '6' Other fuel. Contents 'Personbiler' = Private cars, reference period 'During the month'. SSB: 'Statistics on first-time registered vehicles in Norway cover vehicles registered during the statistical year'; data source: the Register of Vehicles at the Norwegian Public Roads Administration (Statens vegvesen). Vehicle groups follow SSB classification 111 (Classification of vehicle groups). A formal published definition separating new from second-hand imported vehicles beyond these labels was not located (M16)."""
+publication_lag_days = 10
+series_dims = ["TypeRegistrering", "DrivstoffType"]
+universe_dims = ["TypeRegistrering"]
+time_dim = "Tid"
+default_geo = "NO"
+caveats = [
+  "New ('N') and second-hand imported ('B') registrations are different populations; shares are computed within one only.",
+  "'Hybrid' (21) aggregates chargeable (plug-in) and non-chargeable hybrids; the split exists only in annual table 12906.",
+  "'Electric/zero-emission' (19) may include hydrogen vehicles; verify against 12906 (M18).",
+  "Registrations approximate purchases: they include fleet, leasing and company registrations and exclude cars bought but not yet registered.",
+]
+
+[[datasets.query]]
+code = "TypeRegistrering"
+values = ["N", "B"]
+[[datasets.query]]
+code = "DrivstoffType"
+values = ["*"]
+[[datasets.query]]
+code = "ContentsCode"
+values = ["Personbiler"]
+[[datasets.query]]
+code = "Tid"
+values = ["*"]
+
+[[datasets]]
+id = "ssb_12906_private_cars_regional"
+source = "ssb"
+adapter = "ssb_pxweb"
+table = "12906"
+title = "First time registered vehicles, by region, type of registration and detailed type of fuel: private cars, annual"
+frequency = "A"
+evidence_class = "transaction"
+unit = "vehicles"
+measure = "count of first-time registrations during the year"
+definition = """SSB table 12906 'First time registered vehicles, by region, type of registration, euro classes, type of fuel, contents and year' (euro classes eliminated, i.e. summed by SSB). Type of registration 'N' New vehicles / 'B' Second-hand imported vehicles. Detailed fuels: 1 Petrol, 2 Diesel, 3 Paraffin, 4 Gas, 5 Electricity, 13 Hydrogen, 14 Petrol hybrid chargeable, 15 Petrol hybrid non-chargeable, 16 Diesel hybrid chargeable, 17 Diesel hybrid non-chargeable, 6 Other fuel. Contents 'Personbil1' = Private cars. Regions are SSB region codes as published (country '0', counties, municipalities, '9999' unknown municipality)."""
+publication_lag_days = 75
+series_dims = ["TypeRegistrering", "DrivstoffType"]
+universe_dims = ["TypeRegistrering"]
+geo_dim = "Region"
+time_dim = "Tid"
+default_geo = "NO"
+caveats = [
+  "Region codes follow the classification in force when published; Norwegian county and municipality reforms (2020, 2024) change codes, so regional series need harmonisation before comparison over time.",
+  "Annual only, 2019 onward.",
+]
+
+[[datasets.query]]
+code = "Region"
+values = ["*"]
+[[datasets.query]]
+code = "TypeRegistrering"
+values = ["N", "B"]
+[[datasets.query]]
+code = "DrivstoffType"
+values = ["*"]
+[[datasets.query]]
+code = "ContentsCode"
+values = ["Personbil1"]
+[[datasets.query]]
+code = "Tid"
+values = ["*"]
+
+[[datasets]]
+id = "ssb_07849_private_car_fleet"
+source = "ssb"
+adapter = "ssb_pxweb"
+table = "07849"
+title = "Registered vehicles (fleet stock), by region and type of fuel: private cars, annual"
+frequency = "A"
+evidence_class = "stock"
+unit = "vehicles"
+measure = "registered vehicles at year end"
+definition = """SSB table 07849 'Registered vehicles, by region, type of transport, type of fuel, contents and year' (type of transport eliminated, i.e. summed by SSB). Fuels: 1 Petrol, 2 Diesel, 3 Paraffin, 4 Gas, 5 Electricity, 6 Other fuel. Contents 'Personbil1' = Private cars. SSB: 'vehicles with all kinds of Norwegian number plates except trade plates'."""
+publication_lag_days = 120
+series_dims = ["DrivstoffType"]
+universe_dims = []
+geo_dim = "Region"
+time_dim = "Tid"
+default_geo = "NO"
+caveats = [
+  "This fuel classification has NO hybrid category; hybrids are counted under their combustion fuel. Never combine with 14020 fuel groups.",
+  "A stock, not a flow: reflects purchases, scrapping, exports and migration.",
+  "Region codes change with territorial reforms (see 12906).",
+]
+
+[[datasets.query]]
+code = "Region"
+values = ["*"]
+[[datasets.query]]
+code = "DrivstoffType"
+values = ["*"]
+[[datasets.query]]
+code = "ContentsCode"
+values = ["Personbil1"]
+[[datasets.query]]
+code = "Tid"
+values = ["*"]
+
+# --------------------------------------------------------------------------- covariates
+
+[[datasets]]
+id = "ssb_09654_fuel_prices"
+source = "ssb"
+adapter = "ssb_pxweb"
+table = "09654"
+title = "Prices on engine fuel (NOK per litre), monthly"
+frequency = "M"
+evidence_class = "price"
+unit = "NOK per litre"
+measure = "average retail price"
+definition = """SSB table 09654 'Prices on engine fuel (NOK per litres), by petroleum products, contents and month': '031' Motor gasoline, leadfree 95 octane; '035' Dutiable diesel."""
+publication_lag_days = 20
+series_dims = ["PetroleumProd"]
+universe_dims = []
+time_dim = "Tid"
+default_geo = "NO"
+caveats = ["Nominal prices (not deflated)."]
+
+[[datasets.query]]
+code = "PetroleumProd"
+values = ["*"]
+[[datasets.query]]
+code = "ContentsCode"
+values = ["Priser"]
+[[datasets.query]]
+code = "Tid"
+values = ["*"]
