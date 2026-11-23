@@ -29,6 +29,9 @@ def add_learn_commands(sub) -> None:
     le.add_argument("--kind", action="append")
     ib = ls.add_parser("import-backtest", help="record a completed backtest as an experiment and outcome")
     ib.add_argument("result_dir")
+    sc = ls.add_parser("score", help="score open predictions with data published by --as-of (default: now)")
+    sc.add_argument("--as-of")
+    sc.add_argument("--tag", action="append")
     pr = ls.add_parser("promote", help="activate an eligible candidate (explicit approval required)")
     pr.add_argument("component")
     pr.add_argument("evaluation_id")
@@ -52,6 +55,16 @@ def _handle(args) -> int:
                 print(f"[{k['status']:<12}] {k['kind']:<10} {k['knowledge_id']}  by {k['produced_by']}\n    {k['statement']}")
                 for ln in k["links"]:
                     print(f"      {ln['from_id']} --{ln['relation']}--> {ln['to_id']}  ({ln['note'] or ''})")
+            return 0
+        if args.learn_command == "score":
+            from ..data.store import utc_now  # noqa: PLC0415
+            from .predictions import score_due  # noqa: PLC0415
+            res = score_due(store, mem, args.as_of or utc_now(), tags=args.tag)
+            failed = sum(r["failed"] for r in res)
+            print(f"scored {len(res)} predictions ({failed} failed direction or interval) as of {args.as_of or 'now'}")
+            for r in res[:20]:
+                print(f"  {r['prediction']}: point {100 * r['point']:.2f}% realized {100 * r['realized']:.2f}% "
+                      f"{'FAILED' if r['failed'] else 'ok'} {r['explanations']}")
             return 0
         if args.learn_command == "import-backtest":
             return _import_backtest(store, mem, Path(args.result_dir))

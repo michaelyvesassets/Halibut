@@ -119,57 +119,17 @@ def investigate(store, market_path, out_dir="results/intel", raw_dir="data/raw",
                                              tuple(market.gdelt_fips), max_files=max(len(pl["gdelt_files"]), 1)))
 
     # ---------------------------------------------------------------- analysis (as of the market date)
-    check_action("read_evidence")
-    retr = StoreEvidenceRetriever(store, market.as_of)
-    tx = sig.transaction_signals(retr, market, brands)
-    signals = {"transactions": tx, "products": sig.product_signals(retr, market, [market.focal, market.target]
-                                                                   if market.focal else list(brands))
-               if tx.get("available") else {},
-               "media": sig.media_signals(retr, market, brands), "footprint": sig.footprint_signals(retr, market, brands),
-               "macro": sig.macro_signals(retr, market), "groups": sig.group_signals(retr, tx, brands) if tx.get("available") else {}}
-    metrics = {m["id"]: m for m in tx.get("metrics", [])}
-    check_action("read_knowledge")
-    lessons = memory.retrieve(tags=["domain:share_forecasting", "domain:competitive_displacement", f"market:{market.id}"],
-                              kinds=["lesson", "outcome", "question"])
-    prior_hypotheses = memory.retrieve(tags=[f"market:{market.id}"], kinds=["hypothesis"])
-    unresolved = [k for k, v in resolutions.items() if v.get("method") == "unresolved"]
-    ctx = {"run_id": run_id, "market": market, "signals": signals, "lessons": lessons, "unresolved": unresolved}
-    check_action("propose_hypothesis")
-    hyps = ReferenceHypothesisAgent().propose(ctx)
-    critic, drafter = ReferenceCritic(), ReferenceScenarioDrafter()
-    accepted, rejected, drafts = [], [], []
-    for h in hyps:
-        problems = validate_hypothesis(h, retr, metrics, retr.as_of)
-        h["validation"] = {"passed": not problems, "problems": problems}
-        (accepted if not problems else rejected).append(h)
-    for h in accepted:
-        h["critiques"] = critic.critique(h, ctx)
-        kid = memory.submit("hypothesis", h["claim"], h["produced_by"],
-                            {"tags": ["domain:competitive_displacement", f"market:{market.id}", f"mode:{h['mode']}"]},
-                            h["evidence"], experiment_id=exp_id, confidence=h["confidence"], record=h)
-        pid = memory.submit("prediction", json.dumps(h["prediction"], sort_keys=True), h["produced_by"],
-                            {"tags": [f"market:{market.id}"], "resolvable_after": h["prediction"]["resolvable_after"]},
-                            h["evidence"], experiment_id=exp_id, record={"hypothesis": h["id"]})
-        memory.link(pid, "derived_from", kid, h["produced_by"])
-        for les in lessons:
-            memory.link(kid, "considered", les["knowledge_id"], h["produced_by"])
-        for c in h["critiques"]:
-            cid = memory.submit("critique", c["statement"], critic.id, {"tags": [f"market:{market.id}"]}, [kid], experiment_id=exp_id)
-            memory.link(cid, "critiques", kid, critic.id)
-        store.conn.execute("INSERT OR REPLACE INTO hypotheses VALUES (?,?,?,?,?)",
-                           (h["id"], run_id, "proposed", h["produced_by"], json.dumps(h, default=str)))
-        h["knowledge_id"] = kid
-        check_action("propose_scenario")
-        raw = drafter.draft(h, ctx)
-        if raw:
-            drafts.append(_preview(raw, h))
-    store.conn.commit()
+    a = analyse(store, market, memory, run_id, exp_id, resolutions)
+    retr, signals = a["retriever"], a["signals"]
+    accepted, rejected, drafts, lessons, prior_hypotheses = (a["accepted"], a["rejected"], a["drafts"], a["lessons"],
+                                                            a["prior_hypotheses"])
     report = {"run_id": run_id, "experiment_id": exp_id, "market": _market_dict(market), "plan": pl, "steps": steps,
               "budget": budget.as_dict(), "resolutions": resolutions, "signals": _strip(signals), "lessons": lessons,
               "hypotheses": accepted, "rejected_hypotheses": rejected, "scenario_drafts": drafts,
               "prior_hypotheses": [{"id": k["knowledge_id"], "status": k["status"], "created_at": k["created_at"],
                                     "statement": k["statement"]} for k in prior_hypotheses],
-              "graph": _graph(retr, brands), "sources": _sources(store),
+              "graph": _graph(retr, brands), "sources": _sources(store), "track_record": a["track_record"],
+              "prediction_policy": a["prediction_policy"], "audit": a["audit"], "agent_costs": a["agent_costs"],
               "seconds": round(time.monotonic() - t0, 1)}
     from .report import write_report  # noqa: PLC0415
     path = write_report(report, out_dir)
@@ -180,6 +140,123 @@ def investigate(store, market_path, out_dir="results/intel", raw_dir="data/raw",
     store.conn.commit()
     report["path"] = path
     return report
+
+
+def active_prediction_method(memory) -> tuple[str, dict | None]:
+    """The prediction method in force: only an APPROVED promotion changes it (default 'level')."""
+    prom = memory.active("intel.prediction_policy")
+    if not prom:
+        return "level", None
+    exp = memory.experiment(prom["experiment_id"])
+    return (exp.get("lineage") or {}).get("parameters", {}).get("method", "level"), prom
+
+
+def track_record(store, as_of: str, replay_id: str | None = None) -> dict:
+    """Accuracy of previously scored predictions whose outcomes were published by ``as_of``."""
+    rows = store.conn.execute("""SELECT method, abs_error, in_interval80, direction_hit, interval_score80, record_json
+        FROM prediction_scores WHERE outcome_available_at<=?""", (to_timestamp(as_of),)).fetchall()
+    out: dict = {}
+    for r in rows:
+        rec = json.loads(r["record_json"])
+        if replay_id is not None and rec.get("replay_id") != replay_id:
+            continue
+        key = (f"hypothesis:{rec['hypothesis_mode']}" if rec.get("hypothesis_id") and rec.get("hypothesis_mode")
+               else f"{r['method']}/{rec.get('interval_method', 'naive')}/{rec.get('quantity_kind')}")
+        e = out.setdefault(key, {"n": 0, "abs": [], "cov": [], "hit": [], "iscore": []})
+        e["n"] += 1
+        e["abs"].append(r["abs_error"])
+        e["cov"].append(r["in_interval80"])
+        e["iscore"].append(r["interval_score80"])
+        if r["direction_hit"] is not None:
+            e["hit"].append(r["direction_hit"])
+    return {k: {"n": v["n"], "mae_pp": 100 * sum(v["abs"]) / v["n"], "coverage80": sum(v["cov"]) / v["n"],
+                "interval_score80_pp": 100 * sum(v["iscore"]) / v["n"],
+                "direction_hit_rate": (sum(v["hit"]) / len(v["hit"])) if v["hit"] else None} for k, v in out.items()}
+
+
+def analyse(store, market, memory, run_id, exp_id, resolutions, *, agents=None, replay_id=None, preview=True,
+            policy_eval=False) -> dict:
+    """Analysis stage: as-of evidence -> signals -> lessons -> hypotheses -> critiques -> validation -> predictions
+    -> scenario drafts. Network-free; reusable for historical replay (``market.as_of`` is the cutoff)."""
+    from .audit import audit_transactions  # noqa: PLC0415
+    from .forecast import hypothesis_prediction, policy_predictions  # noqa: PLC0415
+    from ..agents.orchestrator import ReferenceAgentSet  # noqa: PLC0415
+    agents = agents or ReferenceAgentSet()
+    check_action("read_evidence")
+    retr = StoreEvidenceRetriever(store, market.as_of)
+    brands = {c.id: f"brand:{c.id}" for c in market.competitors}
+    tx = sig.transaction_signals(retr, market, brands)
+    signals = {"transactions": tx, "products": sig.product_signals(retr, market, [market.focal, market.target]
+                                                                   if market.focal else list(brands))
+               if tx.get("available") else {},
+               "media": sig.media_signals(retr, market, brands), "footprint": sig.footprint_signals(retr, market, brands),
+               "macro": sig.macro_signals(retr, market), "groups": sig.group_signals(retr, tx, brands) if tx.get("available") else {}}
+    metrics = {m["id"]: m for m in tx.get("metrics", [])}
+    audit = audit_transactions(retr, market, tx) if tx.get("available") else {"available": False}
+    check_action("read_knowledge")
+    tags = ["domain:share_forecasting", "domain:competitive_displacement", f"market:{market.id}"]
+    lessons = memory.retrieve(tags=tags, kinds=["lesson", "outcome", "question"], as_of=market.as_of)
+    lessons = [k for k in lessons if "outcome:prediction" not in k["scope"].get("tags", [])][:20]
+    prior_hypotheses = memory.retrieve(tags=[f"market:{market.id}"], kinds=["hypothesis"], as_of=market.as_of)
+    record = track_record(store, market.as_of, replay_id)
+    method, promotion = active_prediction_method(memory)
+    unresolved = [k for k, v in resolutions.items() if v.get("method") == "unresolved"]
+    ctx = {"run_id": run_id, "market": market, "signals": signals, "lessons": lessons, "unresolved": unresolved,
+           "metrics": metrics, "audit": audit, "track_record": record, "retriever": retr}
+    extra_tags = [f"replay:{replay_id}"] if replay_id else []
+    hyps, _ = agents.propose(ctx)
+    decomp_numbers = {round(v, 2) for d in audit.get("decomposition", {}).values() for k, v in d.items() if k.endswith("_pp")}
+    accepted, rejected, drafts, policy_preds = [], [], [], []
+    for h in hyps:
+        problems = validate_hypothesis(h, retr, metrics, retr.as_of, extra_numbers=decomp_numbers)
+        h["validation"] = {"passed": not problems, "problems": problems}
+        (accepted if not problems else rejected).append(h)
+    critiques = agents.critique(accepted, ctx)
+    for h in accepted:
+        h["critiques"] = critiques.get(h["id"], [])
+        h["track_record"] = record
+        kid = memory.submit("hypothesis", h["claim"], h["produced_by"],
+                            {"tags": ["domain:competitive_displacement", f"market:{market.id}", f"mode:{h['mode']}"] + extra_tags},
+                            h["evidence"], experiment_id=exp_id, confidence=h["confidence"], record=h, available_at=retr.as_of)
+        h["knowledge_id"] = kid
+        v2 = hypothesis_prediction(h, retr, market, tx, method, replay_id)
+        if v2:
+            v2["hypothesis_knowledge_id"] = kid
+            h["prediction"]["resolvable_after"] = v2["resolvable_after"]
+            h["prediction_v2"] = v2
+            pid = memory.submit("prediction", f"{h['id']}: {v2['method']} point {100 * v2['point']:.2f}% "
+                                f"(80% {100 * v2['interval80'][0]:.2f}-{100 * v2['interval80'][1]:.2f}) for "
+                                f"{', '.join(v2['quantity'].get('periods') or v2['quantity']['a']['periods'])}",
+                                h["produced_by"], {"tags": [f"market:{market.id}", "prediction:hypothesis"] + extra_tags,
+                                                   "resolvable_after": v2["resolvable_after"]},
+                                h["evidence"], experiment_id=exp_id, record={"prediction": v2, "hypothesis": h["id"]},
+                                available_at=retr.as_of)
+            memory.link(pid, "derived_from", kid, h["produced_by"])
+        for les in lessons:
+            memory.link(kid, "considered", les["knowledge_id"], h["produced_by"])
+        for c in h["critiques"]:
+            cid = memory.submit("critique", c["statement"], c.get("produced_by", agents.critic_id),
+                                {"tags": [f"market:{market.id}"] + extra_tags}, [kid], experiment_id=exp_id,
+                                available_at=retr.as_of)
+            memory.link(cid, "critiques", kid, c.get("produced_by", agents.critic_id))
+        store.conn.execute("INSERT OR REPLACE INTO hypotheses VALUES (?,?,?,?,?)",
+                           (h["id"], run_id, "proposed", h["produced_by"], json.dumps(h, default=str)))
+        check_action("propose_scenario")
+        raw = agents.draft(h, ctx) if preview else None
+        if raw:
+            drafts.append(_preview(raw, h))
+    if policy_eval and tx.get("available"):
+        for p in policy_predictions(store, retr, market, tx, "engine:prediction_policies", replay_id):
+            memory.submit("prediction", f"policy {p['method']}/{p['interval_method']} {p['subject']}: point "
+                          f"{100 * p['point']:.2f}% for {', '.join(p['quantity']['periods'])}", "engine:prediction_policies",
+                          {"tags": [f"market:{market.id}", "prediction:policy", f"method:{p['method']}"] + extra_tags},
+                          p["evidence"], experiment_id=exp_id, record={"prediction": p}, available_at=retr.as_of)
+            policy_preds.append(p)
+    store.conn.commit()
+    return {"retriever": retr, "signals": signals, "metrics": metrics, "lessons": lessons,
+            "prior_hypotheses": prior_hypotheses, "accepted": accepted, "rejected": rejected, "drafts": drafts,
+            "track_record": record, "prediction_policy": {"method": method, "promotion": promotion},
+            "audit": audit, "agent_costs": agents.costs(), "agent_set": agents.name, "policy_predictions": policy_preds}
 
 
 def _preview(raw: dict, h: dict) -> dict:

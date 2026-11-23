@@ -69,7 +69,7 @@ class LearningMemory:
     # ------------------------------------------------------------------ knowledge
     def submit(self, kind: str, statement: str, produced_by: str, scope: dict, evidence: list[str], *,
                experiment_id: str | None = None, confidence: str | None = None, record: dict | None = None,
-               status: str = "proposed") -> str:
+               status: str = "proposed", available_at: str | None = None) -> str:
         if kind not in KNOWLEDGE_KINDS:
             raise ConfigError(f"unknown knowledge kind {kind!r}")
         if produced_by.startswith("agent:") and status not in AGENT_ALLOWED_INITIAL:
@@ -80,9 +80,11 @@ class LearningMemory:
         now = utc_now()
         self.store.conn.execute(
             """INSERT OR IGNORE INTO knowledge (knowledge_id, kind, statement, status, produced_by, experiment_id,
-               scope_json, evidence_json, confidence, created_at, updated_at, record_json) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
+               scope_json, evidence_json, confidence, created_at, updated_at, record_json, available_at)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
             (kid, kind, statement, status, produced_by, experiment_id, json.dumps(scope, sort_keys=True),
-             json.dumps(sorted(evidence)), confidence, now, now, json.dumps(record or {}, sort_keys=True, default=str)))
+             json.dumps(sorted(evidence)), confidence, now, now, json.dumps(record or {}, sort_keys=True, default=str),
+             available_at))
         self.store.conn.commit()
         return kid
 
@@ -110,12 +112,21 @@ class LearningMemory:
         self.store.conn.commit()
 
     def retrieve(self, *, tags: list[str] | None = None, kinds: list[str] | None = None,
-                 statuses: list[str] | None = None, limit: int = 50) -> list[dict]:
+                 statuses: list[str] | None = None, limit: int = 50, as_of: str | None = None) -> list[dict]:
         """Lessons and other knowledge whose scope tags overlap ``tags``. Includes
-        contradicting and superseded items, with their links, so disagreement is visible."""
+        contradicting and superseded items, with their links, so disagreement is visible.
+
+        ``as_of`` (historical replay): only knowledge whose ``available_at`` (the
+        availability of the data it rests on; else its creation time) is on or
+        before ``as_of``. Status changes are not time-stamped per as-of yet, so
+        replays use the status recorded with the item's availability."""
+        from ..data.store import to_timestamp  # noqa: PLC0415
         rows = self.store.conn.execute("SELECT * FROM knowledge ORDER BY created_at DESC").fetchall()
+        cutoff = to_timestamp(as_of) if as_of else None
         out = []
         for r in rows:
+            if cutoff and (r["available_at"] or r["created_at"]) > cutoff:
+                continue
             scope = json.loads(r["scope_json"])
             if tags and not set(tags) & set(scope.get("tags", [])):
                 continue

@@ -20,6 +20,17 @@ def _pp(x):
     return None if x is None else 100 * x
 
 
+def empirical_confidence(record: dict, mode: str, heuristic: str, min_n: int = 10) -> tuple[str, dict]:
+    """Confidence from the track record of this hypothesis mode (outcomes published by the as-of date),
+    falling back to the rule's heuristic when fewer than ``min_n`` outcomes exist."""
+    tr = record.get(f"hypothesis:{mode}")
+    if not tr or tr["n"] < min_n or tr.get("direction_hit_rate") is None:
+        return heuristic, {"basis": "heuristic", "n": tr["n"] if tr else 0}
+    hit = tr["direction_hit_rate"]
+    return ("medium" if hit >= 0.75 else "low"), {"basis": "empirical", "n": tr["n"], "direction_hit_rate": hit,
+                                                   "coverage80": tr["coverage80"]}
+
+
 def _resolve_date(as_of: str, quarters: int = 2) -> str:
     # data for the next `quarters` quarters is published ~120 days after each quarter end
     return (date.fromisoformat(as_of[:10]) + timedelta(days=91 * quarters + 120)).isoformat()
@@ -30,12 +41,13 @@ class ReferenceHypothesisAgent:
 
     def _h(self, ctx, mode, claim, subjects, evidence, prediction, confidence, rationale, levers=(), mechanisms=(),
            uncertainties=()):
+        confidence, basis = empirical_confidence(ctx.get("track_record", {}), mode, confidence)
         hid = "hyp:" + stable_id(ctx["run_id"], claim)
         return {"id": hid, "mode": mode, "claim": claim, "subjects": list(subjects), "evidence": list(evidence),
                 "prediction": prediction, "confidence": confidence, "rationale": rationale,
                 "levers": list(levers), "mechanism_candidates": list(mechanisms), "uncertainties": list(uncertainties),
                 "status": "proposed", "epistemic_status": "hypothesis", "produced_by": self.id,
-                "rule_thresholds": {"share_delta_pp": SHARE_DELTA_PP},
+                "rule_thresholds": {"share_delta_pp": SHARE_DELTA_PP}, "confidence_basis": basis,
                 "forecast_policy": ctx.get("forecast_policy"),
                 "lessons_considered": [k["knowledge_id"] for k in ctx.get("lessons", [])]}
 

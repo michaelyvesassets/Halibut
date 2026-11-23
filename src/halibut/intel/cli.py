@@ -29,6 +29,14 @@ def add_intel_commands(sub) -> None:
     inv.add_argument("--offline", action="store_true", help="use only evidence already in the store")
     inv.add_argument("--yes", action="store_true", help="proceed even if the estimate exceeds the market's limits")
     inv.add_argument("--dry-run", action="store_true", help="print the plan and budget, then exit")
+    rp = isub.add_parser("replay", help="historical replay: full learning cycle with publication-date cutoffs (offline)")
+    rp.add_argument("market")
+    rp.add_argument("--agents", choices=("reference", "mock", "qwen"), default="reference")
+    rp.add_argument("--faults", action="store_true", help="mock agents: inject citation/number faults")
+    rp.add_argument("--origin", action="append", help="origin date (repeatable; default: 10 half-yearly origins)")
+    rp.add_argument("--out", default="results/intel/replays")
+    cp = isub.add_parser("compare", help="compare replay summaries (quality, runtime, cost)")
+    cp.add_argument("summaries", nargs="+")
     p.set_defaults(handler=_handle)
 
 
@@ -44,6 +52,10 @@ def _handle(args) -> int:
     try:
         if args.intel_command == "smoke":
             return smoke(store, args)
+        if args.intel_command == "replay":
+            return _replay(store, args)
+        if args.intel_command == "compare":
+            return _compare(args)
         from .workflow import investigate_cli  # noqa: PLC0415
         return investigate_cli(store, args)
     finally:
@@ -115,3 +127,44 @@ def smoke(store, args) -> int:
     path.write_text(json.dumps({"checked_at": utc_now(), "results": results}, indent=2) + "\n")
     print(f"report: {path}")
     return 0 if all(r["status"] == "ok" for k, r in results.items() if k != "rdw") else 1
+
+
+def _replay(store, args) -> int:
+    from .replay import replay  # noqa: PLC0415
+    print(f"replay {args.market} with {args.agents} agents (offline; no paid calls unless --agents qwen is approved)")
+    r = replay(store, args.market, args.origin, args.agents, args.faults)
+    out = Path(args.out)
+    out.mkdir(parents=True, exist_ok=True)
+    path = out / f"{r['replay_id']}_{args.agents}.json"
+    path.write_text(json.dumps(r, indent=1, default=str) + "\n")
+    _print_summary(r)
+    for e in r["evaluations"]:
+        print(f"  lesson [{e.get('lesson_status')}] {e['comparison']}: {e.get('baseline_mean_pp', 0):.3f} -> "
+              f"{e.get('candidate_mean_pp', 0):.3f} pp ({e.get('result')}, {e.get('promotion')})")
+    print(f"summary: {path}")
+    return 0
+
+
+def _print_summary(r: dict) -> None:
+    llm = r["llm"]
+    print(f"  {r['agents']}: {r['hypotheses_valid']} valid / {r['hypotheses_rejected_by_validation']} rejected hypotheses; "
+          f"{r['hypothesis_predictions_scored']} scored: {r['supported']} supported, {r['refuted']} refuted; "
+          f"direction hit {r['direction_hit_rate']:.0%}, MAE {r['hypothesis_mae_pp']:.2f} pp, 80% coverage "
+          f"{r['hypothesis_coverage80']:.0%}; {r['seconds']}s; LLM calls {llm['calls']}, tokens {llm['input_tokens']}+"
+          f"{llm['output_tokens']}, est. cost ${llm['estimated_cost_usd'] or 0:.4f}, duplicates caught {llm['duplicate_tool_calls']}")
+
+
+def _compare(args) -> int:
+    rows = [json.loads(Path(p).read_text()) for p in args.summaries]
+    keys = [("agents", "agent set"), ("hypotheses_valid", "valid hypotheses"),
+            ("hypotheses_rejected_by_validation", "rejected by validation"), ("supported", "supported by outcomes"),
+            ("refuted", "refuted by outcomes"), ("direction_hit_rate", "direction hit rate"),
+            ("hypothesis_mae_pp", "MAE (pp)"), ("hypothesis_coverage80", "80% coverage"), ("seconds", "runtime (s)")]
+    print("| metric | " + " | ".join(r["replay_id"] for r in rows) + " |")
+    print("|---|" + "---|" * len(rows))
+    for k, label in keys:
+        print(f"| {label} | " + " | ".join(f"{r[k]:.3f}" if isinstance(r[k], float) else str(r[k]) for r in rows) + " |")
+    for k in ("calls", "input_tokens", "output_tokens", "estimated_cost_usd", "cache_hit_rate", "duplicate_tool_calls"):
+        print(f"| llm {k} | " + " | ".join(str(r["llm"][k]) for r in rows) + " |")
+    print("| cost per useful validated result (USD) | " + " | ".join(str(r["cost_per_useful_result_usd"]) for r in rows) + " |")
+    return 0

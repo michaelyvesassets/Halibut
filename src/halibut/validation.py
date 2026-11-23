@@ -34,7 +34,34 @@ def check_action(action_type: str) -> None:
         raise PermissionError(f"action {action_type!r} is not permitted for agents (read-only, propose-only)")
 
 
-def validate_hypothesis(h: dict, retriever, metrics: dict[str, dict], as_of: str) -> list[str]:
+NUMBER = re.compile(r"([+-]?\d+(?:\.\d+)?)\s*(%|pp)")
+
+
+def allowed_numbers(metrics: dict[str, dict]) -> set[float]:
+    """Values an agent may quote: metric values (percent) and L4-P4 differences of the same metric."""
+    vals = {round(100 * m["value"], 2) for m in metrics.values() if m.get("value") is not None}
+    by = {}
+    for mid, m in metrics.items():
+        if m.get("value") is None:
+            continue
+        key = mid.replace(":L4:", ":X:").replace(":P4:", ":X:").replace(":L4", ":X").replace(":P4", ":X")
+        by.setdefault(key, {})["L4" if "L4" in mid else "P4"] = m["value"]
+    for v in by.values():
+        if "L4" in v and "P4" in v:
+            vals.add(round(100 * (v["L4"] - v["P4"]), 2))
+    return vals
+
+
+def check_numbers(text: str, allowed: set[float], extra: set[float] = frozenset(), tol: float = 0.06) -> list[str]:
+    problems = []
+    for num, unit in NUMBER.findall(text):
+        x = float(num)
+        if not any(abs(abs(x) - abs(a)) <= tol for a in allowed | set(extra)):
+            problems.append(f"number {num}{unit} in narrative does not match any evidence value")
+    return problems
+
+
+def validate_hypothesis(h: dict, retriever, metrics: dict[str, dict], as_of: str, extra_numbers=frozenset()) -> list[str]:
     from .intel.signals import compute_share  # noqa: PLC0415
     problems = []
     for key in ("id", "mode", "claim", "evidence", "prediction", "confidence", "status", "epistemic_status", "produced_by"):
@@ -72,6 +99,8 @@ def validate_hypothesis(h: dict, retriever, metrics: dict[str, dict], as_of: str
     for lever in h.get("levers", []):
         if lever not in ALLOWED_LEVERS:
             problems.append(f"lever {lever!r} is not an allowed legitimate competitive lever")
+    if h.get("narrative_numbers_check"):
+        problems += check_numbers(h["claim"], allowed_numbers(metrics), set(extra_numbers))
     text = " ".join(str(h.get(k, "")) for k in ("claim", "mechanism_candidates", "levers", "rationale"))
     if PROHIBITED.search(text):
         problems.append("prohibited tactic mentioned: Halibut does not support deceptive or unlawful influence")

@@ -266,6 +266,57 @@ CREATE TABLE promotions (
     note TEXT
 );
 """),
+    (4, """
+ALTER TABLE knowledge ADD COLUMN available_at TEXT;
+CREATE TABLE prediction_scores (
+    prediction_id TEXT NOT NULL,
+    eval_as_of TEXT NOT NULL,
+    realized REAL,
+    point REAL,
+    error REAL,
+    abs_error REAL,
+    in_interval80 INTEGER,
+    interval_score80 REAL,
+    direction_hit INTEGER,
+    brier REAL,
+    method TEXT NOT NULL,
+    produced_by TEXT NOT NULL,
+    origin_as_of TEXT NOT NULL,
+    outcome_available_at TEXT NOT NULL,
+    outcome_id TEXT,
+    record_json TEXT NOT NULL,
+    PRIMARY KEY (prediction_id, eval_as_of)
+);
+CREATE TABLE llm_cache (
+    cache_key TEXT PRIMARY KEY,
+    provider TEXT NOT NULL,
+    model TEXT NOT NULL,
+    response_json TEXT NOT NULL,
+    input_tokens INTEGER,
+    output_tokens INTEGER,
+    created_at TEXT NOT NULL
+);
+CREATE TABLE agent_calls (
+    call_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    run_id TEXT,
+    agent TEXT NOT NULL,
+    role TEXT NOT NULL,
+    provider TEXT NOT NULL,
+    model TEXT NOT NULL,
+    input_tokens INTEGER NOT NULL DEFAULT 0,
+    output_tokens INTEGER NOT NULL DEFAULT 0,
+    tokens_estimated INTEGER NOT NULL DEFAULT 1,
+    estimated_cost_usd REAL,
+    actual_cost_usd REAL,
+    latency_seconds REAL,
+    cache_hit INTEGER NOT NULL DEFAULT 0,
+    prompt_hash TEXT NOT NULL,
+    tool_calls_json TEXT,
+    duplicate_tool_calls INTEGER NOT NULL DEFAULT 0,
+    outcome TEXT NOT NULL,
+    at TEXT NOT NULL
+);
+"""),
 ]
 
 

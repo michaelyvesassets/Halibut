@@ -1,0 +1,19 @@
+# LLM provider configuration (NOT ACTIVE). Copy to configs/llm/qwen.toml, fill in,
+# and set approved = true only after the project owner approves model, budget and
+# credentials. Prices MUST come from the official Alibaba Cloud Model Studio
+# pricing page for the chosen model and region (third-party figures conflict).
+
+[llm]
+provider = "qwen"
+base_url = "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"   # verify for your account/region
+model = ""                     # e.g. a qwen-plus or qwen-max tier, chosen at approval
+api_key_env = "DASHSCOPE_API_KEY"
+input_per_mtok_usd = ""        # USD per million input tokens (official page)
+output_per_mtok_usd = ""       # USD per million output tokens (official page)
+pricing_source = ""            # URL and date of the pricing page used
+max_spend_usd = 5.0            # hard stop across a run
+temperature = 0
+timeout_seconds = 120
+approved = false
+approved_by = ""
+approved_on = ""
