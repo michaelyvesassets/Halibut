@@ -1,0 +1,92 @@
+# Experiment template for the Norway new-car powertrain pilot (schema 1.2).
+#
+# One tick = one MONTH. `weeks` is the engine's tick count and is overwritten
+# by the empirical builder; tick 0 = the pilot's start period.
+#
+# Classification of every value (see docs/phase3_empirical.md):
+#   FITTED      overwritten per forecast origin by calibration (quality paths,
+#               social weight, fuel coefficient)
+#   ASSUMPTION  fixed and stated here; not estimated from data
+#   UNIDENTIFIED a mechanism the aggregate share data cannot pin down; fixed
+#               at a neutral value and reported as such
+#
+# Products: bev (battery-electric), hybrid (all hybrids), fossil (petrol,
+# diesel, other). Utilities are relative to fossil (quality 0).
+
+schema_version = "1.2"
+
+[experiment]
+name = "norway_bev_template"
+description = "Durable-good displacement template (monthly ticks)."
+weeks = 12
+seeds = [1]
+summary_window_weeks = 1
+
+[[products]]
+id = "bev"
+category = "new_private_car"
+price = 0.0            # ASSUMPTION: car prices are unobserved; price effects enter only via fitted quality paths
+quality = 0.0          # FITTED via driver path (intercept + trend + covariates)
+availability = 1.0     # ASSUMPTION: model supply constraints unobserved
+
+[[products]]
+id = "hybrid"
+category = "new_private_car"
+price = 0.0
+quality = 0.0          # FITTED via driver path
+availability = 1.0
+
+[[products]]
+id = "fossil"
+category = "new_private_car"
+price = 0.0
+quality = 0.0          # reference alternative; covariate (fuel price) effects via driver path
+availability = 1.0
+
+[population]
+size = 4000            # ASSUMPTION: agents are a sample of car-owning households (scale-free for shares)
+
+[[population.segments]]
+name = "households"
+weight = 1.0
+initial_product_shares = { fossil = 1.0 }   # ASSUMPTION: 1995 fleet treated as entirely fossil
+
+[population.segments.attributes]
+budget = 1.0
+consumption = 1.0
+price_sensitivity = 0.0                      # prices are zero; see products
+brand_loyalty = 0.0                          # UNIDENTIFIED (no household-level switching data)
+social_susceptibility = { dist = "beta", a = 2, b = 2 }   # ASSUMPTION: heterogeneity shape
+switching_resistance = 0.0                   # UNIDENTIFIED
+
+[population.segments.preferences]
+bev = { dist = "beta", a = 2, b = 2 }        # ASSUMPTION: idiosyncratic taste heterogeneity (sd ~0.22 utils)
+hybrid = { dist = "beta", a = 2, b = 2 }
+fossil = 0.5
+
+[decision]
+model = "logit"
+temperature = 1.0          # FIXED at 1 for empirical calibration (scale normalisation)
+outside_utility = -30.0    # ASSUMPTION: an in-market household always buys one of the three
+preference_weight = 1.0
+quality_weight = 1.0
+
+[network]
+type = "watts_strogatz"
+k = 10
+rewire_prob = 0.1          # ASSUMPTION (Phase 2: nearly inert for share outcomes)
+
+[social_influence]
+enabled = true
+weight = 0.0               # FITTED
+signal = "current_product" # neighbours' OWNED cars (fleet exposure), not last-month purchases
+
+[preference_drift]
+enabled = false            # UNIDENTIFIED: tastes held fixed (Phase 2 showed drift dominates if on)
+
+[purchase_opportunity]
+enabled = true
+probability = 0.005        # ASSUMPTION from data: ~177k new cars/yr / ~2.94M fleet (2025) ~= 0.5%/month
+
+[[scenarios]]
+name = "control"

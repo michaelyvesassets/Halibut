@@ -23,7 +23,7 @@ from dataclasses import dataclass
 import numpy as np
 
 from .config import ExperimentConfig, ScenarioConfig
-from .decision import DecisionContext, LogitChoiceModel
+from .decision import DecisionContext, LogitChoiceModel, sample_options
 from .influence import apply_drift
 from .interventions import effective_market, effective_population, resolve_targets, seeding_events
 from .market import Market
@@ -75,13 +75,22 @@ class _Step:
     available: np.ndarray
     affordable: np.ndarray
     share: np.ndarray | None
+    probabilities: np.ndarray | None = None
+    in_market: np.ndarray | None = None
 
 
-def _step(cfg, model, pop, net, state, market, attrs, availability_u, choice_u, full_availability=False) -> _Step:
-    """Decide one week. Does not update ``state`` (see ``_advance``)."""
+def _step(cfg, model, pop, net, state, market, attrs, availability_u, choice_u, full_availability=False,
+          in_market=None) -> _Step:
+    """Decide one tick. Does not update ``state`` (see ``_advance``).
+
+    ``in_market`` (bool array) is given only when the purchase-opportunity
+    model is enabled; out-of-market consumers make no choice (option 0) and
+    keep their current product.
+    """
     j_count = market.size
     need_share = cfg.social_influence.enabled or cfg.preference_drift.effective_model != "none"
-    share = net.neighbour_product_share(state.last_choice, j_count) if need_share else None
+    signal = state.current if cfg.social_influence.signal == "current_product" else state.last_choice
+    share = net.neighbour_product_share(signal, j_count) if need_share else None
     if full_availability:
         available = np.ones_like(availability_u, dtype=bool)
     else:
@@ -95,9 +104,13 @@ def _step(cfg, model, pop, net, state, market, attrs, availability_u, choice_u, 
         neighbour_share=share if cfg.social_influence.enabled else None,
         **{k: attrs[k] for k in _CONTEXT_ATTRS},
     )
-    choices = model.choose(ctx, choice_u)
+    probabilities = model.probabilities(ctx)
+    choices = sample_options(probabilities, choice_u)  # identical to model.choose(ctx, choice_u)
+    if in_market is not None:
+        choices = np.where(in_market, choices, 0)
     affordable = ctx.cost() <= ctx.budget[:, None]
-    return _Step(choices, np.where(choices > 0, choices, state.current), available, affordable, share)
+    return _Step(choices, np.where(choices > 0, choices, state.current), available, affordable, share,
+                 probabilities, in_market)
 
 
 def _advance(cfg, state: _State, step: _Step, susceptibility, base_preference) -> None:
@@ -120,10 +133,14 @@ def build_world(cfg: ExperimentConfig, seed: int) -> World:
         choice_rng = stream(seed, "warmup_choice")
         availability_rng = stream(seed, "warmup_availability")
         n, j = population.size, market.size
+        opportunity_rng = stream(seed, "warmup_opportunity") if cfg.purchase_opportunity.enabled else None
         for _ in range(cfg.warmup_weeks):
             availability_u = availability_rng.random((n, j))
             choice_u = choice_rng.random(n)
-            step = _step(cfg, model, population, network, state, market, attrs, availability_u, choice_u)
+            in_market = (opportunity_rng.random(n) < cfg.purchase_opportunity.probability
+                         if opportunity_rng is not None else None)
+            step = _step(cfg, model, population, network, state, market, attrs, availability_u, choice_u,
+                         in_market=in_market)
             _advance(cfg, state, step, attrs["social_susceptibility"], population.preference)
     return World(seed, population, market, network, state.current, state.last_choice,
                  state.preference, cfg.warmup_weeks)
@@ -153,6 +170,7 @@ def run_scenario(
 
     choice_rng = stream(world.seed, "choice")
     availability_rng = stream(world.seed, "availability")
+    opportunity_rng = stream(world.seed, "opportunity") if cfg.purchase_opportunity.enabled else None
     state = _State(world.initial_preference.copy(), world.initial_current.copy(),
                    world.initial_last_choice.copy())
 
@@ -168,14 +186,16 @@ def run_scenario(
             if event.preference is not None:
                 state.preference[idx, j] = event.preference
 
-        market = effective_market(world.market, interventions, week)
+        market = effective_market(world.market, tuple(cfg.drivers) + tuple(interventions), week)
         attrs = effective_population(pop, interventions, week, targets)
 
         # Random draws happen every week in a fixed order regardless of scenario.
         availability_u = availability_rng.random((n, j_count))
         choice_u = choice_rng.random(n)
+        in_market = (opportunity_rng.random(n) < cfg.purchase_opportunity.probability
+                     if opportunity_rng is not None else None)
         step = _step(cfg, model, pop, net, state, market, attrs, availability_u, choice_u,
-                     full_availability)
+                     full_availability, in_market)
 
         metrics.append(
             tick_metrics(
@@ -183,6 +203,7 @@ def run_scenario(
                 step.choices, state.last_choice, state.current, step.new_current,
                 attrs["consumption"], attrs["budget"], state.preference,
                 available=step.available, affordable=step.affordable,
+                probabilities=step.probabilities, in_market=step.in_market,
             )
         )
         if collect_segments:

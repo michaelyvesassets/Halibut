@@ -25,6 +25,7 @@ from .interventions import (
     Intervention,
     PopulationChange,
     ProductChange,
+    ProductPath,
     Schedule,
     SeedAdopters,
 )
@@ -89,10 +90,26 @@ class NetworkConfig:
     rewire_prob: float = 0.1
 
 
+SOCIAL_SIGNALS = ("last_purchase", "current_product")
+
+
 @dataclass(frozen=True)
 class SocialInfluenceConfig:
     enabled: bool = True
     weight: float = 1.0
+    # What neighbours expose: what they bought last tick (v1) or what they
+    # currently own/use (durable goods). Also feeds preference drift.
+    signal: str = since("1.2", "last_purchase")
+
+
+@dataclass(frozen=True)
+class PurchaseOpportunityConfig:
+    """Optional: each tick a consumer is in the market with ``probability``
+    (independent draw from its own random stream). Out-of-market consumers
+    make no choice and keep their current product (durable goods)."""
+
+    enabled: bool = False
+    probability: float = 1.0
 
 
 DRIFT_MODELS = ("none", "conformity", "baseline_reversion", "exposure_reinforcement")
@@ -134,6 +151,10 @@ class ExperimentConfig:
     preference_drift: PreferenceDriftConfig
     scenarios: list[ScenarioConfig]
     warmup_weeks: int = since("1.1", 0)
+    purchase_opportunity: PurchaseOpportunityConfig = since("1.2", PurchaseOpportunityConfig())
+    # Exogenous, observed environment (e.g. covariate-driven attribute paths),
+    # applied in EVERY scenario including control. Not experimental interventions.
+    drivers: tuple = since("1.2", ())
 
     @property
     def product_ids(self) -> tuple[str, ...]:
@@ -269,6 +290,10 @@ def parse_config(data: dict) -> ExperimentConfig:
         if version == "1.0" and key in table.data:
             raise ConfigError(f"{table.at(key)}: requires schema_version = \"1.1\"")
 
+    def require_v12(table: _Table, key: str) -> None:
+        if version in ("1.0", "1.1") and key in table.data:
+            raise ConfigError(f"{table.at(key)}: requires schema_version = \"1.2\"")
+
     exp = root.table("experiment")
     name = exp.string("name")
     description = exp.string("description", "") if exp.raw("description", "") else ""
@@ -304,10 +329,19 @@ def parse_config(data: dict) -> ExperimentConfig:
         raise ConfigError("network.k: must be even and smaller than population.size")
 
     si = root.table("social_influence", {})
+    require_v12(si, "signal")
     influence = SocialInfluenceConfig(
-        enabled=si.boolean("enabled", True), weight=si.number("weight", 1.0, lo=0.0)
+        enabled=si.boolean("enabled", True), weight=si.number("weight", 1.0, lo=0.0),
+        signal=si.string("signal", "last_purchase", choices=SOCIAL_SIGNALS),
     )
     si.done()
+
+    if version in ("1.0", "1.1") and "purchase_opportunity" in root.data:
+        raise ConfigError("purchase_opportunity: requires schema_version = \"1.2\"")
+    po = root.table("purchase_opportunity", {})
+    opportunity = PurchaseOpportunityConfig(
+        enabled=po.boolean("enabled", False), probability=po.number("probability", 1.0, lo=0.0, hi=1.0))
+    po.done()
 
     pd = root.table("preference_drift", {})
     for key in ("model", "reversion_rate", "decay_rate"):
@@ -321,7 +355,15 @@ def parse_config(data: dict) -> ExperimentConfig:
     )
     pd.done()
 
-    scenarios = _parse_scenarios(root.tables("scenarios", []), product_ids, weeks)
+    scenarios = _parse_scenarios(root.tables("scenarios", []), product_ids, weeks, version)
+    if version in ("1.0", "1.1") and "drivers" in root.data:
+        raise ConfigError("drivers: requires schema_version = \"1.2\"")
+    drivers = []
+    for dt in root.tables("drivers", []):
+        if dt.raw("type", ProductPath.TYPE) != ProductPath.TYPE:
+            raise ConfigError(f"{dt.path}: drivers must be product_path entries")
+        dt.data.setdefault("type", ProductPath.TYPE)
+        drivers.append(_parse_intervention(dt, product_ids, weeks, version))
     root.done()
 
     return ExperimentConfig(
@@ -339,6 +381,8 @@ def parse_config(data: dict) -> ExperimentConfig:
         preference_drift=drift,
         scenarios=scenarios,
         warmup_weeks=warmup,
+        purchase_opportunity=opportunity,
+        drivers=tuple(drivers),
     )
 
 
@@ -446,8 +490,24 @@ def _parse_target(t: _Table) -> tuple[str, float]:
     return target, fraction
 
 
-def _parse_intervention(t: _Table, product_ids, weeks: int) -> Intervention:
-    kind = t.string("type", choices=(ProductChange.TYPE, PopulationChange.TYPE, SeedAdopters.TYPE))
+def _parse_intervention(t: _Table, product_ids, weeks: int, version: str = "1.0") -> Intervention:
+    kind = t.string("type", choices=(ProductChange.TYPE, PopulationChange.TYPE, SeedAdopters.TYPE, ProductPath.TYPE))
+    if kind == ProductPath.TYPE:
+        if version in ("1.0", "1.1"):
+            raise ConfigError(f"{t.path}: product_path requires schema_version = \"1.2\"")
+        values = t.raw("values")
+        if (not isinstance(values, list) or not values
+                or not all(isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(v) for v in values)):
+            raise ConfigError(f"{t.at('values')}: expected a non-empty list of finite numbers")
+        iv = ProductPath(
+            product=t.string("product", choices=product_ids),
+            attribute=t.string("attribute", choices=PRODUCT_ATTRIBUTES),
+            op=t.string("op", "set", choices=OPERATIONS),
+            values=tuple(float(v) for v in values),
+            start_week=t.number("start_week", 0, integer=True, lo=0, hi=weeks - 1),
+        )
+        t.done()
+        return iv
     if kind == ProductChange.TYPE:
         iv = ProductChange(
             product=t.string("product", choices=product_ids),
@@ -474,14 +534,14 @@ def _parse_intervention(t: _Table, product_ids, weeks: int) -> Intervention:
     return iv
 
 
-def _parse_scenarios(tables: list[_Table], product_ids, weeks: int) -> list[ScenarioConfig]:
+def _parse_scenarios(tables: list[_Table], product_ids, weeks: int, version: str = "1.0") -> list[ScenarioConfig]:
     scenarios = []
     for t in tables:
         s = ScenarioConfig(
             name=t.string("name"),
             description=t.raw("description", "") or "",
             interventions=[
-                _parse_intervention(it, product_ids, weeks) for it in t.tables("interventions", [])
+                _parse_intervention(it, product_ids, weeks, version) for it in t.tables("interventions", [])
             ],
         )
         t.done()

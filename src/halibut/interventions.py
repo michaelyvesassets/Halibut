@@ -86,7 +86,30 @@ class SeedAdopters:
     preference: float | None = None
 
 
-Intervention = Union[ProductChange, PopulationChange, SeedAdopters]
+@dataclass(frozen=True)
+class ProductPath:
+    """A product attribute following an explicit per-tick path (schema 1.2).
+
+    The value at tick ``t >= start_week`` is ``values[min(t - start_week, len - 1)]``:
+    beyond the end of the path the LAST value is held (persistence), so a
+    path built from data available at a forecast origin never encodes later
+    observations. ``op`` combines the path with the base value.
+    """
+
+    TYPE: ClassVar[str] = "product_path"
+    product: str
+    attribute: str
+    op: str
+    values: tuple[float, ...]
+    start_week: int = 0
+
+    def value_at(self, week: int) -> float | None:
+        if week < self.start_week or not self.values:
+            return None
+        return self.values[min(week - self.start_week, len(self.values) - 1)]
+
+
+Intervention = Union[ProductChange, PopulationChange, SeedAdopters, ProductPath]
 
 
 def _apply(base, op: str, value: float, intensity: float):
@@ -119,15 +142,20 @@ def resolve_targets(interventions, network: SocialNetwork) -> dict[tuple[str, fl
 
 
 def effective_market(base: Market, interventions, week: int) -> Market:
-    changes = [iv for iv in interventions if isinstance(iv, ProductChange)]
+    changes = [iv for iv in interventions if isinstance(iv, (ProductChange, ProductPath))]
     if not changes:
         return base
     values = {a: getattr(base, a).copy() for a in PRODUCT_ATTRIBUTES}
     for iv in changes:
+        j = base.index(iv.product)
+        if isinstance(iv, ProductPath):
+            v = iv.value_at(week)
+            if v is not None:  # exact for "set" (ProductChange keeps its v1 arithmetic)
+                values[iv.attribute][j] = v if iv.op == "set" else _apply(values[iv.attribute][j], iv.op, v, 1.0)
+            continue
         k = iv.schedule.intensity(week)
         if k == 0.0:
             continue
-        j = base.index(iv.product)
         values[iv.attribute][j] = _apply(values[iv.attribute][j], iv.op, iv.value, k)
     values["price"] = np.maximum(values["price"], 0.0)
     values["availability"] = np.clip(values["availability"], 0.0, 1.0)
@@ -158,6 +186,8 @@ def seeding_events(interventions, week: int) -> list[SeedAdopters]:
 
 def first_active_week(interventions) -> int | None:
     weeks = [
-        iv.week if isinstance(iv, SeedAdopters) else iv.schedule.start_week for iv in interventions
+        iv.week if isinstance(iv, SeedAdopters)
+        else iv.start_week if isinstance(iv, ProductPath) else iv.schedule.start_week
+        for iv in interventions
     ]
     return min(weeks) if weeks else None

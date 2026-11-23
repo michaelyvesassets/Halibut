@@ -1,0 +1,119 @@
+# Empirical pilot: displacement of fossil new private cars by battery-electric
+# cars in Norway. An industry-level validation case for Halibut's displacement
+# mechanics; NOT a test of competitor-targeted market engineering.
+#
+# Everything industry-specific is in this file and the template; the
+# empirical code is generic.
+
+schema_version = "1.0"
+
+[pilot]
+name = "norway_bev_v1"
+description = "Monthly BEV share of new private cars, Norway (SSB 14020, universe N = new vehicles)."
+store = "data/halibut.sqlite"
+catalogue = "configs/data/catalogue.toml"
+template = "norway_bev_template.toml"
+geo = "NO"
+start_period = "1995-01"        # tick 0
+target_product = "bev"
+
+# --------------------------------------------------------------------------- measurement model
+# Observed share of product p in month t = sum(series of p) / sum(series of all products),
+# all within ONE universe (new vehicles). Simulated counterpart: expected_share_<p>,
+# the population-average choice probability among in-market agents (engine 0.3).
+
+[[pilot.products]]
+id = "bev"
+series = ["ssb_14020_private_cars:TypeRegistrering=N:DrivstoffType=19"]
+
+[[pilot.products]]
+id = "hybrid"
+series = ["ssb_14020_private_cars:TypeRegistrering=N:DrivstoffType=21"]
+
+[[pilot.products]]
+id = "fossil"
+# ASSUMPTION: 'Other fuel' (code 6, < 0.1% of new cars) is merged into fossil.
+series = ["ssb_14020_private_cars:TypeRegistrering=N:DrivstoffType=20",
+          "ssb_14020_private_cars:TypeRegistrering=N:DrivstoffType=6"]
+
+[measurement]
+# Moments: annual means of monthly shares (bev, hybrid) for full years from
+# `annual_from`, plus each of the last `recent_months` months individually.
+annual_from = 2005
+recent_months = 6
+moment_products = ["bev", "hybrid"]
+# Standard errors are ASSUMPTIONS combining revision risk (<= 0.11 pp, M18),
+# simulation noise and structural model error; they set the fit tolerance.
+se_annual = 0.015
+se_month = 0.025
+
+# --------------------------------------------------------------------------- covariates
+# Only values AVAILABLE at the forecast origin are used; later months hold the
+# last available value (persistence). Transform: log price minus log of its
+# trailing mean (shock relative to recent levels), so that general inflation
+# does not masquerade as a trend.
+
+[[covariates]]
+name = "petrol_price_shock"
+series = "ssb_09654_fuel_prices:PetroleumProd=031"
+transform = "log_deviation_from_trailing_mean"
+window = 36
+coefficient = "fuel_beta"
+# ASSUMPTION: loadings on product utility. A positive fuel-price shock lowers
+# fossil utility by fuel_beta * shock and hybrid utility by half that; BEV is
+# unaffected.
+loadings = { fossil = -1.0, hybrid = -0.5 }
+
+# --------------------------------------------------------------------------- fitted parameters
+# Utilities are relative to fossil. Quality path of product p at tick t:
+#   q_p(t) = intercept_p + trend_p * years_since_start + covariate effects.
+# A linear latent trend stands in for everything unobserved (prices, range,
+# model choice, charging, incentives). Extrapolating it IS the forecast
+# assumption: it is not a causal model of any policy.
+
+[[parameters]]
+name = "bev_intercept"
+target = "intercept:bev"
+range = [-12.0, 0.0]
+
+[[parameters]]
+name = "bev_trend"
+target = "trend:bev"
+range = [0.0, 1.5]
+
+[[parameters]]
+name = "hybrid_intercept"
+target = "intercept:hybrid"
+range = [-12.0, 0.0]
+
+[[parameters]]
+name = "hybrid_trend"
+target = "trend:hybrid"
+range = [0.0, 1.5]
+
+[[parameters]]
+name = "social_weight"
+target = "config:social_influence.weight"
+range = [0.0, 6.0]
+
+[[parameters]]
+name = "fuel_beta"
+target = "coefficient:fuel_beta"
+range = [0.0, 5.0]
+
+# --------------------------------------------------------------------------- calibration & backtest
+
+[calibration]
+seeds = [101, 102]
+popsize = 6
+maxiter = 6
+optimizer_seed = 7
+nelder_mead_maxfev = 30
+forecast_seeds = [201, 202, 203, 204]
+
+[backtest]
+# Origin = the date a forecaster stands at; data available on that date only.
+origins = ["2016-01-15", "2019-01-15", "2022-01-15", "2024-01-15"]
+horizon_months = 24
+change_windows = [["2022-11", "2023-03"], ["2025-11", "2026-03"]]
+time_limit_minutes = 30

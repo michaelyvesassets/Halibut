@@ -20,6 +20,9 @@ STREAMS = {
     # warm-up never shifts the numbers seen from week 0 onward
     "warmup_choice": 5,
     "warmup_availability": 6,
+    # engine 0.3: drawn only when purchase_opportunity is enabled
+    "opportunity": 7,
+    "warmup_opportunity": 8,
 }
 
 

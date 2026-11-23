@@ -45,6 +45,7 @@ import numpy as np
 
 
 NO_PURCHASE_CAUSES = (
+    "np_not_in_market",  # engine 0.3: purchase-opportunity model; always 0 when disabled
     "np_nothing_affordable",
     "np_nothing_in_stock",
     "np_current_infeasible",
@@ -71,6 +72,8 @@ def tick_metrics(
     preference: np.ndarray,
     available: np.ndarray | None = None,
     affordable: np.ndarray | None = None,
+    probabilities: np.ndarray | None = None,
+    in_market: np.ndarray | None = None,
 ) -> dict:
     n = len(choices)
     j_count = len(product_ids)
@@ -126,11 +129,28 @@ def tick_metrics(
             m[f"flow_{name_a}_to_{name_b}"] = int(flows[a, b])
 
     if available is not None and affordable is not None:
-        m.update(_feasibility_metrics(choices, prev_current, available, affordable))
+        m.update(_feasibility_metrics(choices, prev_current, available, affordable, in_market))
+    if probabilities is not None:
+        m.update(_expected_metrics(product_ids, probabilities, in_market))
     return m
 
 
-def _feasibility_metrics(choices, prev_current, available, affordable) -> dict:
+def _expected_metrics(product_ids, probabilities, in_market) -> dict:
+    """Expected (choice-probability based) purchase shares: Rao-Blackwellised.
+
+    ``expected_share_<p> = mean_i P_ip / mean_i (1 - P_i0)`` over ALL consumers.
+    Because the in-market draw is independent of preferences and state, this
+    is the expected share of purchases this tick, without the sampling noise
+    of realised choices. Used by measurement models (engine 0.3).
+    """
+    mean_p = probabilities.mean(axis=0)
+    buy = 1.0 - mean_p[0]
+    out = {f"expected_share_{p}": (float(mean_p[j + 1] / buy) if buy > 0 else 0.0) for j, p in enumerate(product_ids)}
+    out["in_market"] = int(in_market.sum()) if in_market is not None else len(probabilities)
+    return out
+
+
+def _feasibility_metrics(choices, prev_current, available, affordable, in_market=None) -> dict:
     rows = np.arange(len(choices))
     feasible = available & affordable
     any_affordable = affordable.any(axis=1)
@@ -140,8 +160,10 @@ def _feasibility_metrics(choices, prev_current, available, affordable) -> dict:
     current_available = has_current & available[rows, cur]
     current_affordable = has_current & affordable[rows, cur]
     current_feasible = current_available & current_affordable
-    none = choices == 0
+    out_of_market = np.zeros(len(choices), dtype=bool) if in_market is None else ~in_market
+    none = (choices == 0) & ~out_of_market
     causes = {
+        "np_not_in_market": out_of_market,
         "np_nothing_affordable": none & ~any_affordable,
         "np_nothing_in_stock": none & any_affordable & ~any_feasible,
         "np_current_infeasible": none & any_feasible & has_current & ~current_feasible,
@@ -150,7 +172,7 @@ def _feasibility_metrics(choices, prev_current, available, affordable) -> dict:
     out = {k: int(v.sum()) for k, v in causes.items()}
     out["current_out_of_stock"] = int((has_current & ~current_available).sum())
     out["current_unaffordable"] = int((has_current & ~current_affordable).sum())
-    out["forced_substitution"] = int((~none & has_current & ~current_feasible).sum())
+    out["forced_substitution"] = int(((choices > 0) & has_current & ~current_feasible).sum())
     return out
 
 

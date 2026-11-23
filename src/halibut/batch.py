@@ -37,7 +37,7 @@ class Task:
     seed: int
     scenarios: tuple[str, ...]
     full_availability: bool = False
-    evaluator: str = "window"  # "window" (this module) or "moments" (calibration)
+    evaluator: str = "window"  # "window" (this module), "moments" (calibration), "series" (empirical)
     payload: tuple = ()
 
     def key(self) -> str:
@@ -60,6 +60,9 @@ def evaluate_task(task: Task) -> dict:
     if task.evaluator == "moments":
         from .calibration import evaluate_moment_task  # noqa: PLC0415
         return evaluate_moment_task(task)
+    if task.evaluator == "series":
+        from .empirical.fit import evaluate_series_task  # noqa: PLC0415
+        return evaluate_series_task(task)
     cfg = task.cfg
     t0 = time.perf_counter()
     world = build_world(cfg, task.seed)
