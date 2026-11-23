@@ -68,6 +68,12 @@ halibut intel benchmark configs/intel/markets/uk_cars_bev_v1.toml --reconstruct 
 halibut intel coverage configs/intel/markets/uk_cars_bev_v1.toml [--as-of 2024-05-23]       # market coverage contract
 halibut learn score [--as-of DATE]        # score predictions whose outcomes are published
 
+# Intelligence loop (R2; offline with mock agents; paid agents need a granted approval)
+halibut investigation run configs/intel/markets/uk_cars_bev_v1.toml --as-of 2025-05-23 --evaluate-at 2026-11-23
+halibut investigation run tests/fixtures/market_plant_milk_panel.toml --as-of 2024-06-30 --evaluate-at 2025-06-30
+halibut investigation list | show ID [--json] | schema
+halibut approvals list | request paid_run investigation:MARKET --by NAME --max-usd X | decide ID granted --by NAME
+
 # Learning memory and evaluation (Phase 4)
 halibut learn demo                        # baseline -> change -> evaluation -> lesson -> informed next experiment
 halibut learn lessons --tag domain:share_forecasting
@@ -96,7 +102,7 @@ configs/intel/markets/ market investigation specs
 docs/phase4_intelligence.md   components, providers, competitor model, learning engine, results
 docs/phase5_agents_learning.md  scorer, replay, agents, cost accounting, audit, demonstration
 docs/benchmark_haiku_v1_diagnostic.md  first live Claude benchmark: diagnosis and limitations
-docs/architecture/     Master Architecture v1.0 (proposed): layers, capability matrix, world model,
+docs/architecture/     Master Architecture v1.0 (accepted): layers, capability matrix, world model,
                        agents, simulation and learning, operating loop, roadmap, decisions
 configs/llm/anthropic.toml      Claude provider: models, official prices, caps (inactive until approved)
 configs/llm/qwen.toml           Qwen provider (inactive until approved)

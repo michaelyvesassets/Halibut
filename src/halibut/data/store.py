@@ -424,6 +424,87 @@ CREATE TRIGGER events_no_update BEFORE UPDATE ON events_log BEGIN SELECT RAISE(A
 CREATE TRIGGER events_no_delete BEFORE DELETE ON events_log BEGIN SELECT RAISE(ABORT, 'events are append-only'); END;
 ALTER TABLE agent_calls ADD COLUMN response_excerpt TEXT;
 """),
+    # 7: R2 intelligence loop. Approvals (requests + decisions), the model registry, pre-registered
+    # hypothesis tests and their results, and investigation results. All append-only.
+    (7, """
+CREATE TABLE approvals (
+    approval_id TEXT PRIMARY KEY,
+    kind TEXT NOT NULL CHECK (kind IN ('paid_run','experiment','external_action','promotion','new_source')),
+    subject TEXT NOT NULL,
+    tenant TEXT NOT NULL DEFAULT 'public',
+    requested_by TEXT NOT NULL,
+    requested_at TEXT NOT NULL,
+    max_usd REAL,
+    expires_at TEXT,
+    payload_json TEXT NOT NULL
+);
+CREATE TABLE approval_decisions (
+    approval_id TEXT NOT NULL REFERENCES approvals(approval_id),
+    decision TEXT NOT NULL CHECK (decision IN ('granted','denied','revoked')),
+    decided_by TEXT NOT NULL,
+    decided_at TEXT NOT NULL,
+    note TEXT,
+    evidence_json TEXT NOT NULL
+);
+CREATE TABLE model_versions (
+    model_version_id TEXT PRIMARY KEY,
+    family TEXT NOT NULL,
+    family_version TEXT NOT NULL,
+    kind TEXT NOT NULL,
+    target_json TEXT NOT NULL,
+    spec_json TEXT NOT NULL,
+    spec_hash TEXT NOT NULL,
+    as_of TEXT NOT NULL,
+    status TEXT NOT NULL CHECK (status IN ('validated','unvalidated','rejected')),
+    validation_json TEXT NOT NULL,
+    registered_by TEXT NOT NULL,
+    run_id TEXT,
+    registered_at TEXT NOT NULL
+);
+CREATE TABLE hypothesis_tests (
+    test_id TEXT PRIMARY KEY,
+    hypothesis_claim_id TEXT NOT NULL,
+    implication_ref TEXT NOT NULL,
+    run_id TEXT,
+    as_of TEXT NOT NULL,
+    status TEXT NOT NULL CHECK (status IN ('registered','not_testable')),
+    spec_json TEXT NOT NULL,
+    spec_hash TEXT NOT NULL,
+    registered_at TEXT NOT NULL
+);
+CREATE TABLE test_results (
+    result_id TEXT PRIMARY KEY,
+    test_id TEXT NOT NULL REFERENCES hypothesis_tests(test_id),
+    evaluated_as_of TEXT NOT NULL,
+    outcome TEXT NOT NULL CHECK (outcome IN ('passed','failed','pending')),
+    available_at TEXT,
+    result_json TEXT NOT NULL,
+    recorded_at TEXT NOT NULL
+);
+CREATE TABLE investigations (
+    investigation_id TEXT PRIMARY KEY,
+    market_id TEXT NOT NULL,
+    tenant TEXT NOT NULL DEFAULT 'public',
+    as_of TEXT NOT NULL,
+    evaluate_as_of TEXT,
+    status TEXT NOT NULL,
+    content_hash TEXT NOT NULL,
+    artifact_json TEXT NOT NULL,
+    created_at TEXT NOT NULL
+);
+CREATE TRIGGER approvals_no_update BEFORE UPDATE ON approvals BEGIN SELECT RAISE(ABORT, 'approvals are append-only'); END;
+CREATE TRIGGER approvals_no_delete BEFORE DELETE ON approvals BEGIN SELECT RAISE(ABORT, 'approvals are append-only'); END;
+CREATE TRIGGER decisions_no_update BEFORE UPDATE ON approval_decisions BEGIN SELECT RAISE(ABORT, 'approval decisions are append-only'); END;
+CREATE TRIGGER decisions_no_delete BEFORE DELETE ON approval_decisions BEGIN SELECT RAISE(ABORT, 'approval decisions are append-only'); END;
+CREATE TRIGGER models_no_update BEFORE UPDATE ON model_versions BEGIN SELECT RAISE(ABORT, 'model versions are append-only'); END;
+CREATE TRIGGER models_no_delete BEFORE DELETE ON model_versions BEGIN SELECT RAISE(ABORT, 'model versions are append-only'); END;
+CREATE TRIGGER tests_no_update BEFORE UPDATE ON hypothesis_tests BEGIN SELECT RAISE(ABORT, 'registered tests are append-only'); END;
+CREATE TRIGGER tests_no_delete BEFORE DELETE ON hypothesis_tests BEGIN SELECT RAISE(ABORT, 'registered tests are append-only'); END;
+CREATE TRIGGER results_no_update BEFORE UPDATE ON test_results BEGIN SELECT RAISE(ABORT, 'test results are append-only'); END;
+CREATE TRIGGER results_no_delete BEFORE DELETE ON test_results BEGIN SELECT RAISE(ABORT, 'test results are append-only'); END;
+CREATE TRIGGER inv_no_update BEFORE UPDATE ON investigations BEGIN SELECT RAISE(ABORT, 'investigations are append-only'); END;
+CREATE TRIGGER inv_no_delete BEFORE DELETE ON investigations BEGIN SELECT RAISE(ABORT, 'investigations are append-only'); END;
+"""),
 ]
 
 

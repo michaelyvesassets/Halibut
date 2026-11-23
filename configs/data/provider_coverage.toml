@@ -48,3 +48,11 @@ identifier = "search"
 geographies = ["*"]
 categories = ["*"]
 measures = "entity resolution: company, parent, country, industry"
+
+[[providers]]
+id = "csv_panel"
+evidence_class = "transactions"
+identifier = ""
+geographies = ["*"]
+categories = ["*"]
+measures = "an operator- or client-supplied quarterly units panel (period, entity, segment, units, available_at); content-addressed"

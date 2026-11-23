@@ -5,8 +5,9 @@ Related documents:
 - [CAPABILITY_MATRIX.md](CAPABILITY_MATRIX.md) (starting point)
 - [ARCHITECTURE_DECISIONS.md](ARCHITECTURE_DECISIONS.md) (decisions each milestone depends on)
 
-Status: v1.0 accepted (founder, 2026-11-23). **R1 is implemented**
-([R1_IMPLEMENTATION.md](R1_IMPLEMENTATION.md)); **R2 and later are not authorised**. No milestone
+Status: v1.0 accepted (founder, 2026-11-23). **R1 and R2 are implemented**
+([R1_IMPLEMENTATION.md](R1_IMPLEMENTATION.md), [R2_IMPLEMENTATION.md](R2_IMPLEMENTATION.md)), R2
+offline only; **R3 and later are not authorised**. No milestone
 starts without founder approval. There are no calendar deadlines; milestones are ordered by
 dependency.
 
@@ -89,6 +90,11 @@ flowchart LR
 - **Cost:** $0 (offline).
 
 ### R2 Thin end-to-end loop, one market (UK cars)
+
+> **Status: implemented offline 2026-11-23.** All eight layers have a lightweight working increment.
+> UK cars runs end to end on real data with mock agents, and a fictional non-vehicle market runs on the
+> industry-neutral panel. 277 tests pass. Not yet done: acceptance item 3 (one approved Haiku run).
+> See [R2_IMPLEMENTATION.md](R2_IMPLEMENTATION.md) for results and limits.
 - **Scope**, one lightweight increment per layer:
 
   | Layer | Increment |

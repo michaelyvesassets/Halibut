@@ -11,7 +11,7 @@ Related documents:
   - MINOR adds components, interfaces or maturity steps within existing boundaries.
 
   This document set is **v1.0, accepted as the baseline architecture by the founder on 2026-11-23**,
-  with the qualifications recorded in §6.0. R1 is authorised; R2 and later milestones are not.
+  with the qualifications recorded in §6.0. R1 and R2 are implemented; R3 and later milestones are not authorised.
 - **Contract versions** cover JSON schemas, protocols, claim types and evaluation rules. Each
   has its own semantic version (for example `hypothesis.v1`, `paired-dev-holdout-v1`, which
   exists as `RULE_VERSION` in `learning/evaluate.py`). Every stored record keeps the version
@@ -277,4 +277,48 @@ Scope authorised: **R1 only**. No paid API calls.
 - **Consequences:**
   - new industries need data and a registry entry, not code changes in the contract;
   - legacy keys still load and are mirrored into `identifiers`.
+
+### ADR-015
+**Model registry with a versioned validation rule; only validated versions issue official forecasts.**
+- **Status:** Accepted (founder R2 scope, 2026-11-23); implemented in R2 (`src/halibut/models/registry.py`).
+- **Decision:**
+  - a model version = family + target + assumptions + data cut-off, registered append-only with a spec hash;
+  - rule `model-validation-v1`: valid spec, reproducible execution, as-of rolling backtest with 80% coverage
+    ≥ 0.5 and MAE ≤ 1.25 × persistence;
+  - unvalidated outputs are `estimate` claims, never forecasts;
+  - families that cannot run on the evidence (causal DiD, the synthetic ABM) are registered as unavailable
+    and rejected with reasons;
+  - baselines use pooled windows, the same statistic as tests.
+- **Consequences:** agents' numerical assumptions enter models only through bounds-checked parameters; the
+  thresholds are judgement calls and may change only by a new rule version.
+
+### ADR-016
+**One self-contained investigation result document (`halibut.investigation_result.v1`) is the read contract.**
+- **Status:** Accepted; implemented in R2. See [INVESTIGATION_RESULT_CONTRACT.md](INVESTIGATION_RESULT_CONTRACT.md).
+- **Decision:**
+  - every item carries id, type, status, label, producer, as-of, data, links and provenance;
+  - documents are append-only and content-hashed;
+  - frontends read documents through `halibut.command.api`, never the database;
+  - envelope changes need a new schema version.
+
+### ADR-017
+**Approvals are requests plus append-only decisions by named people; generated strategies can only request.**
+- **Status:** Accepted (founder decisions 9 and 10, R2 requirement 8); implemented in R2
+  (`src/halibut/control/approvals.py`).
+- **Decision:**
+  - agents may not request paid runs or external actions;
+  - decisions need a named person who is not the requester;
+  - experiments and external actions need a legal review reference and measurable outcomes;
+  - paid investigations call `require()` before any provider is built;
+  - Halibut has no code path that executes external actions.
+
+### ADR-018
+**An industry-neutral share panel underlies the loop; industry specifics live in adapters and data.**
+- **Status:** Accepted; implemented in R2 (`src/halibut/world/panel.py`).
+- **Decision:**
+  - metric templates (share, segment share, segment mix, market segment share, segment share gap) over a
+    quarterly entity × segment panel, built by adapters (DfT, `csv_panel`);
+  - the panel reproduces the legacy DfT signals exactly;
+  - new industries need an adapter or a CSV, not changes to the loop.
+- **Consequences:** quarterly panels only in R2; other periodicities and measures need new templates.
 

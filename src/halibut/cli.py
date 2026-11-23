@@ -60,6 +60,8 @@ def _parser() -> argparse.ArgumentParser:
     add_learn_commands(sub)
     from .agents.cli import add_agents_commands  # noqa: PLC0415
     add_agents_commands(sub)
+    from .investigation.cli import add_investigation_commands  # noqa: PLC0415
+    add_investigation_commands(sub)
     return p
 
 

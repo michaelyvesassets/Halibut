@@ -1,0 +1,41 @@
+# Test fixture: a NON-VEHICLE market with a FICTIONAL client-supplied quarterly panel (tests/fixtures/plant_milk_panel.csv).
+# Brands and numbers are invented; the panel exercises the industry-neutral loop end to end.
+schema_version = "1.0"
+
+[market]
+id = "gb_plant_milk_fixture"
+name = "GB plant-based milk (fictional panel)"
+category = "plant-based milk alternatives"
+geography = "GB"
+as_of = "2025-06-30"
+mode = "annihilation"
+focal = "northfield"
+target = "riverbend"
+
+[measurement]
+category_key = "food.plant_based_milk"
+universe = "retail litres of plant-based milk alternatives in Great Britain (fictional panel)"
+unit = "litres sold"
+period = "quarter"
+share_basis = "share of category litres; barista segment shares within the barista segment"
+
+[[competitors]]
+id = "northfield"
+name = "Northfield Oats"
+aliases = ["northfield oats"]
+identifiers = { retail_panel_brand = "northfield" }
+
+[[competitors]]
+id = "riverbend"
+name = "Riverbend"
+aliases = ["riverbend"]
+identifiers = { retail_panel_brand = "riverbend" }
+
+[[competitors]]
+id = "oakvale"
+name = "Oakvale"
+aliases = ["oakvale"]
+identifiers = { retail_panel_brand = "oakvale" }
+
+[evidence]
+transactions = { provider = "csv_panel", path = "plant_milk_panel.csv", segment = "barista" }

@@ -1,0 +1,1205 @@
+{
+ "$id": "halibut.investigation_result.v1",
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "additionalProperties": false,
+ "properties": {
+  "agents": {
+   "required": [
+    "routing",
+    "calls",
+    "costs"
+   ],
+   "type": "object"
+  },
+  "approvals": {
+   "type": "array"
+  },
+  "content_hash": {
+   "type": "string"
+  },
+  "created_at": {
+   "type": "string"
+  },
+  "evidence": {
+   "required": [
+    "coverage",
+    "panel",
+    "metrics"
+   ],
+   "type": "object"
+  },
+  "experiment_protocol": {
+   "oneOf": [
+    {
+     "type": "null"
+    },
+    {
+     "additionalProperties": false,
+     "properties": {
+      "as_of": {
+       "type": "string"
+      },
+      "data": {
+       "type": "object"
+      },
+      "id": {
+       "type": "string"
+      },
+      "label": {
+       "type": "string"
+      },
+      "links": {
+       "items": {
+        "additionalProperties": false,
+        "properties": {
+         "relation": {
+          "type": "string"
+         },
+         "to": {
+          "type": "string"
+         }
+        },
+        "required": [
+         "relation",
+         "to"
+        ],
+        "type": "object"
+       },
+       "type": "array"
+      },
+      "produced_by": {
+       "type": "string"
+      },
+      "provenance": {
+       "type": "object"
+      },
+      "status": {
+       "type": "string"
+      },
+      "type": {
+       "enum": [
+        "derived_metric",
+        "explanation",
+        "hypothesis",
+        "critique",
+        "assumption",
+        "test",
+        "test_result",
+        "model_version",
+        "forecast",
+        "estimate",
+        "simulated_outcome",
+        "strategic_proposal",
+        "experiment_protocol",
+        "lesson",
+        "question"
+       ],
+       "type": "string"
+      }
+     },
+     "required": [
+      "id",
+      "type",
+      "status",
+      "label",
+      "produced_by",
+      "as_of",
+      "data",
+      "links",
+      "provenance"
+     ],
+     "type": "object"
+    }
+   ]
+  },
+  "failures": {
+   "required": [
+    "items",
+    "calls"
+   ],
+   "type": "object"
+  },
+  "input_id": {
+   "type": "string"
+  },
+  "investigation_id": {
+   "type": "string"
+  },
+  "labels": {
+   "type": "object"
+  },
+  "links": {
+   "items": {
+    "required": [
+     "from",
+     "relation",
+     "to"
+    ],
+    "type": "object"
+   },
+   "type": "array"
+  },
+  "objective": {
+   "required": [
+    "id",
+    "market_id",
+    "mode",
+    "decision",
+    "as_of",
+    "evaluate_as_of",
+    "horizon_quarters",
+    "jurisdiction",
+    "success_metric"
+   ],
+   "type": "object"
+  },
+  "provenance": {
+   "required": [
+    "engine_version",
+    "prompt_version",
+    "schemas",
+    "registry_rule",
+    "test_spec_version",
+    "market_spec_sha256",
+    "panel"
+   ],
+   "type": "object"
+  },
+  "schema": {
+   "enum": [
+    "halibut.investigation_result.v1"
+   ],
+   "type": "string"
+  },
+  "stages": {
+   "additionalProperties": false,
+   "properties": {
+    "assumptions": {
+     "items": {
+      "additionalProperties": false,
+      "properties": {
+       "as_of": {
+        "type": "string"
+       },
+       "data": {
+        "type": "object"
+       },
+       "id": {
+        "type": "string"
+       },
+       "label": {
+        "type": "string"
+       },
+       "links": {
+        "items": {
+         "additionalProperties": false,
+         "properties": {
+          "relation": {
+           "type": "string"
+          },
+          "to": {
+           "type": "string"
+          }
+         },
+         "required": [
+          "relation",
+          "to"
+         ],
+         "type": "object"
+        },
+        "type": "array"
+       },
+       "produced_by": {
+        "type": "string"
+       },
+       "provenance": {
+        "type": "object"
+       },
+       "status": {
+        "type": "string"
+       },
+       "type": {
+        "enum": [
+         "derived_metric",
+         "explanation",
+         "hypothesis",
+         "critique",
+         "assumption",
+         "test",
+         "test_result",
+         "model_version",
+         "forecast",
+         "estimate",
+         "simulated_outcome",
+         "strategic_proposal",
+         "experiment_protocol",
+         "lesson",
+         "question"
+        ],
+        "type": "string"
+       }
+      },
+      "required": [
+       "id",
+       "type",
+       "status",
+       "label",
+       "produced_by",
+       "as_of",
+       "data",
+       "links",
+       "provenance"
+      ],
+      "type": "object"
+     },
+     "type": "array"
+    },
+    "critiques": {
+     "items": {
+      "additionalProperties": false,
+      "properties": {
+       "as_of": {
+        "type": "string"
+       },
+       "data": {
+        "type": "object"
+       },
+       "id": {
+        "type": "string"
+       },
+       "label": {
+        "type": "string"
+       },
+       "links": {
+        "items": {
+         "additionalProperties": false,
+         "properties": {
+          "relation": {
+           "type": "string"
+          },
+          "to": {
+           "type": "string"
+          }
+         },
+         "required": [
+          "relation",
+          "to"
+         ],
+         "type": "object"
+        },
+        "type": "array"
+       },
+       "produced_by": {
+        "type": "string"
+       },
+       "provenance": {
+        "type": "object"
+       },
+       "status": {
+        "type": "string"
+       },
+       "type": {
+        "enum": [
+         "derived_metric",
+         "explanation",
+         "hypothesis",
+         "critique",
+         "assumption",
+         "test",
+         "test_result",
+         "model_version",
+         "forecast",
+         "estimate",
+         "simulated_outcome",
+         "strategic_proposal",
+         "experiment_protocol",
+         "lesson",
+         "question"
+        ],
+        "type": "string"
+       }
+      },
+      "required": [
+       "id",
+       "type",
+       "status",
+       "label",
+       "produced_by",
+       "as_of",
+       "data",
+       "links",
+       "provenance"
+      ],
+      "type": "object"
+     },
+     "type": "array"
+    },
+    "estimates": {
+     "items": {
+      "additionalProperties": false,
+      "properties": {
+       "as_of": {
+        "type": "string"
+       },
+       "data": {
+        "type": "object"
+       },
+       "id": {
+        "type": "string"
+       },
+       "label": {
+        "type": "string"
+       },
+       "links": {
+        "items": {
+         "additionalProperties": false,
+         "properties": {
+          "relation": {
+           "type": "string"
+          },
+          "to": {
+           "type": "string"
+          }
+         },
+         "required": [
+          "relation",
+          "to"
+         ],
+         "type": "object"
+        },
+        "type": "array"
+       },
+       "produced_by": {
+        "type": "string"
+       },
+       "provenance": {
+        "type": "object"
+       },
+       "status": {
+        "type": "string"
+       },
+       "type": {
+        "enum": [
+         "derived_metric",
+         "explanation",
+         "hypothesis",
+         "critique",
+         "assumption",
+         "test",
+         "test_result",
+         "model_version",
+         "forecast",
+         "estimate",
+         "simulated_outcome",
+         "strategic_proposal",
+         "experiment_protocol",
+         "lesson",
+         "question"
+        ],
+        "type": "string"
+       }
+      },
+      "required": [
+       "id",
+       "type",
+       "status",
+       "label",
+       "produced_by",
+       "as_of",
+       "data",
+       "links",
+       "provenance"
+      ],
+      "type": "object"
+     },
+     "type": "array"
+    },
+    "explanations": {
+     "items": {
+      "additionalProperties": false,
+      "properties": {
+       "as_of": {
+        "type": "string"
+       },
+       "data": {
+        "type": "object"
+       },
+       "id": {
+        "type": "string"
+       },
+       "label": {
+        "type": "string"
+       },
+       "links": {
+        "items": {
+         "additionalProperties": false,
+         "properties": {
+          "relation": {
+           "type": "string"
+          },
+          "to": {
+           "type": "string"
+          }
+         },
+         "required": [
+          "relation",
+          "to"
+         ],
+         "type": "object"
+        },
+        "type": "array"
+       },
+       "produced_by": {
+        "type": "string"
+       },
+       "provenance": {
+        "type": "object"
+       },
+       "status": {
+        "type": "string"
+       },
+       "type": {
+        "enum": [
+         "derived_metric",
+         "explanation",
+         "hypothesis",
+         "critique",
+         "assumption",
+         "test",
+         "test_result",
+         "model_version",
+         "forecast",
+         "estimate",
+         "simulated_outcome",
+         "strategic_proposal",
+         "experiment_protocol",
+         "lesson",
+         "question"
+        ],
+        "type": "string"
+       }
+      },
+      "required": [
+       "id",
+       "type",
+       "status",
+       "label",
+       "produced_by",
+       "as_of",
+       "data",
+       "links",
+       "provenance"
+      ],
+      "type": "object"
+     },
+     "type": "array"
+    },
+    "forecasts": {
+     "items": {
+      "additionalProperties": false,
+      "properties": {
+       "as_of": {
+        "type": "string"
+       },
+       "data": {
+        "type": "object"
+       },
+       "id": {
+        "type": "string"
+       },
+       "label": {
+        "type": "string"
+       },
+       "links": {
+        "items": {
+         "additionalProperties": false,
+         "properties": {
+          "relation": {
+           "type": "string"
+          },
+          "to": {
+           "type": "string"
+          }
+         },
+         "required": [
+          "relation",
+          "to"
+         ],
+         "type": "object"
+        },
+        "type": "array"
+       },
+       "produced_by": {
+        "type": "string"
+       },
+       "provenance": {
+        "type": "object"
+       },
+       "status": {
+        "type": "string"
+       },
+       "type": {
+        "enum": [
+         "derived_metric",
+         "explanation",
+         "hypothesis",
+         "critique",
+         "assumption",
+         "test",
+         "test_result",
+         "model_version",
+         "forecast",
+         "estimate",
+         "simulated_outcome",
+         "strategic_proposal",
+         "experiment_protocol",
+         "lesson",
+         "question"
+        ],
+        "type": "string"
+       }
+      },
+      "required": [
+       "id",
+       "type",
+       "status",
+       "label",
+       "produced_by",
+       "as_of",
+       "data",
+       "links",
+       "provenance"
+      ],
+      "type": "object"
+     },
+     "type": "array"
+    },
+    "hypotheses": {
+     "items": {
+      "additionalProperties": false,
+      "properties": {
+       "as_of": {
+        "type": "string"
+       },
+       "data": {
+        "type": "object"
+       },
+       "id": {
+        "type": "string"
+       },
+       "label": {
+        "type": "string"
+       },
+       "links": {
+        "items": {
+         "additionalProperties": false,
+         "properties": {
+          "relation": {
+           "type": "string"
+          },
+          "to": {
+           "type": "string"
+          }
+         },
+         "required": [
+          "relation",
+          "to"
+         ],
+         "type": "object"
+        },
+        "type": "array"
+       },
+       "produced_by": {
+        "type": "string"
+       },
+       "provenance": {
+        "type": "object"
+       },
+       "status": {
+        "type": "string"
+       },
+       "type": {
+        "enum": [
+         "derived_metric",
+         "explanation",
+         "hypothesis",
+         "critique",
+         "assumption",
+         "test",
+         "test_result",
+         "model_version",
+         "forecast",
+         "estimate",
+         "simulated_outcome",
+         "strategic_proposal",
+         "experiment_protocol",
+         "lesson",
+         "question"
+        ],
+        "type": "string"
+       }
+      },
+      "required": [
+       "id",
+       "type",
+       "status",
+       "label",
+       "produced_by",
+       "as_of",
+       "data",
+       "links",
+       "provenance"
+      ],
+      "type": "object"
+     },
+     "type": "array"
+    },
+    "lessons": {
+     "items": {
+      "additionalProperties": false,
+      "properties": {
+       "as_of": {
+        "type": "string"
+       },
+       "data": {
+        "type": "object"
+       },
+       "id": {
+        "type": "string"
+       },
+       "label": {
+        "type": "string"
+       },
+       "links": {
+        "items": {
+         "additionalProperties": false,
+         "properties": {
+          "relation": {
+           "type": "string"
+          },
+          "to": {
+           "type": "string"
+          }
+         },
+         "required": [
+          "relation",
+          "to"
+         ],
+         "type": "object"
+        },
+        "type": "array"
+       },
+       "produced_by": {
+        "type": "string"
+       },
+       "provenance": {
+        "type": "object"
+       },
+       "status": {
+        "type": "string"
+       },
+       "type": {
+        "enum": [
+         "derived_metric",
+         "explanation",
+         "hypothesis",
+         "critique",
+         "assumption",
+         "test",
+         "test_result",
+         "model_version",
+         "forecast",
+         "estimate",
+         "simulated_outcome",
+         "strategic_proposal",
+         "experiment_protocol",
+         "lesson",
+         "question"
+        ],
+        "type": "string"
+       }
+      },
+      "required": [
+       "id",
+       "type",
+       "status",
+       "label",
+       "produced_by",
+       "as_of",
+       "data",
+       "links",
+       "provenance"
+      ],
+      "type": "object"
+     },
+     "type": "array"
+    },
+    "model_specs": {
+     "items": {
+      "additionalProperties": false,
+      "properties": {
+       "as_of": {
+        "type": "string"
+       },
+       "data": {
+        "type": "object"
+       },
+       "id": {
+        "type": "string"
+       },
+       "label": {
+        "type": "string"
+       },
+       "links": {
+        "items": {
+         "additionalProperties": false,
+         "properties": {
+          "relation": {
+           "type": "string"
+          },
+          "to": {
+           "type": "string"
+          }
+         },
+         "required": [
+          "relation",
+          "to"
+         ],
+         "type": "object"
+        },
+        "type": "array"
+       },
+       "produced_by": {
+        "type": "string"
+       },
+       "provenance": {
+        "type": "object"
+       },
+       "status": {
+        "type": "string"
+       },
+       "type": {
+        "enum": [
+         "derived_metric",
+         "explanation",
+         "hypothesis",
+         "critique",
+         "assumption",
+         "test",
+         "test_result",
+         "model_version",
+         "forecast",
+         "estimate",
+         "simulated_outcome",
+         "strategic_proposal",
+         "experiment_protocol",
+         "lesson",
+         "question"
+        ],
+        "type": "string"
+       }
+      },
+      "required": [
+       "id",
+       "type",
+       "status",
+       "label",
+       "produced_by",
+       "as_of",
+       "data",
+       "links",
+       "provenance"
+      ],
+      "type": "object"
+     },
+     "type": "array"
+    },
+    "simulations": {
+     "items": {
+      "additionalProperties": false,
+      "properties": {
+       "as_of": {
+        "type": "string"
+       },
+       "data": {
+        "type": "object"
+       },
+       "id": {
+        "type": "string"
+       },
+       "label": {
+        "type": "string"
+       },
+       "links": {
+        "items": {
+         "additionalProperties": false,
+         "properties": {
+          "relation": {
+           "type": "string"
+          },
+          "to": {
+           "type": "string"
+          }
+         },
+         "required": [
+          "relation",
+          "to"
+         ],
+         "type": "object"
+        },
+        "type": "array"
+       },
+       "produced_by": {
+        "type": "string"
+       },
+       "provenance": {
+        "type": "object"
+       },
+       "status": {
+        "type": "string"
+       },
+       "type": {
+        "enum": [
+         "derived_metric",
+         "explanation",
+         "hypothesis",
+         "critique",
+         "assumption",
+         "test",
+         "test_result",
+         "model_version",
+         "forecast",
+         "estimate",
+         "simulated_outcome",
+         "strategic_proposal",
+         "experiment_protocol",
+         "lesson",
+         "question"
+        ],
+        "type": "string"
+       }
+      },
+      "required": [
+       "id",
+       "type",
+       "status",
+       "label",
+       "produced_by",
+       "as_of",
+       "data",
+       "links",
+       "provenance"
+      ],
+      "type": "object"
+     },
+     "type": "array"
+    },
+    "strategic_options": {
+     "items": {
+      "additionalProperties": false,
+      "properties": {
+       "as_of": {
+        "type": "string"
+       },
+       "data": {
+        "type": "object"
+       },
+       "id": {
+        "type": "string"
+       },
+       "label": {
+        "type": "string"
+       },
+       "links": {
+        "items": {
+         "additionalProperties": false,
+         "properties": {
+          "relation": {
+           "type": "string"
+          },
+          "to": {
+           "type": "string"
+          }
+         },
+         "required": [
+          "relation",
+          "to"
+         ],
+         "type": "object"
+        },
+        "type": "array"
+       },
+       "produced_by": {
+        "type": "string"
+       },
+       "provenance": {
+        "type": "object"
+       },
+       "status": {
+        "type": "string"
+       },
+       "type": {
+        "enum": [
+         "derived_metric",
+         "explanation",
+         "hypothesis",
+         "critique",
+         "assumption",
+         "test",
+         "test_result",
+         "model_version",
+         "forecast",
+         "estimate",
+         "simulated_outcome",
+         "strategic_proposal",
+         "experiment_protocol",
+         "lesson",
+         "question"
+        ],
+        "type": "string"
+       }
+      },
+      "required": [
+       "id",
+       "type",
+       "status",
+       "label",
+       "produced_by",
+       "as_of",
+       "data",
+       "links",
+       "provenance"
+      ],
+      "type": "object"
+     },
+     "type": "array"
+    },
+    "test_results": {
+     "items": {
+      "additionalProperties": false,
+      "properties": {
+       "as_of": {
+        "type": "string"
+       },
+       "data": {
+        "type": "object"
+       },
+       "id": {
+        "type": "string"
+       },
+       "label": {
+        "type": "string"
+       },
+       "links": {
+        "items": {
+         "additionalProperties": false,
+         "properties": {
+          "relation": {
+           "type": "string"
+          },
+          "to": {
+           "type": "string"
+          }
+         },
+         "required": [
+          "relation",
+          "to"
+         ],
+         "type": "object"
+        },
+        "type": "array"
+       },
+       "produced_by": {
+        "type": "string"
+       },
+       "provenance": {
+        "type": "object"
+       },
+       "status": {
+        "type": "string"
+       },
+       "type": {
+        "enum": [
+         "derived_metric",
+         "explanation",
+         "hypothesis",
+         "critique",
+         "assumption",
+         "test",
+         "test_result",
+         "model_version",
+         "forecast",
+         "estimate",
+         "simulated_outcome",
+         "strategic_proposal",
+         "experiment_protocol",
+         "lesson",
+         "question"
+        ],
+        "type": "string"
+       }
+      },
+      "required": [
+       "id",
+       "type",
+       "status",
+       "label",
+       "produced_by",
+       "as_of",
+       "data",
+       "links",
+       "provenance"
+      ],
+      "type": "object"
+     },
+     "type": "array"
+    },
+    "tests": {
+     "items": {
+      "additionalProperties": false,
+      "properties": {
+       "as_of": {
+        "type": "string"
+       },
+       "data": {
+        "type": "object"
+       },
+       "id": {
+        "type": "string"
+       },
+       "label": {
+        "type": "string"
+       },
+       "links": {
+        "items": {
+         "additionalProperties": false,
+         "properties": {
+          "relation": {
+           "type": "string"
+          },
+          "to": {
+           "type": "string"
+          }
+         },
+         "required": [
+          "relation",
+          "to"
+         ],
+         "type": "object"
+        },
+        "type": "array"
+       },
+       "produced_by": {
+        "type": "string"
+       },
+       "provenance": {
+        "type": "object"
+       },
+       "status": {
+        "type": "string"
+       },
+       "type": {
+        "enum": [
+         "derived_metric",
+         "explanation",
+         "hypothesis",
+         "critique",
+         "assumption",
+         "test",
+         "test_result",
+         "model_version",
+         "forecast",
+         "estimate",
+         "simulated_outcome",
+         "strategic_proposal",
+         "experiment_protocol",
+         "lesson",
+         "question"
+        ],
+        "type": "string"
+       }
+      },
+      "required": [
+       "id",
+       "type",
+       "status",
+       "label",
+       "produced_by",
+       "as_of",
+       "data",
+       "links",
+       "provenance"
+      ],
+      "type": "object"
+     },
+     "type": "array"
+    }
+   },
+   "required": [
+    "explanations",
+    "hypotheses",
+    "critiques",
+    "tests",
+    "test_results",
+    "model_specs",
+    "assumptions",
+    "forecasts",
+    "estimates",
+    "simulations",
+    "strategic_options",
+    "lessons"
+   ],
+   "type": "object"
+  },
+  "status": {
+   "enum": [
+    "completed",
+    "stopped",
+    "insufficient_evidence",
+    "invalid_market"
+   ],
+   "type": "string"
+  },
+  "stop_reason": {
+   "type": [
+    "string",
+    "null"
+   ]
+  },
+  "tenant": {
+   "type": "string"
+  },
+  "world_model": {
+   "required": [
+    "slice_id",
+    "market",
+    "entities",
+    "anomalies"
+   ],
+   "type": "object"
+  }
+ },
+ "required": [
+  "schema",
+  "investigation_id",
+  "input_id",
+  "content_hash",
+  "created_at",
+  "tenant",
+  "status",
+  "stop_reason",
+  "objective",
+  "labels",
+  "evidence",
+  "world_model",
+  "stages",
+  "experiment_protocol",
+  "links",
+  "failures",
+  "agents",
+  "approvals",
+  "provenance"
+ ],
+ "title": "Halibut investigation result v1",
+ "type": "object"
+}

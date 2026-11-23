@@ -150,3 +150,99 @@ def split_items(data, schema: dict, key: str):
         prob = validate(it, arr_schema["items"], f"$.{key}[{i}]")
         (rejected.append((i, it, prob)) if prob else valid.append(it))
     return valid, rejected, []
+
+
+# --------------------------------------------------------------------------------------------- R2 loop roles
+SCHEMA_VERSIONS.update({"hypothesis_generator": "hypothesis_original.v1", "loop_critic": "critic_loop.v1",
+                        "strategist": "strategy_options.v1"})
+TEMPLATES = ("share", "segment_share", "segment_mix", "market_segment_share", "segment_share_gap")
+COMPARATORS = ("increase_vs_L4", "decrease_vs_L4", "above_reference", "below_reference")
+ASSUMPTION_KINDS = ("behavioural", "market_structure", "measurement", "competitive", "other")
+RESPONSES = ("match_price", "expand_range", "increase_distribution", "increase_marketing", "hold", "unknown")
+OFFSETS = ("none", "offsets_partly", "offsets_fully", "unknown")
+HYP_REFS = tuple(f"H{i}" for i in range(1, 7))
+IMP_REFS = tuple(f"I{i}" for i in range(1, 5))
+OPT_REFS = tuple(f"O{i}" for i in range(1, 5))
+CURRENCIES = ("GBP", "EUR", "USD", "NOK", "SEK", "DKK", "unknown")
+
+
+def _s(n):
+    return {"type": "string", "maxLength": n}
+
+
+def _arr(item, mx, mn=None):
+    a = {"type": "array", "items": item, "maxItems": mx}
+    if mn:
+        a["minItems"] = mn
+    return a
+
+
+def generator_schema(metric_ids, entities, families) -> dict:
+    ents = sorted(set(entities))
+    imp = _obj({"id": _enum(IMP_REFS), "template": _enum(TEMPLATES + ("other",)), "entity": _enum(ents + ["market"]),
+                "entity_b": _enum(ents + [""]), "comparator": _enum(COMPARATORS), "reference_metric": _enum(list(metric_ids) + [""]),
+                "description": _s(300), "would_refute_if": _s(300)})
+    hyp = _obj({"ref": _enum(HYP_REFS), "statement": _s(500),
+                "mechanism": _obj({"cause": _s(200), "pathway": _s(500), "effect_template": _enum(TEMPLATES + ("other",)),
+                                   "direction": _enum(("increase", "decrease"))}),
+                "conditions": _arr(_s(200), 4),
+                "assumptions": _arr(_obj({"statement": _s(240), "kind": _enum(ASSUMPTION_KINDS)}), 5),
+                "supporting_evidence": _arr(_enum(metric_ids), 8, 1),
+                "alternative_explanations": _arr(_obj({"statement": _s(300), "discriminating_implication": _enum(IMP_REFS)}), 3, 1),
+                "observable_implications": _arr(imp, 4, 1),
+                "uncertainty": _obj({"level": _enum(CONFIDENCE), "sources": _arr(_s(160), 3)}),
+                "refutation_criteria": _s(500), "novelty_claim": _s(300),
+                "model_request": _obj({"family": _enum(list(families) + ["none"]), "rationale": _s(300),
+                                       "numerical_assumptions": _arr(_obj({"name": _s(60), "value": {"type": "number"},
+                                                                           "unit": _s(30), "basis": _s(240)}), 3)})})
+    expl = _obj({"statement": _s(500), "evidence": _arr(_enum(metric_ids), 6, 1)})
+    return _obj({"explanations": _arr(expl, 4), "hypotheses": _arr(hyp, 6)})
+
+
+def loop_critic_schema(refs) -> dict:
+    item = _obj({"hypothesis_ref": _enum(refs), "severity": _enum(SEVERITIES), "statement": _s(500),
+                 "challenged_assumption": _s(240)})
+    return _obj({"critiques": _arr(item, max(1, 3 * len(set(refs))))})
+
+
+def strategist_schema(refs, entities, metric_ids, levers, modes) -> dict:
+    ents = sorted(set(entities))
+    crit = _obj({"template": _enum(TEMPLATES), "entity": _enum(ents + ["market"]), "entity_b": _enum(ents + [""]),
+                 "comparator": _enum(COMPARATORS), "reference_metric": _enum(list(metric_ids) + [""]),
+                 "horizon_quarters": {"type": "integer", "enum": [2]}})
+    opt = _obj({"ref": _enum(OPT_REFS), "title": _s(160), "mode": _enum(modes), "levers": _arr(_enum(levers), 4, 1),
+                "intended_effect": _obj({"template": _enum(TEMPLATES), "entity": _enum(ents + ["market"]),
+                                         "direction": _enum(("increase", "decrease")),
+                                         "magnitude_low_pp": {"type": "number"}, "magnitude_high_pp": {"type": "number"},
+                                         "basis": _s(300)}),
+                "linked_hypotheses": _arr(_enum(refs), 4, 1), "supporting_evidence": _arr(_enum(metric_ids), 6, 1),
+                "assumptions": _arr(_obj({"statement": _s(240), "kind": _enum(ASSUMPTION_KINDS)}), 5),
+                "competitor_responses": _arr(_obj({"competitor": _enum(ents), "response": _enum(RESPONSES),
+                                                   "likelihood": _enum(CONFIDENCE), "effect_on_option": _enum(OFFSETS)}), 4),
+                "cost": _obj({"known": {"type": "boolean"}, "low": {"type": "number"}, "high": {"type": "number"},
+                              "currency": _enum(CURRENCIES), "basis": _s(300)}),
+                "risks": _arr(_s(200), 4), "uncertainty": _enum(CONFIDENCE), "success_criteria": _arr(crit, 3, 1)})
+    return _obj({"options": _arr(opt, 4)})
+
+
+def split_multi(data, schema: dict, keys) -> tuple[dict, dict, list]:
+    """Like ``split_items`` for replies with several item arrays: ({key: valid}, {key: rejected}, top_problems)."""
+    if not isinstance(data, dict):
+        return {}, {}, [f"$: expected object, got {_tname(data)}"]
+    top = [f"$: unexpected field {k!r}" for k in data if k not in schema["properties"]]
+    top += [f"$: missing required field {k!r}" for k in keys if k not in data]
+    for k in keys:
+        if k in data:
+            if not isinstance(data[k], list):
+                top.append(f"$.{k}: expected array, got {_tname(data[k])}")
+            elif len(data[k]) > schema["properties"][k].get("maxItems", 10 ** 9):
+                top.append(f"$.{k}: more than {schema['properties'][k]['maxItems']} items ({len(data[k])})")
+    if top:
+        return {}, {}, top
+    valid, rejected = {}, {}
+    for k in keys:
+        valid[k], rejected[k] = [], []
+        for i, it in enumerate(data[k]):
+            prob = validate(it, schema["properties"][k]["items"], f"$.{k}[{i}]")
+            (rejected[k].append((i, it, prob)) if prob else valid[k].append(it))
+    return valid, rejected, []

@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Version | 1.0 (2026-11-23) |
-| Status | **Accepted as the baseline architecture by the founder on 2026-11-23, with qualifications** ([ARCHITECTURE_DECISIONS.md §6.0](ARCHITECTURE_DECISIONS.md#60-founder-decisions-of-2026-11-23-approval-of-v10-with-qualifications)). R1 is implemented ([R1_IMPLEMENTATION.md](R1_IMPLEMENTATION.md)). Nothing else here is implemented unless [CAPABILITY_MATRIX.md](CAPABILITY_MATRIX.md) says so. |
+| Status | **Accepted as the baseline architecture by the founder on 2026-11-23, with qualifications** ([ARCHITECTURE_DECISIONS.md §6.0](ARCHITECTURE_DECISIONS.md#60-founder-decisions-of-2026-11-23-approval-of-v10-with-qualifications)). R1 and R2 are implemented ([R1_IMPLEMENTATION.md](R1_IMPLEMENTATION.md), [R2_IMPLEMENTATION.md](R2_IMPLEMENTATION.md)); R2 is tested offline only. Nothing else here is implemented unless [CAPABILITY_MATRIX.md](CAPABILITY_MATRIX.md) says so. |
 | Supersedes | The per-phase component lists in `docs/phase4_intelligence.md` §1 and `docs/phase5_agents_learning.md` §1 |
 | Governance | [ARCHITECTURE_DECISIONS.md](ARCHITECTURE_DECISIONS.md) |
 
@@ -20,6 +20,8 @@
 | [IMPLEMENTATION_ROADMAP.md](IMPLEMENTATION_ROADMAP.md) | Dependency-ordered milestones, acceptance criteria, costs, founder decisions |
 | [ARCHITECTURE_DECISIONS.md](ARCHITECTURE_DECISIONS.md) | Versioning, ADRs, ownership, contracts, change rules |
 | [R1_IMPLEMENTATION.md](R1_IMPLEMENTATION.md) | What R1 built, how it behaves, acceptance results and known limits |
+| [R2_IMPLEMENTATION.md](R2_IMPLEMENTATION.md) | The first complete intelligence loop: what works, examples, limits |
+| [INVESTIGATION_RESULT_CONTRACT.md](INVESTIGATION_RESULT_CONTRACT.md) | The result document, statuses and read-only API for frontends |
 
 ---
 

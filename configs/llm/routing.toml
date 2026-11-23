@@ -1,0 +1,16 @@
+# Task-class model routing for the R2 intelligence loop (no secrets; approval lives in the provider config).
+# One investigation makes at most one call per role: 3 LLM calls (the Investigator is merged into the
+# Hypothesis Generator; model design is deterministic from the generator's model request).
+# A role may override the model; providers and their spend guards are shared per model.
+schema_version = "1.0"
+provider_config = "configs/llm/anthropic.toml"
+default_model = "claude-haiku-5-5"
+
+[roles.hypothesis_generator]
+max_output_tokens = 5000
+
+[roles.loop_critic]
+max_output_tokens = 1800
+
+[roles.strategist]
+max_output_tokens = 4000

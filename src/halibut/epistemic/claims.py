@@ -35,8 +35,8 @@ CLAIM_TYPES = ("observation", "derived_metric", "estimate", "assumption", "expla
                "simulated_outcome", "critique", "strategic_proposal", "experiment_result", "lesson")
 INITIAL_STATUS = {"observation": "recorded", "derived_metric": "recorded", "forecast": "open", "simulated_outcome": "recorded",
                   "experiment_result": "recorded"}
-STATUSES = ("proposed", "recorded", "open", "tested", "survived", "refuted", "inconclusive", "validated", "rejected",
-            "superseded", "scored")
+STATUSES = ("proposed", "recorded", "open", "tested", "survived", "refuted", "inconclusive", "untested", "validated",
+            "rejected", "superseded", "scored")
 RELATIONS = ("supports", "contradicts", "derived_from", "tests", "critiques", "supersedes", "duplicates", "explains")
 FORECAST_FIELDS = ("point", "interval80", "resolution")
 TENANT = re.compile(r"^[a-z0-9][a-z0-9_-]{0,62}$")

@@ -97,7 +97,7 @@ def classify_problems(problems: list[str], item=None, *, subjects=()) -> str:
             return c[0]
     text = " ".join(problems)
     if re.search(r"is not an allowed value", text):
-        m = re.search(r"\.(evidence|subject|kind|tool|hypothesis_id)(\[\d+\])?: '([^']*)'", text)
+        m = re.search(r"\.(?:supporting_)?(evidence|subject|kind|tool|hypothesis_id)(\[\d+\])?: '([^']*)'", text)
         if m and m.group(1) == "evidence":
             v = m.group(3)
             return "format.evidence_value_appended" if (v.startswith(ID_PREFIXES) and not ID_RE.match(v)) else "fabricated.evidence_id"
