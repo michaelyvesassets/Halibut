@@ -81,7 +81,7 @@ def calibrate(spec, obs, covariates, workers=1, cache_dir=None, log=lambda *_: N
                                          maxiter=spec.maxiter, seed=spec.optimizer_seed, polish=False,
                                          vectorized=True, updating="deferred", init="latinhypercube")
     best_u, best_L = np.clip(de.x, 0, 1), float(de.fun)
-    log(f"    DE: L={best_L:.2f} after {de.nfev} evaluations ({time.perf_counter() - t0:.0f}s)")
+    log(f"    DE: L={best_L:.2f} after {sim.evaluations} evaluations ({time.perf_counter() - t0:.0f}s)")
     if spec.nm_maxfev:
         nm = optimize.minimize(lambda u: float(f_vec(np.clip(u, 0, 1)[:, None])[0]), best_u, method="Nelder-Mead",
                                bounds=[(0.0, 1.0)] * k, options={"maxfev": spec.nm_maxfev, "xatol": 1e-3, "fatol": 1e-2})
