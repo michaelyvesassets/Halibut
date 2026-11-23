@@ -36,9 +36,22 @@ class ReferenceHypothesisAgent:
                 "levers": list(levers), "mechanism_candidates": list(mechanisms), "uncertainties": list(uncertainties),
                 "status": "proposed", "epistemic_status": "hypothesis", "produced_by": self.id,
                 "rule_thresholds": {"share_delta_pp": SHARE_DELTA_PP},
+                "forecast_policy": ctx.get("forecast_policy"),
                 "lessons_considered": [k["knowledge_id"] for k in ctx.get("lessons", [])]}
 
+    @staticmethod
+    def forecast_policy(lessons: list[dict]) -> dict:
+        """Choose how predictions are framed, from retrieved knowledge (cross-agent learning)."""
+        sim_deficit = [k for k in lessons if k["kind"] == "outcome" and "component:simulation.agent_model" in k["scope"].get("tags", [])]
+        if sim_deficit:
+            return {"method": "persistence_baseline", "simulation_use": "exploratory_only",
+                    "because": [k["knowledge_id"] for k in sim_deficit],
+                    "note": "Prior outcome: simple diffusion baselines beat the agent model in out-of-sample share forecasts; "
+                            "predictions therefore use persistence, and scenario drafts are exploratory, not forecasts."}
+        return {"method": "persistence_baseline", "simulation_use": "unvalidated", "because": [], "note": "No prior outcome retrieved."}
+
     def propose(self, ctx: dict) -> list[dict]:
+        ctx.setdefault("forecast_policy", self.forecast_policy(ctx.get("lessons", [])))
         m, tx = ctx["market"], ctx["signals"]["transactions"]
         if not tx.get("available"):
             return []
@@ -153,9 +166,15 @@ class ReferenceCritic:
         if fp_ids & set(h["evidence"]):
             out.append({"target": h["id"], "relation": "critiques",
                         "statement": "OSM footprint reflects mapping completeness as of the snapshot, not the full dealer network."})
-        if ctx.get("unresolved"):
+        unresolved_subjects = [u for u in ctx.get("unresolved", []) if f"brand:{u}" in h["subjects"]]
+        if unresolved_subjects:
             out.append({"target": h["id"], "relation": "critiques",
-                        "statement": f"Entity resolution left {', '.join(ctx['unresolved'])} unresolved; group-level reasoning is incomplete."})
+                        "statement": f"Entity resolution left {', '.join(unresolved_subjects)} unresolved; company/parent reasoning about it is incomplete."})
+        if h["mode"] == "diagnostic" and any(e.startswith("doc:") for e in h["evidence"]):
+            n = sum(e.startswith("doc:") for e in h["evidence"])
+            if n < 20:
+                out.append({"target": h["id"], "relation": "critiques",
+                            "statement": f"Only {n} matched media records support this; the sample is too small to distinguish signal from noise."})
         return out
 
 
@@ -185,7 +204,9 @@ class ReferenceScenarioDrafter:
         return {
             "schema_version": "1.2",
             "experiment": {"name": f"draft_{m.id}_{m.focal}_vs_{m.target}",
-                           "description": f"SYNTHETIC DRAFT from {h['id']}: uncalibrated; levers illustrative.",
+                           "description": (f"SYNTHETIC DRAFT from {h['id']}: uncalibrated; levers illustrative; "
+                                           f"use: {ctx.get('forecast_policy', {}).get('simulation_use', 'unvalidated')} "
+                                           f"(lessons {', '.join(ctx.get('forecast_policy', {}).get('because', [])) or 'none'})."),
                            "weeks": 26, "seeds": [1, 2, 3], "summary_window_weeks": 4},
             "products": products,
             "population": {"size": 2000, "segments": [{"name": "segment_buyers", "weight": 1.0,
@@ -195,7 +216,8 @@ class ReferenceScenarioDrafter:
                                                        "preferences": {"focal": 0.0, "target": 0.0, "others": 0.0}}]},
             "decision": {"temperature": 1.0, "outside_utility": -30.0, "preference_weight": 1.0, "quality_weight": 1.0},
             "network": {"k": 10, "rewire_prob": 0.1},
-            "social_influence": {"enabled": True, "weight": 1.0, "signal": "current_product"},
+            # UNIDENTIFIED from aggregate data: off, so the control reproduces observed segment shares
+            "social_influence": {"enabled": False, "weight": 0.0, "signal": "current_product"},
             "preference_drift": {"enabled": False},
             "scenarios": [
                 {"name": "control"},

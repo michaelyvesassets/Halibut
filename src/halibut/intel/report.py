@@ -63,7 +63,14 @@ def write_report(r: dict, out_dir) -> Path:
           "", "**Macro (World Bank):** " + ("; ".join(f"{k} {v['latest_period']}: {v['latest']:,.2f}" for k, v in mc.get("indicators", {}).items())
                                             if mc.get("available") else "unavailable")]
     L += ["", "## 4. Prior lessons considered", ""]
-    L += [f"- [{k['status']}] {k['statement']} (`{k['knowledge_id']}`)" for k in r["lessons"]] or ["- none"]
+    L += [f"- [{k['status']}] {k['kind']}: {k['statement']} (`{k['knowledge_id']}`)" for k in r["lessons"]] or ["- none"]
+    pol = next((h.get("forecast_policy") for h in r["hypotheses"] if h.get("forecast_policy")), None)
+    if pol:
+        L += ["", f"**Effect on this run:** predictions use `{pol['method']}`; simulation use: `{pol['simulation_use']}`. {pol['note']}"
+              + (f" (because of {', '.join('`' + b + '`' for b in pol['because'])})" if pol["because"] else "")]
+    if r.get("prior_hypotheses"):
+        L += ["", f"Prior hypotheses for this market in the learning memory: {len(r['prior_hypotheses'])} "
+              f"(statuses: {', '.join(sorted({p['status'] for p in r['prior_hypotheses']}))})."]
     L += ["", "## 5. Hypotheses (proposed, validated against evidence; untested)", ""]
     for h in r["hypotheses"]:
         L += [f"### `{h['id']}` [{h['mode']}, confidence {h['confidence']}]", "", h["claim"], "",

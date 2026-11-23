@@ -129,7 +129,9 @@ def investigate(store, market_path, out_dir="results/intel", raw_dir="data/raw",
                "macro": sig.macro_signals(retr, market), "groups": sig.group_signals(retr, tx, brands) if tx.get("available") else {}}
     metrics = {m["id"]: m for m in tx.get("metrics", [])}
     check_action("read_knowledge")
-    lessons = memory.retrieve(tags=["domain:share_forecasting", "domain:competitive_displacement", f"market:{market.id}"])
+    lessons = memory.retrieve(tags=["domain:share_forecasting", "domain:competitive_displacement", f"market:{market.id}"],
+                              kinds=["lesson", "outcome", "question"])
+    prior_hypotheses = memory.retrieve(tags=[f"market:{market.id}"], kinds=["hypothesis"])
     unresolved = [k for k, v in resolutions.items() if v.get("method") == "unresolved"]
     ctx = {"run_id": run_id, "market": market, "signals": signals, "lessons": lessons, "unresolved": unresolved}
     check_action("propose_hypothesis")
@@ -165,6 +167,8 @@ def investigate(store, market_path, out_dir="results/intel", raw_dir="data/raw",
     report = {"run_id": run_id, "experiment_id": exp_id, "market": _market_dict(market), "plan": pl, "steps": steps,
               "budget": budget.as_dict(), "resolutions": resolutions, "signals": _strip(signals), "lessons": lessons,
               "hypotheses": accepted, "rejected_hypotheses": rejected, "scenario_drafts": drafts,
+              "prior_hypotheses": [{"id": k["knowledge_id"], "status": k["status"], "created_at": k["created_at"],
+                                    "statement": k["statement"]} for k in prior_hypotheses],
               "graph": _graph(retr, brands), "sources": _sources(store),
               "seconds": round(time.monotonic() - t0, 1)}
     from .report import write_report  # noqa: PLC0415

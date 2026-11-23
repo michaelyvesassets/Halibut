@@ -107,7 +107,11 @@ def test_end_to_end_offline_fixtures(run):
     ann = next(h for h in r["hypotheses"] if h["mode"] == "annihilation")
     assert any("displaced" in c["statement"] for c in ann["critiques"])
     assert r["scenario_drafts"] and r["scenario_drafts"][0]["validated"]
-    assert set(r["scenario_drafts"][0]["preview_final_expected_shares"]) >= {"control", "focal_price_cut_10pct"}
+    prev = r["scenario_drafts"][0]["preview_final_expected_shares"]
+    assert set(prev) >= {"control", "focal_price_cut_10pct"}
+    byd = tx["competitors"]["byd"]["segment_share_L4"]
+    assert abs(prev["control"]["focal"] - byd) < 1e-3  # the draft's control reproduces the observed starting share
+    assert prev["focal_price_cut_10pct"]["focal"] > prev["control"]["focal"]
     # learning memory: experiment + proposed hypotheses/predictions/critiques; no validated agent claims
     mem = LearningMemory(store)
     ks = mem.retrieve(tags=["market:test_market"])

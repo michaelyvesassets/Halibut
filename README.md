@@ -48,6 +48,18 @@ halibut data ingest                       # network: Statistics Norway (CC BY 4.
 halibut data events configs/data/events_norway_ev.toml
 halibut data quality                      # writes data/quality_report.json
 halibut data rebuild --into NEW.sqlite    # recreate a store from raw snapshots only
+
+# Market intelligence (Phase 4)
+halibut intel smoke                                              # one live request per provider
+halibut intel investigate configs/intel/markets/uk_cars_bev_v1.toml --dry-run
+halibut intel investigate configs/intel/markets/uk_cars_bev_v1.toml [--offline]
+
+# Learning memory and evaluation (Phase 4)
+halibut learn demo                        # baseline -> change -> evaluation -> lesson -> informed next experiment
+halibut learn lessons --tag domain:share_forecasting
+halibut learn import-backtest results/backtests/<run>
+halibut learn promote COMPONENT EVALUATION_ID --approved-by NAME   # explicit approval only
+halibut learn rollback COMPONENT --approved-by NAME
 ```
 
 Analyses run in parallel (`--workers`) and cache every simulation under
@@ -65,7 +77,9 @@ docs/model.md          the simulation model, assumptions, limitations
 docs/analysis.md       Phase 2 statistical methods and their caveats
 docs/phase2_report.md  Phase 2 findings (synthetic)
 docs/m15_source_verification.md, docs/phase3_data.md   real-world sources and data quality
-configs/data/          data catalogue, sourced events, cross-table checks
+configs/data/          data catalogue, provider registry, sourced events, cross-table checks
+configs/intel/markets/ market investigation specs
+docs/phase4_intelligence.md   components, providers, competitor model, learning engine, results
 src/halibut/
   config.py  distributions.py  population.py  market.py  network.py
   decision.py  influence.py  interventions.py  engine.py  metrics.py
@@ -74,6 +88,10 @@ src/halibut/
   params.py  specs.py  batch.py      # overrides, parameter spaces, parallel cached runner
   suite.py  sensitivity.py  calibration.py
   data/                              # catalogue, SQLite store, SSB adapter, events, quality (no engine coupling)
+  data/providers/                    # World Bank, Wikidata, OSM/Overpass, GDELT, DfT (budgeted, logged)
+  intel/                             # market specs, retrieval, signals, reference agents, workflow, reports
+  learning/                          # learning memory, lineage, evaluation rules, promotions, demo
+  validation.py                      # validation/safety engine
   interfaces.py                      # protocols for future AI integrations (no implementations)
   cli.py  analysis_cli.py
 tests/                               # incl. golden fingerprints of engine 0.1.0
