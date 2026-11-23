@@ -344,7 +344,101 @@ CREATE TABLE llm_spend_ledger (
     note TEXT
 );
 """),
+    # 6: Epistemic Integrity (Master Architecture v1.0, R1). Typed claims, validation records and a
+    # hash-chained event log. All four tables are append-only (enforced by triggers): status changes
+    # are new history rows, corrections are new claims linked with 'supersedes'.
+    (6, """
+CREATE TABLE claims (
+    claim_id TEXT PRIMARY KEY,
+    claim_type TEXT NOT NULL CHECK (claim_type IN ('observation','derived_metric','estimate','assumption','explanation',
+        'hypothesis','forecast','simulated_outcome','critique','strategic_proposal','experiment_result','lesson')),
+    statement TEXT NOT NULL,
+    produced_by TEXT NOT NULL,
+    run_id TEXT,
+    tenant TEXT NOT NULL DEFAULT 'public',
+    as_of TEXT NOT NULL,
+    available_at TEXT NOT NULL,
+    schema_version TEXT NOT NULL,
+    content_hash TEXT NOT NULL,
+    provenance_json TEXT NOT NULL,
+    payload_json TEXT NOT NULL,
+    created_at TEXT NOT NULL
+);
+CREATE INDEX claims_lookup ON claims(claim_type, tenant, available_at);
+CREATE INDEX claims_run ON claims(run_id);
+CREATE INDEX claims_hash ON claims(content_hash);
+CREATE TABLE claim_links (
+    from_id TEXT NOT NULL REFERENCES claims(claim_id),
+    relation TEXT NOT NULL CHECK (relation IN ('supports','contradicts','derived_from','tests','critiques','supersedes',
+        'duplicates','explains')),
+    to_id TEXT NOT NULL,
+    produced_by TEXT NOT NULL,
+    at TEXT NOT NULL,
+    PRIMARY KEY (from_id, relation, to_id)
+);
+CREATE TABLE claim_status_history (
+    claim_id TEXT NOT NULL REFERENCES claims(claim_id),
+    status TEXT NOT NULL,
+    effective_at TEXT NOT NULL,
+    recorded_at TEXT NOT NULL,
+    changed_by TEXT NOT NULL,
+    reason TEXT
+);
+CREATE INDEX csh_lookup ON claim_status_history(claim_id, effective_at);
+CREATE TABLE validation_records (
+    record_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    run_id TEXT,
+    tenant TEXT NOT NULL DEFAULT 'public',
+    produced_by TEXT NOT NULL,
+    subject TEXT NOT NULL,
+    stage TEXT NOT NULL CHECK (stage IN ('call','schema','conversion','validation','ledger')),
+    outcome TEXT NOT NULL CHECK (outcome IN ('rejected','dropped','failed')),
+    failure_class TEXT NOT NULL,
+    problems_json TEXT NOT NULL,
+    item_json TEXT NOT NULL,
+    as_of TEXT,
+    recorded_at TEXT NOT NULL
+);
+CREATE INDEX vr_run ON validation_records(run_id);
+CREATE TABLE events_log (
+    seq INTEGER PRIMARY KEY AUTOINCREMENT,
+    event_type TEXT NOT NULL,
+    layer TEXT NOT NULL,
+    run_id TEXT,
+    tenant TEXT NOT NULL DEFAULT 'public',
+    subject_id TEXT,
+    payload_json TEXT NOT NULL,
+    provenance_json TEXT NOT NULL,
+    at TEXT NOT NULL,
+    prev_hash TEXT NOT NULL,
+    hash TEXT NOT NULL UNIQUE
+);
+CREATE INDEX events_type ON events_log(event_type, seq);
+CREATE TRIGGER claims_no_update BEFORE UPDATE ON claims BEGIN SELECT RAISE(ABORT, 'claims are append-only'); END;
+CREATE TRIGGER claims_no_delete BEFORE DELETE ON claims BEGIN SELECT RAISE(ABORT, 'claims are append-only'); END;
+CREATE TRIGGER csh_no_update BEFORE UPDATE ON claim_status_history BEGIN SELECT RAISE(ABORT, 'claim status history is append-only'); END;
+CREATE TRIGGER csh_no_delete BEFORE DELETE ON claim_status_history BEGIN SELECT RAISE(ABORT, 'claim status history is append-only'); END;
+CREATE TRIGGER vr_no_update BEFORE UPDATE ON validation_records BEGIN SELECT RAISE(ABORT, 'validation records are append-only'); END;
+CREATE TRIGGER vr_no_delete BEFORE DELETE ON validation_records BEGIN SELECT RAISE(ABORT, 'validation records are append-only'); END;
+CREATE TRIGGER events_no_update BEFORE UPDATE ON events_log BEGIN SELECT RAISE(ABORT, 'events are append-only'); END;
+CREATE TRIGGER events_no_delete BEFORE DELETE ON events_log BEGIN SELECT RAISE(ABORT, 'events are append-only'); END;
+ALTER TABLE agent_calls ADD COLUMN response_excerpt TEXT;
+"""),
 ]
+
+
+def _statements(sql: str) -> list[str]:
+    """Split a migration into complete SQL statements (trigger bodies contain ';')."""
+    out, buf = [], ""
+    for frag in sql.split(";"):
+        buf += frag + ";"
+        if sqlite3.complete_statement(buf):
+            if buf.strip(" \n;"):
+                out.append(buf.strip())
+            buf = ""
+    if buf.strip(" \n;"):
+        raise ValueError(f"incomplete SQL statement in migration: {buf[:80]!r}")
+    return out
 
 
 def utc_now() -> str:
@@ -421,7 +515,7 @@ class Store:
             if version in done:
                 continue
             with self.transaction() as c:
-                for stmt in [s for s in sql.split(";") if s.strip()]:
+                for stmt in _statements(sql):
                     c.execute(stmt)
                 c.execute("INSERT INTO schema_migrations VALUES (?, ?)", (version, utc_now()))
             applied.append(version)

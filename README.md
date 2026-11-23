@@ -64,6 +64,8 @@ halibut agents smoke --dry-run                       # Haiku 5.5 request setting
 halibut agents spend                                 # application-wide ledger (all providers)
 halibut intel benchmark configs/intel/markets/uk_cars_bev_v1.toml --agents anthropic --dry-run
 halibut intel benchmark configs/intel/markets/uk_cars_bev_v1.toml --agents anthropic --model claude-sonnet-5-5 --dry-run
+halibut intel benchmark configs/intel/markets/uk_cars_bev_v1.toml --reconstruct rpf5673fab06   # offline, from cache
+halibut intel coverage configs/intel/markets/uk_cars_bev_v1.toml [--as-of 2024-05-23]       # market coverage contract
 halibut learn score [--as-of DATE]        # score predictions whose outcomes are published
 
 # Learning memory and evaluation (Phase 4)

@@ -1,0 +1,996 @@
+{
+ "competitor_ids": [
+  "byd",
+  "volkswagen",
+  "tesla",
+  "kia",
+  "mg",
+  "toyota",
+  "ford",
+  "bmw"
+ ],
+ "provenance": {
+  "model": "claude-haiku-5-5",
+  "note": "model output only (no prompts, no evidence values beyond what the model wrote); see docs/benchmark_haiku_v1_diagnostic.md",
+  "prompt_version": "v1 (no output schema)",
+  "source": "llm_cache of the first live Claude benchmark (replay rpf5673fab06, 2026-11-23)"
+ },
+ "replies": [
+  {
+   "cached_at": "2026-11-23T21:08:19Z",
+   "hypotheses": [
+    {
+     "claim": "BYD's apparent entry into the Battery electric segment is drawing registrations from Volkswagen within the segment, though brand-to-brand switching cannot be directly observed in registration counts.",
+     "confidence": "low",
+     "evidence": {
+      "metrics_cited": [
+       "metric:segment_share:L4:volkswagen",
+       "metric:segment_share:P4:volkswagen",
+       "metric:share:L4:volkswagen",
+       "metric:share:P4:volkswagen",
+       "metric:share:L4:byd",
+       "metric:segment_share:L4:byd"
+      ],
+      "note": "Within-segment share change for Volkswagen is +0.95 pp, which does not support displacement by BYD in this bundle; BYD's segment share is 0.00 in both windows, so the claim is not supported by the bundle's own figures.",
+      "target_units_change_pct": "200.75",
+      "volkswagen_registration_share_change_pp": 0.44,
+      "within_segment_share_change_pp": {
+       "byd": 0.0,
+       "volkswagen": 0.95
+      }
+     },
+     "kind": "displacement",
+     "levers": [
+      "price",
+      "product_range",
+      "availability"
+     ],
+     "mechanism_candidates": [
+      "Entry of a new BEV-focused brand with a competing price point",
+      "Shift of fleet or subscription buyers toward a newly listed model"
+     ],
+     "subject": "brand:volkswagen"
+    },
+    {
+     "claim": "Kia is gaining momentum in the Battery electric segment, with its segment share rising while its within-segment effect remains negative, indicating growth driven by segment mix rather than within-segment performance.",
+     "confidence": "medium",
+     "evidence": {
+      "decomposition_note": "Mix effect +0.31 pp and interaction +0.49 pp; within-segment effect -0.51 pp",
+      "metrics_cited": [
+       "metric:segment_share:L4:kia",
+       "metric:segment_share:P4:kia",
+       "metric:segment_mix:L4:kia",
+       "metric:share:L4:kia",
+       "metric:share:P4:kia"
+      ],
+      "registration_share_change_pp": 0.28,
+      "segment_mix_L4_pct": 14.18,
+      "segment_share_change_pp": 4.85
+     },
+     "kind": "momentum",
+     "levers": [
+      "product_range",
+      "product_quality",
+      "financing_terms"
+     ],
+     "mechanism_candidates": [
+      "Expanded electric model line-up raising BEV share of Kia's own registrations",
+      "Product quality or warranty perception improving BEV demand"
+     ],
+     "subject": "brand:kia"
+    },
+    {
+     "claim": "Tesla's dominant segment position is exposed: its Battery electric segment share fell sharply while the segment's competitors gained, making Tesla the largest source of within-segment share loss.",
+     "confidence": "high",
+     "evidence": {
+      "metrics_cited": [
+       "metric:segment_share:L4:tesla",
+       "metric:segment_share:P4:tesla",
+       "metric:segment_mix:L4:tesla",
+       "metric:share:L4:tesla",
+       "metric:share:P4:tesla"
+      ],
+      "registration_share_change_pp": 0.27,
+      "segment_share_L4_pct": 19.5,
+      "segment_share_P4_pct": 38.36,
+      "within_segment_share_change_pp": -18.86
+     },
+     "kind": "exposure",
+     "levers": [
+      "availability",
+      "price",
+      "product_range",
+      "distribution"
+     ],
+     "mechanism_candidates": [
+      "Competitive entry of established brands into the BEV segment",
+      "Tesla supply or availability constraints during the window"
+     ],
+     "subject": "brand:tesla"
+    }
+   ],
+   "origin": "2021-11-23",
+   "output_tokens": 1305
+  },
+  {
+   "cached_at": "2026-11-23T21:08:32Z",
+   "hypotheses": [
+    {
+     "claim": "BYD's Battery electric segment gains coincided with losses concentrated at Volkswagen, which is the target brand in this bundle. Volkswagen's within-segment share rose rather than fell, so this hypothesis cannot be confirmed as displacement from the bundle's own figures; the bundle does not show Volkswagen losing battery electric share to BYD at all.",
+     "confidence": "low",
+     "evidence": [
+      "metric:segment_share:L4:volkswagen",
+      "metric:segment_share:P4:volkswagen",
+      "metric:share:L4:volkswagen",
+      "metric:share:P4:volkswagen",
+      "metric:market_segment_share:L4",
+      "metric:market_segment_share:P4"
+     ],
+     "kind": "displacement",
+     "levers": [
+      "product_range",
+      "product_quality",
+      "availability"
+     ],
+     "mechanism_candidates": [
+      "Battery electric demand growth absorbed by several brands simultaneously rather than displaced from Volkswagen",
+      "Shift from non-electric to electric registrations at Volkswagen as its own product mix changed"
+     ],
+     "subject": "volkswagen"
+    },
+    {
+     "claim": "Tesla carries the highest battery electric exposure in the market, so it is the brand most sensitive to segment-level demand movements and the most likely to lose ground if competitors' electric offerings deepen. Its segment share fell while its segment mix remained fully electric.",
+     "confidence": "medium",
+     "evidence": [
+      "metric:segment_mix:L4:tesla",
+      "metric:segment_share:L4:tesla",
+      "metric:segment_share:P4:tesla",
+      "metric:share:L4:tesla",
+      "metric:share:P4:tesla"
+     ],
+     "kind": "exposure",
+     "levers": [
+      "product_range",
+      "price",
+      "distribution",
+      "service"
+     ],
+     "mechanism_candidates": [
+      "Entry of incumbent brands' battery electric models eroding Tesla's share of a fast-growing segment",
+      "Tesla's single-segment dependence limiting its ability to offset segment-level share loss"
+     ],
+     "subject": "tesla"
+    },
+    {
+     "claim": "Ford's overall registration share rose while its battery electric segment share fell sharply, indicating momentum in non-electric volume rather than electric positioning. The within-segment effect and mix effect both point to Ford's electric presence weakening.",
+     "confidence": "medium",
+     "evidence": [
+      "metric:share:L4:ford",
+      "metric:share:P4:ford",
+      "metric:segment_share:L4:ford",
+      "metric:segment_share:P4:ford",
+      "metric:segment_mix:L4:ford"
+     ],
+     "kind": "momentum",
+     "levers": [
+      "product_range",
+      "availability",
+      "financing_terms"
+     ],
+     "mechanism_candidates": [
+      "Ford's electric lineup lacking competitive range or availability relative to peers",
+      "Ford prioritising combustion and hybrid volume in the period"
+     ],
+     "subject": "ford"
+    },
+    {
+     "claim": "Kia gained battery electric segment share and overall registration share between the two windows, with a positive within-segment effect, indicating accelerating electric momentum.",
+     "confidence": "medium",
+     "evidence": [
+      "metric:segment_share:L4:kia",
+      "metric:segment_share:P4:kia",
+      "metric:share:L4:kia",
+      "metric:share:P4:kia",
+      "metric:segment_mix:L4:kia"
+     ],
+     "kind": "momentum",
+     "levers": [
+      "product_range",
+      "price",
+      "distribution"
+     ],
+     "mechanism_candidates": [
+      "Expansion of Kia's electric model range and pricing competitiveness",
+      "Improved distribution of electric variants across the dealer network"
+     ],
+     "subject": "kia"
+    }
+   ],
+   "origin": "2022-05-23",
+   "output_tokens": 1337
+  },
+  {
+   "cached_at": "2026-11-23T21:08:53Z",
+   "hypotheses": [
+    {
+     "claim": "BMW's within-segment gain in Battery electric is displacing Volkswagen's within-segment share in Battery electric; the co-movement is consistent with a switching flow between the two brands but registration counts do not directly observe brand-to-brand switching.",
+     "confidence": "low",
+     "evidence": [
+      "metric:segment_share:L4:bmw",
+      "metric:segment_share:P4:bmw",
+      "metric:segment_share:L4:volkswagen",
+      "metric:segment_share:P4:volkswagen"
+     ],
+     "kind": "displacement",
+     "levers": [
+      "product_range",
+      "financing_terms",
+      "disclosed_advertising"
+     ],
+     "mechanism_candidates": [
+      "Model-line launches in the electric segment shifting buyers who were considering VW electric models",
+      "Competing trade-in or lease offers targeting the same premium-leaning buyers"
+     ],
+     "subject": "brand:bmw"
+    },
+    {
+     "claim": "Volkswagen's total registration share is falling, and its Battery electric segment share is declining, so its electric franchise is exposed to continued erosion if competitors keep expanding electric supply.",
+     "confidence": "medium",
+     "evidence": [
+      "metric:share:L4:volkswagen",
+      "metric:share:P4:volkswagen",
+      "metric:segment_share:L4:volkswagen",
+      "metric:segment_share:P4:volkswagen",
+      "metric:segment_mix:L4:volkswagen"
+     ],
+     "kind": "exposure",
+     "levers": [
+      "product_range",
+      "product_quality",
+      "financing_terms",
+      "availability"
+     ],
+     "mechanism_candidates": [
+      "Electric line-up depth lagging rival brands in the same segment",
+      "Weaker price-to-spec positioning in electric versus competitors gaining segment share"
+     ],
+     "subject": "brand:volkswagen"
+    },
+    {
+     "claim": "Kia's Battery electric segment share is building momentum, moving its overall registration share upward, and this trend is likely to persist into the next quarter.",
+     "confidence": "medium",
+     "evidence": [
+      "metric:share:L4:kia",
+      "metric:share:P4:kia",
+      "metric:segment_share:L4:kia",
+      "metric:segment_share:P4:kia"
+     ],
+     "kind": "momentum",
+     "levers": [
+      "product_range",
+      "availability",
+      "distribution"
+     ],
+     "mechanism_candidates": [
+      "Expanding electric model range supporting overall brand share gains",
+      "Distribution and availability improvements in electric variants"
+     ],
+     "subject": "brand:kia"
+    },
+    {
+     "claim": "Tesla is exposed because its Battery electric segment share is falling while its overall registration share is rising only modestly, indicating that segment leadership is being contested by faster-growing electric entrants.",
+     "confidence": "medium",
+     "evidence": [
+      "metric:segment_share:L4:tesla",
+      "metric:segment_share:P4:tesla",
+      "metric:share:L4:tesla",
+      "metric:share:P4:tesla"
+     ],
+     "kind": "exposure",
+     "levers": [
+      "product_range",
+      "financing_terms",
+      "disclosed_advertising"
+     ],
+     "mechanism_candidates": [
+      "Rising electric competition from BMW and Kia narrowing Tesla's segment lead",
+      "Limited electric product range relative to multi-model rivals"
+     ],
+     "subject": "brand:tesla"
+    }
+   ],
+   "origin": "2022-11-23",
+   "output_tokens": 1208
+  },
+  {
+   "cached_at": "2026-11-23T21:09:16Z",
+   "hypotheses": [
+    {
+     "claim": "Volkswagen is losing Battery electric segment share to Tesla and BMW, and this loss is the most plausible source of the focal segment's within-segment share movement, though the registration data cannot confirm brand-to-brand switching directly.",
+     "confidence": "medium",
+     "evidence": {
+      "displacement.target_units_change_pct": 15.8,
+      "displacement.within_segment_share_changes_pp.bmw": 4.269,
+      "displacement.within_segment_share_changes_pp.tesla": 2.175,
+      "displacement.within_segment_share_changes_pp.volkswagen": -1.542,
+      "metric:segment_share:L4:bmw": 8.0386,
+      "metric:segment_share:L4:tesla": 20.4875,
+      "metric:segment_share:L4:volkswagen": 7.3353,
+      "metric:segment_share:P4:bmw": 3.7701,
+      "metric:segment_share:P4:tesla": 18.3122,
+      "metric:segment_share:P4:volkswagen": 8.8777
+     },
+     "kind": "displacement",
+     "levers": [
+      "product_range",
+      "availability",
+      "financing_terms",
+      "disclosed_advertising"
+     ],
+     "mechanism_candidates": [
+      "Tesla and BMW product range or availability gains in battery electric models drawing buyers from Volkswagen's electric lineup",
+      "Competitor financing terms or disclosed advertising concentrated on battery electric offers",
+      "Co-movement only: other brands (Kia, MG) also shifted within the segment and may be alternative sources of the flows"
+     ],
+     "subject": "volkswagen"
+    },
+    {
+     "claim": "MG's Battery electric segment share is gaining momentum, with its overall registration share rising from 1.83 percent to 3.07 percent, driven primarily by within-segment effects rather than mix.",
+     "confidence": "medium",
+     "evidence": {
+      "decomposition.mg.delta_pp": 1.2359,
+      "decomposition.mg.mix_effect_pp": 0.1595,
+      "decomposition.mg.within_segment_effect_pp": 1.1336,
+      "metric:segment_mix:L4:mg": 32.5534,
+      "metric:segment_share:L4:mg": 6.1883,
+      "metric:segment_share:P4:mg": 5.4942,
+      "metric:share:L4:mg": 3.0707,
+      "metric:share:P4:mg": 1.8349
+     },
+     "kind": "momentum",
+     "levers": [
+      "product_range",
+      "product_quality",
+      "financing_terms"
+     ],
+     "mechanism_candidates": [
+      "Improved battery electric product range or quality relative to peers",
+      "Pricing or financing terms making MG electric models more competitive"
+     ],
+     "subject": "mg"
+    },
+    {
+     "claim": "Tesla's dominance of the Battery electric segment is strengthening, with its segment share rising from 18.31 percent to 20.49 percent while its all-fuel share also grew.",
+     "confidence": "medium",
+     "evidence": {
+      "decomposition.tesla.delta_pp": 1.2304,
+      "decomposition.tesla.mix_effect_pp": 0.879,
+      "decomposition.tesla.within_segment_effect_pp": 0.247,
+      "metric:segment_share:L4:tesla": 20.4875,
+      "metric:segment_share:P4:tesla": 18.3122,
+      "metric:share:L4:tesla": 3.3094,
+      "metric:share:P4:tesla": 2.079
+     },
+     "kind": "momentum",
+     "levers": [
+      "product_range",
+      "availability",
+      "product_quality"
+     ],
+     "mechanism_candidates": [
+      "Mix shift toward Tesla as the market's battery electric share grows",
+      "Sustained product range and availability advantages within the segment"
+     ],
+     "subject": "tesla"
+    },
+    {
+     "claim": "Volkswagen's overall registration share is exposed to continued battery electric segment expansion, since battery electric is a larger share of the market and Volkswagen's electric segment share is falling.",
+     "confidence": "medium",
+     "evidence": {
+      "decomposition.volkswagen.delta_pp": -0.7541,
+      "decomposition.volkswagen.mix_effect_pp": -0.4411,
+      "decomposition.volkswagen.within_segment_effect_pp": -0.2285,
+      "metric:market_segment_share:L4": 16.1534,
+      "metric:market_segment_share:P4": 11.3531,
+      "metric:segment_mix:L4:volkswagen": 14.4525,
+      "metric:share:L4:volkswagen": 8.1986,
+      "metric:share:P4:volkswagen": 8.9527
+     },
+     "kind": "exposure",
+     "levers": [
+      "product_range",
+      "availability",
+      "distribution"
+     ],
+     "mechanism_candidates": [
+      "Volkswagen's electric share lagging the segment's growth, so its mix-weighted position deteriorates",
+      "Continued electrification of the market rewarding brands with stronger electric lineups"
+     ],
+     "subject": "volkswagen"
+    }
+   ],
+   "origin": "2023-05-23",
+   "output_tokens": 1772
+  },
+  {
+   "cached_at": "2026-11-23T21:09:30Z",
+   "hypotheses": [
+    {
+     "claim": "Volkswagen's battery-electric segment share is gaining while Kia's is falling, consistent with Volkswagen capturing some of the BEV demand Kia is losing; the two movements co-occur within the segment but brand-to-brand switching is not directly observed in registration counts.",
+     "confidence": "low",
+     "evidence": [
+      "metric:segment_share:L4:volkswagen = 8.1321",
+      "metric:segment_share:P4:volkswagen = 7.9209",
+      "metric:segment_share:L4:kia = 5.064",
+      "metric:segment_share:P4:kia = 7.728",
+      "metric:market_segment_share:L4 = 16.9251",
+      "metric:market_segment_share:P4 = 14.7216"
+     ],
+     "kind": "displacement",
+     "levers": [
+      "product_range",
+      "price",
+      "availability"
+     ],
+     "mechanism_candidates": [
+      "Volkswagen BEV model launches or refreshes capturing buyers who would otherwise choose Kia BEVs",
+      "Kia BEV pricing or availability gaps relative to Volkswagen in the same body segments",
+      "Shared buyer pool shifting toward established German brands during the BEV transition"
+     ],
+     "subject": "brand:volkswagen"
+    },
+    {
+     "claim": "MG is gaining momentum in battery-electric registrations, with its segment share rising strongly from the prior window, suggesting sustained competitive traction in BEV that could continue into the next quarter.",
+     "confidence": "medium",
+     "evidence": [
+      "metric:segment_share:L4:mg = 8.4161",
+      "metric:segment_share:P4:mg = 5.2374",
+      "metric:segment_mix:L4:mg = 39.2816",
+      "metric:share:L4:mg = 3.6262",
+      "metric:share:P4:mg = 2.6829"
+     ],
+     "kind": "momentum",
+     "levers": [
+      "price",
+      "product_range",
+      "financing_terms"
+     ],
+     "mechanism_candidates": [
+      "Aggressive BEV price positioning relative to incumbents",
+      "Expanded BEV model range within MG's line-up",
+      "Financing or incentive offers lowering the effective entry price of MG BEVs"
+     ],
+     "subject": "brand:mg"
+    },
+    {
+     "claim": "BMW's overall registration share is declining while its battery-electric share is rising, indicating its BEV exposure is increasing relative to its ICE and hybrid business and that BMW is more exposed to continued BEV-segment competition.",
+     "confidence": "medium",
+     "evidence": [
+      "metric:share:L4:bmw = 6.0485",
+      "metric:share:P4:bmw = 6.7405",
+      "metric:segment_share:L4:bmw = 7.9742",
+      "metric:segment_share:P4:bmw = 5.8402",
+      "metric:segment_mix:L4:bmw = 22.3135"
+     ],
+     "kind": "exposure",
+     "levers": [
+      "product_range",
+      "product_quality",
+      "service"
+     ],
+     "mechanism_candidates": [
+      "Deliberate shift of BMW's product mix toward electrified models",
+      "Dependence on BEV volume to meet fleet or regulatory targets",
+      "Competitive pressure in BEV from MG and Tesla intensifying BMW's need to defend segment share"
+     ],
+     "subject": "brand:bmw"
+    }
+   ],
+   "origin": "2023-11-23",
+   "output_tokens": 1184
+  },
+  {
+   "cached_at": "2026-11-23T21:09:45Z",
+   "hypotheses": [
+    {
+     "claim": "Battery electric segment share losses at Tesla and Ford are co-moving with Volkswagen's within-segment gains, consistent with Volkswagen capturing some BEV buyers who would otherwise have gone to Tesla, though not establishing it.",
+     "confidence": "low",
+     "evidence": [
+      "metric:segment_share:L4:volkswagen",
+      "metric:segment_share:P4:volkswagen",
+      "metric:segment_share:L4:tesla",
+      "metric:segment_share:P4:tesla",
+      "metric:segment_share:L4:ford",
+      "metric:segment_share:P4:ford"
+     ],
+     "kind": "displacement",
+     "levers": [
+      "product_range",
+      "price",
+      "financing_terms"
+     ],
+     "mechanism_candidates": [
+      "Volkswagen BEV model range or price positioning overlapping Tesla's core buyers",
+      "Tesla-specific demand softness unrelated to Volkswagen",
+      "Shared gains from MG and BMW drawing buyers from the same pool"
+     ],
+     "subject": "brand:volkswagen"
+    },
+    {
+     "claim": "MG shows the strongest BEV segment momentum in the set, with its segment share rising from 6.19% to 9.67%, a gain consistent with continued expansion if the trend persists into the next quarter.",
+     "confidence": "medium",
+     "evidence": [
+      "metric:segment_share:P4:mg",
+      "metric:segment_share:L4:mg",
+      "metric:segment_mix:L4:mg"
+     ],
+     "kind": "momentum",
+     "levers": [
+      "price",
+      "product_range",
+      "distribution"
+     ],
+     "mechanism_candidates": [
+      "Price-led positioning of affordable BEV models",
+      "Expanded BEV product range relative to prior period",
+      "Distribution growth in the UK market"
+     ],
+     "subject": "brand:mg"
+    },
+    {
+     "claim": "Tesla's BEV segment share fell from 20.49% to 15.79%, so its position in the segment is exposed to competitive gains from brands like MG and Volkswagen, which is consistent with the pattern of recent track-record hit rates on continuation forecasts.",
+     "confidence": "medium",
+     "evidence": [
+      "metric:segment_share:P4:tesla",
+      "metric:segment_share:L4:tesla",
+      "metric:segment_mix:L4:tesla"
+     ],
+     "kind": "exposure",
+     "levers": [
+      "price",
+      "product_quality",
+      "service",
+      "availability"
+     ],
+     "mechanism_candidates": [
+      "Price cuts or model-cycle timing at competitors",
+      "Growing competitor BEV line-ups narrowing Tesla's product advantage",
+      "Service or availability gaps relative to rivals"
+     ],
+     "subject": "brand:tesla"
+    },
+    {
+     "claim": "BYD's registration share rose from 0.00% to 0.06% of all registrations, with its BEV share rising from 0.00% to 0.37%, but the base is very small and the signal is not yet reliable for forecasting.",
+     "confidence": "low",
+     "evidence": [
+      "metric:share:P4:byd",
+      "metric:share:L4:byd",
+      "metric:segment_share:P4:byd",
+      "metric:segment_share:L4:byd"
+     ],
+     "kind": "momentum",
+     "levers": [
+      "distribution",
+      "availability",
+      "product_range"
+     ],
+     "mechanism_candidates": [
+      "Early-stage market entry and dealer network build-out",
+      "Launch of new BEV models in the UK"
+     ],
+     "subject": "brand:byd"
+    },
+    {
+     "claim": "BMW gained segment share in BEVs from 8.04% to 9.14%, but its overall registration share fell from 6.66% to 5.83%, indicating that BEV growth is not offsetting weaker performance in its other fuel types.",
+     "confidence": "medium",
+     "evidence": [
+      "metric:segment_share:P4:bmw",
+      "metric:segment_share:L4:bmw",
+      "metric:share:P4:bmw",
+      "metric:share:L4:bmw",
+      "metric:segment_mix:L4:bmw"
+     ],
+     "kind": "exposure",
+     "levers": [
+      "product_range",
+      "financing_terms",
+      "disclosed_advertising"
+     ],
+     "mechanism_candidates": [
+      "Shift in BMW's mix toward BEV models as the brand transitions its range",
+      "Weakness in combustion or hybrid models absorbed by competitors"
+     ],
+     "subject": "brand:bmw"
+    }
+   ],
+   "origin": "2024-05-23",
+   "output_tokens": 1392
+  },
+  {
+   "cached_at": "2026-11-23T21:10:09Z",
+   "hypotheses": [
+    {
+     "claim": "Battery-electric registrations at Volkswagen fell sharply between the prior and latest four-quarter windows, and the loss co-occurs with gains by BMW, BYD and Toyota within the segment. This pattern is consistent with Volkswagen's battery-electric buyers being displaced toward these brands, though registration counts alone cannot confirm brand-to-brand switching.",
+     "confidence": "medium",
+     "evidence": {
+      "bmw_within_segment_share_change_pp": 3.2,
+      "byd_within_segment_share_change_pp": 1.17,
+      "metric_ids": [
+       "metric:segment_share:L4:volkswagen",
+       "metric:segment_share:P4:volkswagen",
+       "metric:segment_share:L4:bmw",
+       "metric:segment_share:P4:bmw",
+       "metric:segment_share:L4:byd",
+       "metric:segment_share:P4:byd",
+       "metric:segment_share:L4:toyota",
+       "metric:segment_share:P4:toyota",
+       "metric:market_segment_share:L4",
+       "metric:market_segment_share:P4"
+      ],
+      "segment_units_change_direction": "Segment units rose from 304582 to 328621, so the Volkswagen loss is not explained by a shrinking segment",
+      "target_units_change_pct": -25.33,
+      "toyota_within_segment_share_change_pp": 1.33,
+      "volkswagen_within_segment_share_change_pp": -2.5
+     },
+     "kind": "displacement",
+     "levers": [
+      "price",
+      "product_range",
+      "product_quality",
+      "financing_terms"
+     ],
+     "mechanism_candidates": [
+      "Volkswagen battery-electric buyers switching to BMW's electric range",
+      "Volkswagen losing share to BYD on price-competitive electric models",
+      "Toyota's entry of electric models capturing Volkswagen-adjacent demand"
+     ],
+     "subject": "brand:volkswagen"
+    },
+    {
+     "claim": "BYD's battery-electric segment share is rising quickly from a very small base, with its within-segment share change exceeding that of all other brands except BMW. If the trend persists, BYD is likely to continue gaining segment share over the next quarter.",
+     "confidence": "medium",
+     "evidence": {
+      "metric_ids": [
+       "metric:segment_share:L4:byd",
+       "metric:segment_share:P4:byd",
+       "metric:share:L4:byd",
+       "metric:share:P4:byd",
+       "metric:segment_mix:L4:byd"
+      ],
+      "registrations_L4": 3957,
+      "registrations_P4": 108,
+      "segment_share_L4_pct": 1.2,
+      "segment_share_P4_pct": 0.04,
+      "within_segment_share_change_pp": 1.17
+     },
+     "kind": "momentum",
+     "levers": [
+      "price",
+      "product_range",
+      "distribution",
+      "availability"
+     ],
+     "mechanism_candidates": [
+      "Expanded battery-electric model range and dealer distribution",
+      "Competitive pricing against established electric incumbents"
+     ],
+     "subject": "brand:byd"
+    },
+    {
+     "claim": "Tesla is the most exposed brand in the segment: it lost the largest within-segment share, and its battery-electric share fell while the segment itself grew. Tesla's entire registration base is battery electric, so any further competitive gains by rivals translate directly into Tesla share loss.",
+     "confidence": "high",
+     "evidence": {
+      "metric_ids": [
+       "metric:segment_share:L4:tesla",
+       "metric:segment_share:P4:tesla",
+       "metric:segment_mix:L4:tesla",
+       "metric:share:L4:tesla",
+       "metric:share:P4:tesla"
+      ],
+      "segment_mix_L4_pct": 100.0,
+      "segment_share_L4_pct": 14.15,
+      "segment_share_P4_pct": 19.54,
+      "within_segment_share_change_pp": -5.39
+     },
+     "kind": "exposure",
+     "levers": [
+      "price",
+      "product_range",
+      "financing_terms",
+      "service"
+     ],
+     "mechanism_candidates": [
+      "Rising competition from BMW, BYD and Toyota electric models eroding Tesla's share",
+      "Tesla's concentrated electric-only exposure leaving it no fallback segment"
+     ],
+     "subject": "brand:tesla"
+    }
+   ],
+   "origin": "2024-11-23",
+   "output_tokens": 1482
+  },
+  {
+   "cached_at": "2026-11-23T21:10:25Z",
+   "hypotheses": [
+    {
+     "claim": "BYD's within-segment gain in Battery electric is coinciding with Volkswagen's within-segment loss, consistent with BYD drawing battery-electric buyers from Volkswagen, though registration counts alone cannot confirm brand-to-brand switching.",
+     "confidence": "medium",
+     "evidence": [
+      "metric:segment_share:L4:byd = 2.1057",
+      "metric:segment_share:P4:byd = 0.3695",
+      "metric:segment_share:L4:volkswagen = 6.0322",
+      "metric:segment_share:P4:volkswagen = 7.8594",
+      "metric:segment_mix:L4:byd = 91.4581",
+      "metric:share:L4:byd = 0.4396",
+      "metric:share:P4:byd = 0.0597"
+     ],
+     "kind": "displacement",
+     "levers": [
+      "price",
+      "product_range",
+      "product_quality"
+     ],
+     "mechanism_candidates": [
+      "BYD's battery-electric-led range (91.46% of its registrations are battery electric) may attract EV-focused buyers at a lower price point than Volkswagen's EV offering",
+      "Volkswagen may be losing share to multiple competitors simultaneously (Toyota, BYD and Ford also gained or held within segment), so the loss may not be BYD-specific"
+     ],
+     "subject": "brand:byd vs brand:volkswagen"
+    },
+    {
+     "claim": "BYD's battery-electric segment share is on a strong upward trajectory, with its within-segment share rising sharply quarter on quarter from a low base.",
+     "confidence": "medium",
+     "evidence": [
+      "metric:segment_share:L4:byd = 2.1057",
+      "metric:segment_share:P4:byd = 0.3695",
+      "metric:share:L4:byd = 0.4396",
+      "metric:share:P4:byd = 0.0597",
+      "metric:segment_mix:L4:byd = 91.4581"
+     ],
+     "kind": "momentum",
+     "levers": [
+      "product_range",
+      "distribution",
+      "availability"
+     ],
+     "mechanism_candidates": [
+      "Expanding battery-electric line-up and distribution scale-up in the UK market",
+      "Increasing brand recognition in the battery-electric segment as registrations build"
+     ],
+     "subject": "brand:byd"
+    },
+    {
+     "claim": "Volkswagen's battery-electric volume is exposed to continued share erosion, as its segment share fell while its overall registration share held roughly flat, suggesting its EV position is weakening relative to its total business.",
+     "confidence": "medium",
+     "evidence": [
+      "metric:segment_share:L4:volkswagen = 6.0322",
+      "metric:segment_share:P4:volkswagen = 7.8594",
+      "metric:segment_mix:L4:volkswagen = 13.2997",
+      "metric:share:L4:volkswagen = 8.6595",
+      "metric:share:P4:volkswagen = 8.6241"
+     ],
+     "kind": "exposure",
+     "levers": [
+      "product_range",
+      "product_quality",
+      "financing_terms",
+      "disclosed_advertising"
+     ],
+     "mechanism_candidates": [
+      "Volkswagen's battery-electric share of its own mix (13.30%) is low relative to the segment's overall growth, indicating under-indexed EV exposure",
+      "Competitors with higher EV mix (Tesla at 100.00%, BYD at 91.46%) are capturing segment growth faster than Volkswagen"
+     ],
+     "subject": "brand:volkswagen"
+    },
+    {
+     "claim": "Battery electric is gaining share of the overall UK new-car market, which is the underlying tailwind behind competitor shifts in the segment.",
+     "confidence": "high",
+     "evidence": [
+      "metric:market_segment_share:L4 = 19.0924",
+      "metric:market_segment_share:P4 = 16.1485"
+     ],
+     "kind": "momentum",
+     "levers": [
+      "price",
+      "financing_terms",
+      "availability"
+     ],
+     "mechanism_candidates": [
+      "Broad market shift toward battery-electric vehicles lifting all segment participants",
+      "Policy and pricing incentives favouring battery-electric registrations"
+     ],
+     "subject": "market:battery_electric"
+    }
+   ],
+   "origin": "2025-05-23",
+   "output_tokens": 1480
+  },
+  {
+   "cached_at": "2026-11-23T21:10:40Z",
+   "hypotheses": [
+    {
+     "claim": "Volkswagen's gain in Battery electric share is partly sourced from brands losing segment share (notably BMW and MG), so its within-segment gain is consistent with competitive displacement rather than pure market expansion.",
+     "confidence": "medium",
+     "evidence": {
+      "decomposition.volkswagen.delta_pp": 0.4427,
+      "decomposition.volkswagen.within_segment_effect_pp": 1.3651,
+      "displacement.target_units_change_pct": 85.65095155709344,
+      "displacement.within_segment_share_changes_pp.bmw": -3.523,
+      "displacement.within_segment_share_changes_pp.mg": -3.671,
+      "displacement.within_segment_share_changes_pp.volkswagen": 2.181,
+      "metric:segment_share:L4:volkswagen": 7.8096,
+      "metric:segment_share:P4:volkswagen": 5.6284
+     },
+     "kind": "displacement",
+     "levers": [
+      "product_range",
+      "price",
+      "product_quality"
+     ],
+     "mechanism_candidates": [
+      "Volkswagen ID-range model launches or refreshes capturing buyers who would otherwise choose BMW or MG electric models",
+      "Price-positioning of Volkswagen BEVs against premium-adjacent BMW electric offerings"
+     ],
+     "subject": "brand:volkswagen"
+    },
+    {
+     "claim": "BYD's Battery electric share is accelerating: its segment share rose sharply while its overall registration share is growing from a low base, suggesting continued within-segment gains if the trend persists.",
+     "confidence": "medium",
+     "evidence": {
+      "decomposition.byd.delta_pp": 1.0457,
+      "decomposition.byd.within_segment_effect_pp": 0.7811,
+      "metric:segment_mix:L4:byd": 62.6335,
+      "metric:segment_share:L4:byd": 3.6014,
+      "metric:segment_share:P4:byd": 1.2041,
+      "track_record.momentum/naive/share.coverage80": 0.703125,
+      "track_record.momentum/naive/share.mae_pp": 0.7777375731855984
+     },
+     "kind": "momentum",
+     "levers": [
+      "product_range",
+      "price",
+      "distribution",
+      "availability"
+     ],
+     "mechanism_candidates": [
+      "Expanded BEV model range and pricing gaining traction among UK buyers",
+      "Distribution and availability growth in UK dealer network"
+     ],
+     "subject": "brand:byd"
+    },
+    {
+     "claim": "MG is the most exposed incumbent in the Battery electric segment: its segment share fell materially while its segment mix remains low, leaving it vulnerable to further share loss to rising entrants.",
+     "confidence": "low",
+     "evidence": {
+      "decomposition.mg.within_segment_effect_pp": -0.3,
+      "displacement.within_segment_share_changes_pp.mg": -3.671,
+      "metric:segment_mix:L4:mg": 22.8485,
+      "metric:segment_share:L4:mg": 4.1379,
+      "metric:segment_share:P4:mg": 7.809,
+      "track_record.annihilation... ": null
+     },
+     "kind": "exposure",
+     "levers": [
+      "product_range",
+      "price",
+      "disclosed_advertising",
+      "financing_terms"
+     ],
+     "mechanism_candidates": [
+      "Competitive pricing pressure from BYD and Volkswagen BEV launches",
+      "Limited BEV product range relative to the brand's overall offering"
+     ],
+     "subject": "brand:mg"
+    }
+   ],
+   "origin": "2025-11-23",
+   "output_tokens": 1248
+  },
+  {
+   "cached_at": "2026-11-23T21:10:56Z",
+   "hypotheses": [
+    {
+     "claim": "BYD's within-segment gain in Battery electric is drawing share from Volkswagen; the co-movement is consistent with BYD displacing VW's electric registrations rather than the two moving independently.",
+     "confidence": "low",
+     "evidence": {
+      "metrics": [
+       "metric:segment_share:L4:byd",
+       "metric:segment_share:P4:byd",
+       "metric:segment_share:L4:volkswagen",
+       "metric:segment_share:P4:volkswagen",
+       "metric:share:L4:byd",
+       "metric:share:L4:volkswagen"
+      ],
+      "note": "Within-segment share changes for both brands are positive, so the bundle does not directly show VW losing share; this is a co-movement claim only. Brand-to-brand switching is not observed in registration counts, and other competitors (Tesla, MG, BMW, Toyota) are alternative sources of BYD's gain.",
+      "values": {
+       "byd_registration_share_L4_pct": 2.47,
+       "byd_segment_share_change_pp": 4.19,
+       "byd_within_segment_effect_pp": 1.55,
+       "volkswagen_registration_share_L4_pct": 9.01,
+       "volkswagen_segment_share_change_pp": 1.07,
+       "volkswagen_within_segment_effect_pp": 1.03
+      }
+     },
+     "kind": "displacement",
+     "levers": [
+      "price",
+      "product_range",
+      "availability"
+     ],
+     "mechanism_candidates": [
+      "BYD price-led entry into mid-market battery electric buyers who would otherwise consider VW electric models",
+      "Segment-level demand growth lifting all entrants, with BYD capturing a larger slice than VW rather than substituting for it"
+     ],
+     "subject": "byd vs volkswagen"
+    },
+    {
+     "claim": "BYD's momentum in Battery electric is strong and likely to persist over the next quarter: its segment share rose sharply year on year, and the trend-based model has historically been directionally reliable.",
+     "confidence": "medium",
+     "evidence": {
+      "metrics": [
+       "metric:segment_share:L4:byd",
+       "metric:segment_share:P4:byd",
+       "metric:segment_mix:L4:byd",
+       "metric:share:L4:byd",
+       "metric:share:P4:byd"
+      ],
+      "note": "Track record shows the continuation hypothesis with direction hit rate 1.00 (n=4) and momentum/naive/share MAE 0.75 pp; annihilation hypothesis direction hit rate only 0.33 (n=3), so the sustained-growth framing is preferred.",
+      "values": {
+       "byd_delta_pp": 2.03,
+       "registration_share_L4_pct": 2.47,
+       "registration_share_P4_pct": 0.44,
+       "segment_mix_L4_pct": 58.35,
+       "segment_share_L4_pct": 6.3,
+       "segment_share_P4_pct": 2.11
+      }
+     },
+     "kind": "momentum",
+     "levers": [
+      "product_range",
+      "price",
+      "distribution",
+      "availability"
+     ],
+     "mechanism_candidates": [
+      "Expanding battery electric model range and sustained price positioning driving repeat fleet and private purchases",
+      "Growing dealer and charging-network availability supporting higher conversion"
+     ],
+     "subject": "byd"
+    },
+    {
+     "claim": "Tesla is the most exposed brand to continued BYD gains: it has the highest Battery electric segment share among the tracked brands but lost segment share over the window while BYD gained.",
+     "confidence": "medium",
+     "evidence": {
+      "metrics": [
+       "metric:segment_share:L4:tesla",
+       "metric:segment_share:P4:tesla",
+       "metric:segment_mix:L4:tesla",
+       "metric:segment_share:L4:byd",
+       "metric:segment_share:P4:byd"
+      ],
+      "note": "Tesla is a pure battery electric brand in this bundle, so its exposure to segment-level competition is total.",
+      "values": {
+       "byd_within_segment_share_change_pp": 4.19,
+       "tesla_segment_mix_L4_pct": 100.0,
+       "tesla_segment_share_L4_pct": 9.63,
+       "tesla_segment_share_P4_pct": 13.2,
+       "tesla_within_segment_share_change_pp": -3.56
+      }
+     },
+     "kind": "exposure",
+     "levers": [
+      "price",
+      "product_range",
+      "financing_terms"
+     ],
+     "mechanism_candidates": [
+      "BYD price competition in the mass-market battery electric segment pressuring Tesla's pricing and volume",
+      "Product range breadth at BYD across price points capturing buyers Tesla does not serve"
+     ],
+     "subject": "tesla"
+    }
+   ],
+   "origin": "2026-05-23",
+   "output_tokens": 1658
+  }
+ ]
+}

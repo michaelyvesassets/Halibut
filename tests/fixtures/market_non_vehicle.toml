@@ -1,0 +1,36 @@
+# Test fixture: a NON-VEHICLE market declared under the market coverage contract v1.
+# Fictional brands; no data is ingested for it. It must validate as a declaration and be reported as
+# uncovered (no registered transactions provider covers this category), never forced into vehicle fields.
+schema_version = "1.0"
+
+[market]
+id = "gb_plant_based_milk_fixture"
+name = "GB plant-based milk (fixture)"
+category = "plant-based milk alternatives"
+geography = "GB"
+as_of = "2026-01-01"
+mode = "continuation"
+focal = "northfield"
+
+[measurement]
+category_key = "food.plant_based_milk"
+universe = "retail sales of plant-based milk alternatives in Great Britain"
+unit = "litres sold"
+period = "month"
+share_basis = "share of category litres in the period"
+
+[[competitors]]
+id = "northfield"
+name = "Northfield Oats"
+aliases = ["northfield oats"]
+identifiers = { retail_panel_brand = "NORTHFIELD" }
+
+[[competitors]]
+id = "riverbend"
+name = "Riverbend"
+aliases = ["riverbend"]
+identifiers = { retail_panel_brand = "RIVERBEND" }
+
+[evidence]
+worldbank_indicators = ["NY.GDP.PCAP.CD"]
+media = { provider = "gdelt", start = "2025-07-01", end = "2025-12-31", n_files = 4, time_of_day = "120000" }

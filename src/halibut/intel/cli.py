@@ -42,9 +42,15 @@ def add_intel_commands(sub) -> None:
     bm.add_argument("--model", help="Anthropic model id priced in configs/llm/anthropic.toml (default: its llm.model)")
     bm.add_argument("--origin", action="append")
     bm.add_argument("--dry-run", action="store_true", help="measure prompts and worst-case cost on a throwaway copy; no network")
+    bm.add_argument("--reconstruct", metavar="REPLAY_ID",
+                    help="OFFLINE: re-run a past LLM replay from cached and recorded replies on a throwaway copy and "
+                         "classify every failure (no network, no spend)")
     bm.add_argument("--max-usd", type=float, help="hard per-run cap for this benchmark (tighter than the config's)")
     bm.add_argument("--yes", action="store_true", help="required for a PAID run (qwen/anthropic), after reading the plan")
     bm.add_argument("--out", default="results/intel/benchmarks")
+    cv = isub.add_parser("coverage", help="market coverage contract check and as-of evidence coverage (offline)")
+    cv.add_argument("market")
+    cv.add_argument("--as-of", help="date for the coverage report (default: the market's as_of)")
     cp = isub.add_parser("compare", help="compare replay summaries (quality, runtime, cost)")
     cp.add_argument("summaries", nargs="+")
     p.set_defaults(handler=_handle)
@@ -76,6 +82,8 @@ def _handle(args) -> int:
             return _compare(args)
         if args.intel_command == "benchmark":
             return _benchmark(store, args)
+        if args.intel_command == "coverage":
+            return _coverage(store, args)
         from .workflow import investigate_cli  # noqa: PLC0415
         return investigate_cli(store, args)
     finally:
@@ -191,9 +199,54 @@ def _compare(args) -> int:
     return 0
 
 
+def _coverage(store, args) -> int:
+    from ..world.coverage import coverage_report  # noqa: PLC0415
+    from .market import load_market  # noqa: PLC0415
+    r = coverage_report(store, load_market(args.market), args.as_of)
+    c = r["contract"]
+    print(f"{c['market_id']}: contract {c['contract']} {'VALID' if c['valid'] else 'INVALID'}; coverage {r['status']} as of {r['as_of']}")
+    for v in c["violations"]:
+        print(f"  violation: {v}")
+    for w in c["warnings"]:
+        print(f"  warning: {w}")
+    print("  providers: " + ", ".join(f"{k}={v}" for k, v in c["providers"].items()))
+    print("  capabilities: " + "; ".join(f"{k}: {v}" for k, v in c["capabilities"].items()))
+    for cid, row in r["per_competitor"].items():
+        print(f"  {cid:<14} " + "  ".join(f"{k}={n}" for k, n in row.items()))
+    for g in r["gaps"][:20]:
+        print(f"  gap: {g}")
+    return 0 if c["valid"] else 2
+
+
+def _reconstruct(args) -> int:
+    from . import benchmark as bm  # noqa: PLC0415
+    r = bm.reconstruct(args.db, args.market, args.reconstruct, args.origin)
+    out = Path(args.out)
+    out.mkdir(parents=True, exist_ok=True)
+    path = out / f"reconstruction_{args.reconstruct}.json"
+    path.write_text(json.dumps(r, indent=1, default=str) + "\n")
+    rp = r["reproduced"]
+    print(f"offline reconstruction of {r['original_replay_id']} ({r['provider']} {r['model']}, prompts {r['prompt_version']}): "
+          f"{r['cache_hits']} cached replies, {len(r['recorded_outcomes_served'])} recorded outcomes served; no requests sent")
+    print(f"  hypotheses: {rp['hypotheses_valid']} valid, {rp['hypotheses_rejected_by_validation']} rejected, "
+          f"{rp['hypotheses_dropped']} dropped before validation")
+    print(f"  scored predictions: {rp['hypothesis_predictions_scored_raw']} raw -> {rp['hypothesis_predictions_scored']} unique "
+          f"({rp['duplicate_predictions_removed']} duplicates removed); supported {rp['supported']}, refuted {rp['refuted']}")
+    for stage, classes in r["failures"]["items"].items():
+        print(f"  {stage}: " + ", ".join(f"{k} {n}" for k, n in classes.items()))
+    print("  calls: " + (", ".join(f"{k} {n}" for k, n in r["failures"]["calls"].items()) or "none failed"))
+    c = r["r1_contract_on_same_items"]
+    print(f"  R1 output contract on the same {c['items']} items: {c['would_pass']} would pass, {c['would_be_rejected']} would be "
+          f"rejected (" + ", ".join(f"{k} {n}" for k, n in c["rejection_classes"].items()) + ")")
+    print(f"report: {path}")
+    return 0
+
+
 def _benchmark(store, args) -> int:
     from . import benchmark as bm  # noqa: PLC0415
     from ..agents.llm import NotApproved, SpendLimitReached  # noqa: PLC0415
+    if args.reconstruct:
+        return _reconstruct(args)
     kind = _agent_kind(args)
     if args.max_usd is not None:
         from . import replay as rp_mod  # noqa: PLC0415

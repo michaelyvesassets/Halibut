@@ -3,7 +3,8 @@
 The mock reads the evidence bundle and answers like a reasonable, imperfect LLM.
 With ``mock_faults`` in the bundle it also emits one hypothesis citing a
 non-existent metric and one with a wrong number, so validation can be shown
-to catch them. MOCK OUTPUT IS NOT INTELLIGENCE: it exercises the pipeline,
+to catch them. Replies follow the v2 output contracts (research actions carry ``target``).
+MOCK OUTPUT IS NOT INTELLIGENCE: it exercises the pipeline,
 accounting and validators, nothing more.
 """
 
@@ -16,17 +17,17 @@ def responder(role: str, b: dict) -> dict:
         for g in b["gaps"]:
             code = g["gap"]
             if code == "no_track_record":
-                acts.append({"tool": "store.track_record", "args": {}, "reason": "check prior prediction accuracy"})
+                acts.append({"tool": "store.track_record", "target": "", "reason": "check prior prediction accuracy"})
             elif code == "segment_mix_vs_within_unclear":
-                acts.append({"tool": "store.decomposition", "args": {}, "reason": "separate mix from within-segment effects"})
-                acts.append({"tool": "store.decomposition", "args": {}, "reason": "(repeated request)"})
+                acts.append({"tool": "store.decomposition", "target": "", "reason": "separate mix from within-segment effects"})
+                acts.append({"tool": "store.decomposition", "target": "", "reason": "(repeated request)"})
             elif code == "media_evidence_thin":
-                acts.append({"tool": "provider.gdelt_sample_expand", "args": {"n_files": 48}, "reason": "media sample too small"})
+                acts.append({"tool": "provider.gdelt_sample_expand", "target": "", "reason": "media sample too small"})
             elif code == "unresolved_entities":
-                acts.append({"tool": "analyst.wikidata_override", "args": {"competitors": g["detail"]}, "reason": "resolve entity"})
+                acts.append({"tool": "analyst.wikidata_override", "target": ",".join(g["detail"])[:120], "reason": "resolve entity"})
             elif code == "footprint_unavailable_as_of":
-                acts.append({"tool": "provider.overpass_refresh", "args": {}, "reason": "no footprint snapshot at this date"})
-        return {"actions": acts}
+                acts.append({"tool": "provider.overpass_refresh", "target": "", "reason": "no footprint snapshot at this date"})
+        return {"actions": acts[:6]}
     if role == "hypothesis":
         m, comps, names = b["market"], b["competitors"], b["market"]["names"]
         out = []
@@ -59,9 +60,9 @@ def responder(role: str, b: dict) -> dict:
                         "mechanism_candidates": ["product range"], "levers": ["product_range"]})
         if b.get("mock_faults") and movers:
             cid, e = movers[0]
-            out.append({"kind": "momentum", "subject": cid, "confidence": "medium",
+            out.append({"kind": "momentum", "subject": cid, "confidence": "medium", "mechanism_candidates": [], "levers": [],
                         "claim": f"{names[cid]} is surging.", "evidence": ["metric:share:L4:does_not_exist"]})
-            out.append({"kind": "momentum", "subject": cid, "confidence": "medium",
+            out.append({"kind": "momentum", "subject": cid, "confidence": "medium", "mechanism_candidates": [], "levers": [],
                         "claim": f"{names[cid]} reached {e['share_L4'] + 1.0:.2f}% of first registrations.",
                         "evidence": [f"metric:share:L4:{cid}", f"metric:share:P4:{cid}"]})
         return {"hypotheses": out}

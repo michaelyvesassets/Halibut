@@ -41,7 +41,10 @@ class LLMProvider(Protocol):
     name: str
     model: str
 
-    def complete(self, system: str, user: str, *, role: str, max_output_tokens: int = 1500) -> LLMResponse: ...
+    def complete(self, system: str, user: str, *, role: str, max_output_tokens: int = 1500,
+                 schema: dict | None = None) -> LLMResponse:
+        """``schema``: the full JSON schema the reply must satisfy (enforced at generation where the
+        provider supports it; always re-validated locally by the caller)."""
 
 
 def estimate_tokens(text: str) -> int:
@@ -87,8 +90,10 @@ class MockProvider:
         data = self.responder(role, payload)
         text = json.dumps(data, sort_keys=True)
         tin, tout = estimate_tokens(system + user), estimate_tokens(text)
-        return LLMResponse(text, data, tin, tout, True, self.model, self.name, time.perf_counter() - t0,
-                           estimated_cost_usd=self.pricing.cost(tin, tout))
+        r = LLMResponse(text, data, tin, tout, True, self.model, self.name, time.perf_counter() - t0,
+                        estimated_cost_usd=self.pricing.cost(tin, tout))
+        r.stop_reason = "end_turn"
+        return r
 
 
 class CachedProvider:
@@ -103,25 +108,31 @@ class CachedProvider:
         self.name, self.model = inner.name, inner.model
         self.hits = self.misses = 0
 
-    def key(self, system: str, user: str, role: str) -> str:
+    def key(self, system: str, user: str, role: str, schema: dict | None = None) -> str:
         parts = [self.name, self.model, role, system, user]
         salt = getattr(self.inner, "cache_salt", None)
         if salt:  # request settings (thinking, effort, ...) of providers that declare them
             parts.append(salt)
+        if schema is not None:  # a different output contract never reuses an old answer
+            parts.append(["schema", hashlib.sha256(json.dumps(schema, sort_keys=True).encode()).hexdigest()])
         return hashlib.sha256(json.dumps(parts).encode()).hexdigest()
 
     def complete(self, system: str, user: str, *, role: str, max_output_tokens: int | None = None,
-                 run_id: str = "unscoped") -> LLMResponse:
-        k = self.key(system, user, role)
+                 run_id: str = "unscoped", schema: dict | None = None) -> LLMResponse:
+        k = self.key(system, user, role, schema)
         row = self.store.conn.execute("SELECT response_json FROM llm_cache WHERE cache_key=?", (k,)).fetchone()
         if row:
             self.hits += 1
             d = json.loads(row[0])
             d.pop("reasoning_tokens", None)
-            return LLMResponse(**{**d, "cached": True, "latency_seconds": 0.0, "estimated_cost_usd": 0.0,
-                                  "actual_cost_usd": 0.0 if d.get("actual_cost_usd") is not None else None})
+            r = LLMResponse(**{**d, "cached": True, "latency_seconds": 0.0, "estimated_cost_usd": 0.0,
+                               "actual_cost_usd": 0.0 if d.get("actual_cost_usd") is not None else None})
+            r.stop_reason = "end_turn"  # only complete, parseable replies are ever cached
+            return r
         self.misses += 1
         kw = {"run_id": run_id} if getattr(self.inner, "accepts_run_id", False) else {}
+        if schema is not None:
+            kw["schema"] = schema
         r = self.inner.complete(system, user, role=role, max_output_tokens=max_output_tokens, **kw)
         if r.data is None:
             return r
@@ -188,7 +199,8 @@ class QwenProvider:
                 "enable_thinking": bool(self.cfg.get("enable_thinking", False))}
 
     def complete(self, system: str, user: str, *, role: str, max_output_tokens: int | None = None,
-                 run_id: str = "unscoped") -> LLMResponse:
+                 run_id: str = "unscoped", schema: dict | None = None) -> LLMResponse:
+        # ``schema`` is not sent: DashScope JSON mode guarantees JSON, not a schema. Callers validate locally.
         if "json" not in (system + user).lower():
             raise ValueError("JSON mode requires the word 'JSON' in the prompt")
         max_out = int(max_output_tokens or self.cfg.get("max_output_tokens", {}).get(role, 1200))
@@ -227,6 +239,8 @@ class QwenProvider:
             r = LLMResponse(text, data, tin or conservative_tokens(system + user), tout or max_out, tin is None or tout is None,
                             d.get("model", self.model), self.name, latency, estimated_cost_usd=worst, actual_cost_usd=actual)
             r.reasoning_tokens = reasoning
+            r.stop_reason = {"length": "max_tokens", "stop": "end_turn"}.get(d["choices"][0].get("finish_reason"),
+                                                                            d["choices"][0].get("finish_reason"))
             return r
         raise last
 
@@ -287,18 +301,32 @@ def pricing_from_config(cfg: dict) -> Pricing:
     return Pricing(cfg.get("input_per_mtok_usd"), cfg.get("output_per_mtok_usd"), cfg.get("pricing_source") or "")
 
 
+EXCERPT_CHARS = 4000  # stored text of failed replies (diagnosis of truncation/refusal/schema failures)
+
+
 def record_call(store, run_id, agent: str, role: str, r: LLMResponse | None, prompt_hash: str, *,
                 tool_calls: list | None = None, duplicates: int = 0, outcome: str = "ok", provider="", model="") -> None:
-    if r is not None and r.data is None and outcome == "ok":  # refusal, truncation or invalid JSON: a failed call
-        outcome = f"unparseable: stop_reason={getattr(r, 'stop_reason', None)}"
+    from ..epistemic.failures import call_outcome, classify_outcome  # noqa: PLC0415
+    if r is not None and r.data is None and outcome == "ok":  # truncation, refusal or invalid JSON: a failed call
+        outcome = call_outcome(getattr(r, "stop_reason", None))
+    excerpt = (r.text or "")[:EXCERPT_CHARS] if (r is not None and outcome != "ok") else None
     store.conn.execute(
         """INSERT INTO agent_calls (run_id, agent, role, provider, model, input_tokens, output_tokens, tokens_estimated,
            estimated_cost_usd, actual_cost_usd, latency_seconds, cache_hit, prompt_hash, tool_calls_json,
-           duplicate_tool_calls, outcome, at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+           duplicate_tool_calls, outcome, at, response_excerpt) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
         (run_id, agent, role, r.provider if r else provider, r.model if r else model, r.input_tokens if r else 0,
          r.output_tokens if r else 0, int(r.tokens_estimated) if r else 1, r.estimated_cost_usd if r else None,
          r.actual_cost_usd if r else None, r.latency_seconds if r else 0.0, int(r.cached) if r else 0, prompt_hash,
-         json.dumps(tool_calls or []), duplicates, outcome, utc_now()))
+         json.dumps(tool_calls or []), duplicates, outcome, utc_now(), excerpt))
+    from ..epistemic.events import EventLog  # noqa: PLC0415
+    EventLog(store).append("llm.call", "L1", {"agent": agent, "role": role, "outcome": outcome,
+                                              "failure_class": classify_outcome(outcome),
+                                              "input_tokens": r.input_tokens if r else 0, "output_tokens": r.output_tokens if r else 0,
+                                              "cache_hit": bool(r.cached) if r else False,
+                                              "actual_cost_usd": r.actual_cost_usd if r else None},
+                           run_id=run_id, subject_id=prompt_hash,
+                           provenance={"provider": r.provider if r else provider, "model": r.model if r else model,
+                                       "request_id": getattr(r, "request_id", None)})
     store.conn.commit()
 
 

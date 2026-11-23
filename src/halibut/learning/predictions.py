@@ -191,6 +191,14 @@ def score_due(store, memory: LearningMemory, eval_as_of: str, tags: list[str] | 
                                 record={"code": e["code"], "note": "candidate explanation, not a demonstrated cause"},
                                 available_at=published)
             memory.link(eid, "derived_from", oid, produced_by)
+            # typed claim: an explanation of an observed error (not a hypothesis, not a forecast)
+            from ..epistemic.claims import ClaimLedger  # noqa: PLC0415
+            ClaimLedger(store).submit("explanation", e["statement"], produced_by, as_of=published,
+                                      evidence=[oid, k["knowledge_id"]], exists=StoreEvidenceRetriever(store, published).exists,
+                                      payload={"code": e["code"], "explains": k["knowledge_id"], "knowledge_id": eid,
+                                               "note": "candidate explanation, not a demonstrated cause"},
+                                      provenance={"scorer": produced_by, "replay_id": pred.get("replay_id")},
+                                      run_id=pred.get("replay_id"), commit=False)
         hyp = pred.get("hypothesis_knowledge_id")
         if hyp:
             memory.set_status(hyp, "rejected" if failed else "tested", produced_by, effective_at=published)

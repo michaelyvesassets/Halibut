@@ -5,8 +5,10 @@ Related documents:
 - [CAPABILITY_MATRIX.md](CAPABILITY_MATRIX.md) (starting point)
 - [ARCHITECTURE_DECISIONS.md](ARCHITECTURE_DECISIONS.md) (decisions each milestone depends on)
 
-Status: **proposed**. No milestone starts without founder approval. There are no calendar
-deadlines; milestones are ordered by dependency.
+Status: v1.0 accepted (founder, 2026-11-23). **R1 is implemented**
+([R1_IMPLEMENTATION.md](R1_IMPLEMENTATION.md)); **R2 and later are not authorised**. No milestone
+starts without founder approval. There are no calendar deadlines; milestones are ordered by
+dependency.
 
 ## 1. Principles
 
@@ -47,6 +49,14 @@ flowchart LR
 - **Cost:** $0.
 
 ### R1 Epistemic foundation and contracts (offline)
+
+> **Status: implemented 2026-11-23.** Acceptance met. The offline reconstruction reproduced the
+> Haiku benchmark exactly (10 valid / 17 rejected / 9 dropped / 13 truncated / 10 raw → 8 unique
+> predictions). The reference replay is unchanged, and 259 tests pass. Delivered beyond the
+> original R1 list: the cross-industry market coverage contract (ADR-014). Still open from the
+> R1 list: the task-class routing table (moved to R2), the selection-vs-random comparison, and an
+> import-lint test for the layer dependency rules. See
+> [R1_IMPLEMENTATION.md §5](R1_IMPLEMENTATION.md#5-known-limits-of-r1-honest-list).
 - **Scope:**
   - the EI claim ledger (typed claims: explanation, hypothesis, forecast, simulated outcome,
     critique, lesson; links; validation results), built on the existing tables without

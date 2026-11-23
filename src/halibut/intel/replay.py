@@ -68,7 +68,8 @@ def llm_config_for(kind: str) -> dict:
 
 
 def replay(store, market_path, origins=None, agents: str = "reference", faults: bool = False, final_as_of: str | None = None,
-           dev_fraction: float = 0.6, log=print) -> dict:
+           dev_fraction: float = 0.6, log=print, agent_factory=None) -> dict:
+    """``agent_factory(store, run_id) -> agent set`` overrides ``make_agents`` (planning, offline reconstruction)."""
     base = load_market(market_path)
     origins = sorted(origins or DEFAULT_ORIGINS)
     memory = LearningMemory(store)
@@ -78,6 +79,13 @@ def replay(store, market_path, origins=None, agents: str = "reference", faults: 
                                       lineage(store, config={"market_spec": Path(market_path).read_text()},
                                               parameters={"agents": agents, "faults": faults, "origins": origins},
                                               datasets=["dft_veh0160_makes"], extra={"replay_id": replay_id}))
+    from ..epistemic.events import EventLog  # noqa: PLC0415
+    events = EventLog(store)
+    from ..world.coverage import check_contract  # noqa: PLC0415
+    contract = check_contract(base).as_dict()
+    events.append("replay.started", "L6", {"market": base.id, "agents": agents, "origins": origins,
+                                           "coverage_contract_valid": contract["valid"]}, run_id=replay_id,
+                  subject_id=exp_id, provenance={"experiment_id": exp_id}, commit=True)
     t0, per = time.monotonic(), []
     for o in origins:
         s0 = time.monotonic()
@@ -86,12 +94,17 @@ def replay(store, market_path, origins=None, agents: str = "reference", faults: 
         run_id = f"{replay_id}:{o}"
         store.conn.execute("INSERT INTO intel_runs VALUES (?,?,?,?,?,?,?)",
                            (run_id, base.id, o, utc_now(), None, "running", json.dumps({"experiment": exp_id, "replay": replay_id})))
-        a = analyse(store, market, memory, run_id, exp_id, {}, agents=make_agents(agents, store, run_id, faults),
+        agent_set = agent_factory(store, run_id) if agent_factory else make_agents(agents, store, run_id, faults)
+        a = analyse(store, market, memory, run_id, exp_id, {}, agents=agent_set,
                     replay_id=replay_id, preview=(o == origins[-1]), policy_eval=True)
         store.conn.execute("UPDATE intel_runs SET finished_at=?, status='completed' WHERE run_id=?", (utc_now(), run_id))
         per.append({"origin": o, "scored_at_origin": len(scored), "hypotheses_valid": len(a["accepted"]),
                     "hypotheses_rejected_by_validation": len(a["rejected"]),
                     "rejection_reasons": [h["validation"]["problems"][:2] for h in a["rejected"]],
+                    "rejection_classes": [h.get("failure_class") for h in a["rejected"]],
+                    "hypotheses_dropped": len(a.get("dropped", [])),
+                    "dropped_classes": [d["failure_class"] for d in a.get("dropped", [])],
+                    **({"contract_diagnostic": a["contract_diagnostic"]} if a.get("contract_diagnostic") else {}),
                     "lessons_available": len(a["lessons"]), "track_record_entries": len(a["track_record"]),
                     "costs": a["agent_costs"], "seconds": round(time.monotonic() - s0, 2),
                     "audit_passed": a["audit"].get("all_passed"),
@@ -103,7 +116,14 @@ def replay(store, market_path, origins=None, agents: str = "reference", faults: 
     evaluations = evaluate_policies(store, memory, replay_id, origins, dev_fraction, base.id)
     summary = summarize(store, replay_id, per, agents, time.monotonic() - t0)
     summary["evaluations"] = evaluations
+    from ..epistemic.failures import summary as failure_summary  # noqa: PLC0415
+    summary["failures"] = failure_summary(store, replay_id)
+    summary["coverage_contract"] = contract
     memory.finish_experiment(exp_id, {"summary": {k: v for k, v in summary.items() if k != "per_origin"}})
+    events.append("replay.completed", "L6", {"hypotheses_valid": summary["hypotheses_valid"],
+                                             "unique_scored": summary["hypothesis_predictions_scored"],
+                                             "duplicates_removed": summary["duplicate_predictions_removed"]},
+                  run_id=replay_id, subject_id=exp_id, provenance={"experiment_id": exp_id}, commit=True)
     summary["experiment_id"] = exp_id
     return summary
 
@@ -183,9 +203,28 @@ def evaluate_policies(store, memory, replay_id, origins, dev_fraction, market_id
     return out
 
 
+def prediction_identity(r: dict) -> tuple:
+    """Two scored predictions are the same prediction if they were made at the same origin for the same
+    quantity by the same method with the same numbers (e.g. two exposure hypotheses mapping to one
+    market-level prediction). Evaluation counts each identity once."""
+    return (r["origin_as_of"], r.get("subject"), r.get("hypothesis_mode"), r.get("quantity_kind"), r.get("method"),
+            r.get("interval_method"), round(float(r["point"]), 12), round(float(r["realized"]), 12))
+
+
+def unique_predictions(rows: list[dict]) -> list[dict]:
+    seen, out = set(), []
+    for r in rows:
+        k = prediction_identity(r)
+        if k not in seen:
+            seen.add(k)
+            out.append(r)
+    return out
+
+
 def summarize(store, replay_id, per, agents, seconds) -> dict:
     sc = _scores(store, replay_id)
-    hyp = [r for r in sc if r.get("hypothesis_id")]
+    hyp_raw = [r for r in sc if r.get("hypothesis_id")]
+    hyp = unique_predictions(hyp_raw)
     failed = [r for r in hyp if (r["direction_hit"] == 0) or not r["in_interval80"]]
     supported = [r for r in hyp if r not in failed]
     dir_ = [r["direction_hit"] for r in hyp if r["direction_hit"] is not None]
@@ -199,7 +238,9 @@ def summarize(store, replay_id, per, agents, seconds) -> dict:
     valid = sum(p["hypotheses_valid"] for p in per)
     return {"replay_id": replay_id, "agents": agents, "origins": [p["origin"] for p in per], "seconds": round(seconds, 1),
             "hypotheses_valid": valid, "hypotheses_rejected_by_validation": sum(p["hypotheses_rejected_by_validation"] for p in per),
-            "hypothesis_predictions_scored": len(hyp), "supported": len(supported), "refuted": len(failed),
+            "hypotheses_dropped": sum(p.get("hypotheses_dropped", 0) for p in per),
+            "hypothesis_predictions_scored": len(hyp), "hypothesis_predictions_scored_raw": len(hyp_raw),
+            "duplicate_predictions_removed": len(hyp_raw) - len(hyp), "supported": len(supported), "refuted": len(failed),
             "direction_hit_rate": (sum(dir_) / len(dir_)) if dir_ else None,
             "hypothesis_mae_pp": 100 * float(np.mean([r["abs_error"] for r in hyp])) if hyp else None,
             "hypothesis_coverage80": float(np.mean([r["in_interval80"] for r in hyp])) if hyp else None,

@@ -59,7 +59,7 @@ def test_migrations_idempotent(tmp_path):
     assert s.migrate() == []
     s.close()
     s2 = Store(tmp_path / "m.sqlite")
-    assert [r[0] for r in s2.conn.execute("SELECT version FROM schema_migrations")] == [1, 2, 3, 4, 5]
+    assert [r[0] for r in s2.conn.execute("SELECT version FROM schema_migrations")] == [1, 2, 3, 4, 5, 6]
 
 
 def test_v1_store_upgrades_in_place(tmp_path):
@@ -76,7 +76,7 @@ def test_v1_store_upgrades_in_place(tmp_path):
     finally:
         st.MIGRATIONS = saved
     new = Store(path)
-    assert [r[0] for r in new.conn.execute("SELECT version FROM schema_migrations")] == [1, 2, 3, 4, 5]
+    assert [r[0] for r in new.conn.execute("SELECT version FROM schema_migrations")] == [1, 2, 3, 4, 5, 6]
     assert new.conn.execute("SELECT COUNT(*) FROM sources").fetchone()[0] == n_sources
     assert new.conn.execute("SELECT COUNT(*) FROM entities").fetchone()[0] == 0
     new.close()

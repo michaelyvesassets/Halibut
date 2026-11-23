@@ -1,7 +1,8 @@
 # First live Claude benchmark: diagnostic findings (input to Master Architecture v1.0)
 
-Status: diagnostic record. The fixes proposed here are **not implemented**. They wait for the
-architecture milestone. No paid calls were made during the diagnosis.
+Status: diagnostic record. No paid calls were made during the diagnosis. **R1 (2026-11-23)
+implemented most of the proposed fixes**; see "Status after R1" at the end and
+`docs/architecture/R1_IMPLEMENTATION.md`.
 
 ## Run
 
@@ -165,3 +166,19 @@ a different set of quantities. They are context, not a head-to-head comparison:
 - It did **not** establish any accuracy difference, any skill at choosing predictions, or any
   value from LLM agents in the current design. The current design cannot test whether agents
   produce original insight.
+
+## Status after R1 (2026-11-23)
+
+| Proposed fix | Status | Where |
+|---|---|---|
+| 1. Schema enforced at generation, with enums from the bundle; no repair | Implemented; **live behaviour untested** | `src/halibut/epistemic/schemas.py`, `src/halibut/agents/anthropic_provider.py` |
+| 2. Bounded Research and Critic replies | Implemented: limits in prompts and schemas, enforced locally by rejection | `src/halibut/agents/orchestrator.py` (prompt v2) |
+| 3. Text of failed replies stored | Implemented | `agent_calls.response_excerpt` |
+| 4. Duplicate predictions removed; exposure label fixed | Implemented | `src/halibut/intel/replay.py:unique_predictions`, `to_hypothesis` |
+| 5. Drops counted; failure types split | Implemented | `src/halibut/epistemic/failures.py`, `validation_records` |
+| 6. Per-origin rejection reasons; conditional critic noted | Implemented | replay per-origin classes; benchmark `critic_calls` |
+| 7. Matched and selection-aware comparison | Partial: matched overlap count implemented; selection-vs-random test not | `src/halibut/intel/benchmark.py:overlap` |
+
+The offline reconstruction (`halibut intel benchmark … --reconstruct rpf5673fab06`) reproduces
+this run's numbers and classifies every failure as diagnosed above.
+

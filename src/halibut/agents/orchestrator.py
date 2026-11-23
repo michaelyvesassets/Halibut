@@ -6,6 +6,12 @@ Selective invocation (cost control):
   approval. Identical tool calls within a run are executed once (duplicates counted).
 - Hypothesis: one call per run; identical evidence bundles hit the cache.
 - Critic: one batched call for all validated hypotheses; skipped if none. No debates.
+
+Output contracts (R1). Prompt version "v2" (default) sends a strict JSON schema with every call, built
+from the bundle (ids, subjects, tools and hypothesis ids are enums), enforced at generation by
+providers that support structured outputs and ALWAYS re-validated here. Invalid items are rejected
+with reasons and recorded; nothing is repaired. Prompt version "v1" reproduces the exact prompts of
+the first live benchmark (no schema), for offline reconstruction from cached replies only.
 """
 
 from __future__ import annotations
@@ -13,13 +19,17 @@ from __future__ import annotations
 import hashlib
 import json
 
+from ..epistemic import schemas as sch
+from ..epistemic.failures import classify_item, classify_problems
 from ..intel.agents import ReferenceCritic, ReferenceHypothesisAgent, ReferenceScenarioDrafter
+from ..validation import ALLOWED_LEVERS
 from .llm import CachedProvider, record_call, run_costs
 
 OFFLINE_TOOLS = ("store.track_record", "store.decomposition", "store.denominator_check", "store.lessons")
 PROPOSABLE_TOOLS = ("provider.gdelt_sample_expand", "provider.overpass_refresh", "analyst.wikidata_override",
                     "provider.new_source_search")
 
+# v1: the prompts of the first live benchmark (2026-11-23), kept verbatim for offline reconstruction.
 RESEARCH_SYSTEM = ("You are Halibut's Research Agent. Given evidence gaps, choose tools to close them. Offline tools: "
                    f"{', '.join(OFFLINE_TOOLS)}. You may only PROPOSE: {', '.join(PROPOSABLE_TOOLS)}. "
                    'Return JSON {"actions": [{"tool", "args", "reason"}]}. Never invent data.')
@@ -32,6 +42,28 @@ HYPOTHESIS_SYSTEM = ("You are Halibut's Hypothesis Agent. Propose evidence-backe
 CRITIC_SYSTEM = ("You are Halibut's Critic Agent. Independently challenge each hypothesis: evidence quality, denominators, "
                  "segment-mix versus within-segment effects, unobserved switching, definitions. Do not soften or merge "
                  'disagreements. Return JSON {"critiques": [{"hypothesis_id", "statement", "severity"}]}.')
+
+# v2: explicit shapes and limits; the schema sent with the call is authoritative.
+RESEARCH_SYSTEM_V2 = ("You are Halibut's Research Agent. Given evidence gaps, choose at most 6 tool actions that would close "
+                      f"them. Offline tools (run now): {', '.join(OFFLINE_TOOLS)}. Tools you may only PROPOSE for approval: "
+                      f"{', '.join(PROPOSABLE_TOOLS)}. Reply with a JSON object "
+                      '{"actions": [{"tool": "<tool name>", "target": "<competitor id or empty string>", '
+                      '"reason": "<one sentence, at most 30 words>"}]}. Use each tool at most once per target. '
+                      "Never invent data.")
+HYPOTHESIS_SYSTEM_V2 = ("You are Halibut's Hypothesis Agent. Propose evidence-backed, testable competitive hypotheses. Reply "
+                        'with a JSON object {"hypotheses": [...]} with at most 8 items. Each item has: "kind" (momentum, '
+                        'displacement or exposure); "subject" (exactly one competitor id from bundle.market.names, '
+                        'copied without any prefix); "claim" (at most 80 words; every number must equal a bundle value, '
+                        'in percent or percentage points with 2 decimals); "evidence" (a JSON array of 1 to 8 metric '
+                        "id strings copied exactly from bundle.metrics[].id: ids only, never values, never an object); "
+                        '"confidence" (low, medium or high); "mechanism_candidates" (at most 3 short phrases); "levers" '
+                        "(at most 4, only: " + ", ".join(ALLOWED_LEVERS) + "). Numbers belong in the claim, not in evidence.")
+CRITIC_SYSTEM_V2 = ("You are Halibut's Critic Agent. Independently challenge each hypothesis: evidence quality, denominators, "
+                    "segment-mix versus within-segment effects, unobserved switching, definitions. Do not soften or merge "
+                    'disagreements. Reply with a JSON object {"critiques": [{"hypothesis_id": "<copied exactly>", '
+                    '"severity": "low|medium|high", "statement": "<at most 80 words>"}]}: at most 3 critiques per hypothesis.')
+PROMPTS = {"v1": {"research": RESEARCH_SYSTEM, "hypothesis": HYPOTHESIS_SYSTEM, "critic": CRITIC_SYSTEM},
+           "v2": {"research": RESEARCH_SYSTEM_V2, "hypothesis": HYPOTHESIS_SYSTEM_V2, "critic": CRITIC_SYSTEM_V2}}
 
 
 class ReferenceAgentSet:
@@ -101,17 +133,36 @@ class LLMAgentSet:
     name = "llm"
     research_id, hypothesis_id, critic_id = "agent:llm_research:v1", "agent:llm_hypotheses:v1", "agent:llm_critic:v1"
 
-    def __init__(self, provider, store, run_id, faults: bool = False):
+    def __init__(self, provider, store, run_id, faults: bool = False, prompt_version: str = "v2"):
+        if prompt_version not in PROMPTS:
+            raise ValueError(f"unknown prompt version {prompt_version!r}")
         self.provider = CachedProvider(provider, store)
         self.store, self.run_id, self.faults = store, run_id, faults
+        self.prompt_version, self.prompts, self.strict = prompt_version, PROMPTS[prompt_version], prompt_version != "v1"
         self.drafter = ReferenceScenarioDrafter()
         self.research_result = None
+        self.call_rejections = []  # top-level schema failures of whole replies
 
-    def _call(self, role, agent, system, payload):
+    def _check(self, r, schema, key, role):
+        """Split a reply into valid and rejected items under ``schema`` (strict mode only). Returns
+        (items, rejected [(i, item, problems)], outcome)."""
+        if r.data is None:
+            return [], [], "ok"  # record_call types truncation/refusal/invalid JSON itself
+        if not self.strict:
+            items = r.data.get(key, []) if isinstance(r.data, dict) else []
+            return (items if isinstance(items, list) else []), [], "ok"
+        valid, rejected, top = sch.split_items(r.data, schema, key)
+        if top:
+            self.call_rejections.append({"role": role, "problems": top, "reply": r.data})
+            return [], [], "schema_invalid: " + top[0][:150]
+        return valid, rejected, "ok"
+
+    def _call(self, role, agent, system, payload, schema=None):
         user = "BUNDLE:" + json.dumps(payload, sort_keys=True, default=str)
         ph = hashlib.sha256((system + user).encode()).hexdigest()[:16]
         try:
-            r = self.provider.complete(system, user, role=role, run_id=self.run_id)
+            r = self.provider.complete(system, user, role=role, run_id=self.run_id,
+                                       schema=schema if self.strict else None)
         except Exception as exc:
             record_call(self.store, self.run_id, agent, role, None, ph, outcome=f"error: {exc}"[:200],
                         provider=self.provider.name, model=self.provider.model)
@@ -122,10 +173,15 @@ class LLMAgentSet:
         gaps = find_gaps(ctx)
         if not gaps:
             return {"invoked": False}
-        r, ph = self._call("research", self.research_id, RESEARCH_SYSTEM, {"gaps": gaps, "market": bundle["market"]})
+        schema = sch.research_schema(OFFLINE_TOOLS, PROPOSABLE_TOOLS)
+        r, ph = self._call("research", self.research_id, self.prompts["research"], {"gaps": gaps, "market": bundle["market"]},
+                           schema)
+        actions, rejected, outcome = self._check(r, schema, "actions", "research")
+        self.research_rejected = [{"subject": "research_action", "item": it, "problems": pr,
+                                   "failure_class": classify_problems(pr)} for _, it, pr in rejected]
         seen, executed, pending, dup = set(), [], [], 0
-        for a in (r.data or {}).get("actions", []):
-            key = (a.get("tool"), json.dumps(a.get("args", {}), sort_keys=True))
+        for a in actions:
+            key = (a.get("tool"), a.get("target") if "target" in a else json.dumps(a.get("args", {}), sort_keys=True))
             if key in seen:
                 dup += 1
                 continue
@@ -137,7 +193,7 @@ class LLMAgentSet:
             else:
                 pending.append({**a, "status": "rejected_unknown_tool"})
         record_call(self.store, self.run_id, self.research_id, "research", r, ph, tool_calls=[{"tool": t["tool"]} for t in executed + pending],
-                    duplicates=dup)
+                    duplicates=dup, outcome=outcome)
         self.research_result = {"invoked": True, "gaps": gaps, "executed": executed, "pending": pending, "duplicates": dup}
         return self.research_result
 
@@ -158,20 +214,50 @@ class LLMAgentSet:
             bundle["research"] = [{"tool": a["tool"], "result": a["result"]} for a in res["executed"]]
         if self.faults:
             bundle["mock_faults"] = True
-        r, ph = self._call("hypothesis", self.hypothesis_id, HYPOTHESIS_SYSTEM, bundle)
-        record_call(self.store, self.run_id, self.hypothesis_id, "hypothesis", r, ph)
-        hyps = [h for h in (to_hypothesis(item, ctx, self.hypothesis_id) for item in (r.data or {}).get("hypotheses", [])) if h]
-        return hyps, {}
+        subjects = sorted(bundle["market"]["names"])
+        metric_ids = [m["id"] for m in bundle["metrics"]]
+        schema = sch.hypothesis_schema(metric_ids, subjects, ALLOWED_LEVERS)
+        r, ph = self._call("hypothesis", self.hypothesis_id, self.prompts["hypothesis"], bundle, schema)
+        items, rejected, outcome = self._check(r, schema, "hypotheses", "hypothesis")
+        record_call(self.store, self.run_id, self.hypothesis_id, "hypothesis", r, ph, outcome=outcome)
+        schema_rejected = [{"id": "rejected:" + hashlib.sha256(json.dumps([self.run_id, i, it], sort_keys=True,
+                                                                          default=str).encode()).hexdigest()[:16],
+                            "claim": str(it.get("claim", ""))[:300] if isinstance(it, dict) else "",
+                            "produced_by": self.hypothesis_id, "agent_item": it, "evidence": [],
+                            "failure_class": classify_problems(pr, it, subjects=subjects),
+                            "validation": {"passed": False, "problems": pr, "stage": "schema"}} for i, it, pr in rejected]
+        hyps, dropped, contract = [], [], []
+        for item in items:
+            h = to_hypothesis(item, ctx, self.hypothesis_id) if isinstance(item, dict) else None
+            if not self.strict:  # legacy replies: how would the R1 contract have judged this item? (diagnostic only)
+                contract.append({"item": item, "problems": sch.validate(item, schema["properties"]["hypotheses"]["items"])})
+            if h is None:
+                # conversion needs a supported kind and subject: those causes rank first for a drop
+                found = classify_item(item, subjects=subjects, kinds=sch.KINDS)
+                cause = [c for c in found if c in ("format.subject_not_canonical", "unsupported.kind_or_subject")]
+                classes = (cause + [c for c in found if c not in cause]) or ["unsupported.missing_evidence_signals"]
+                dropped.append({"item": item, "failure_class": classes[0], "problems": [
+                    f"not convertible into a testable prediction: {', '.join(classes)}"]})
+                continue
+            h["agent_item"] = item
+            hyps.append(h)
+        return hyps, {"dropped": dropped, "schema_rejected": schema_rejected, "contract_diagnostic": contract,
+                      "call_rejections": list(self.call_rejections), "research_rejected": getattr(self, "research_rejected", []),
+                      "prompt_version": self.prompt_version, "schema_version": sch.SCHEMA_VERSIONS["hypothesis"]}
 
     def critique(self, hyps, ctx):
         if not hyps:
             return {}
         payload = {"hypotheses": [{"id": h["id"], "mode": h["mode"], "claim": h["claim"], "subjects": h["subjects"],
                                    "evidence": h["evidence"][:12]} for h in hyps], **evidence_bundle(ctx)}
-        r, ph = self._call("critic", self.critic_id, CRITIC_SYSTEM, payload)
-        record_call(self.store, self.run_id, self.critic_id, "critic", r, ph)
+        schema = sch.critic_schema([h["id"] for h in hyps])
+        r, ph = self._call("critic", self.critic_id, self.prompts["critic"], payload, schema)
+        items, rejected, outcome = self._check(r, schema, "critiques", "critic")
+        record_call(self.store, self.run_id, self.critic_id, "critic", r, ph, outcome=outcome)
+        self.critic_rejected = [{"subject": "critique", "item": it, "problems": pr, "failure_class": classify_problems(pr)}
+                                for _, it, pr in rejected]
         out = {}
-        for c in (r.data or {}).get("critiques", []):
+        for c in items:
             out.setdefault(c.get("hypothesis_id"), []).append({"target": c.get("hypothesis_id"), "relation": "critiques",
                                                                "statement": c.get("statement", ""), "severity": c.get("severity"),
                                                                "produced_by": self.critic_id})
@@ -213,7 +299,9 @@ def to_hypothesis(item: dict, ctx: dict, agent_id: str) -> dict | None:
     elif kind == "exposure" and tx.get("segment_share_P4") is not None:
         pred = {"metric": "segment_share_of_market", "direction": "above", "threshold": tx["segment_share_P4"],
                 "periods": "next 2 quarters", "resolvable_after": resolve}
-        mode, subjects = "continuation", [comps.get(subj, {}).get("brand", f"brand:{subj}")]
+        # label only (does not affect validation or the prediction): never double-prefix ("brand:brand:x")
+        label = comps.get(subj, {}).get("brand") or (subj if str(subj).startswith("brand:") else f"brand:{subj}")
+        mode, subjects = "continuation", [label]
     else:
         return None
     from ..intel.agents import empirical_confidence  # noqa: PLC0415
@@ -224,5 +312,5 @@ def to_hypothesis(item: dict, ctx: dict, agent_id: str) -> dict | None:
             "levers": list(item.get("levers", [])), "mechanism_candidates": list(item.get("mechanism_candidates", [])),
             "uncertainties": ["First UK registrations include imported used vehicles (DfT definition).",
                               "Brand-to-brand switching is not observed."],
-            "status": "proposed", "epistemic_status": "hypothesis", "produced_by": agent_id,
+            "status": "proposed", "epistemic_status": "hypothesis", "produced_by": agent_id, "origin": "template_selection",
             "narrative_numbers_check": True, "lessons_considered": [k["knowledge_id"] for k in ctx.get("lessons", [])]}

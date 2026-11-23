@@ -1,0 +1,50 @@
+# Provider coverage registry: what each registered provider can supply, for which markets.
+# Used by the market coverage contract (src/halibut/world/coverage.py). No industry logic lives in code:
+# a provider that only covers one industry says so here, and a market outside it is reported as a gap.
+#
+# evidence_class   transactions | macro | footprint | media | entities
+# identifier       the competitor identifier scheme the provider needs ("" = none, "aliases", "search", or a
+#                  key in the competitor's identifiers table)
+# geographies      ISO 3166-1 alpha-2 codes, or "*" for any
+# categories       category keys (see [measurement].category_key in a market spec), or "*" for any
+schema_version = "1.0"
+
+[[providers]]
+id = "dft"
+evidence_class = "transactions"
+identifier = "dft_make"
+geographies = ["GB"]
+categories = ["road_vehicles.cars"]
+measures = "first UK registrations by make and fuel (units, quarterly); includes imported used vehicles"
+
+[[providers]]
+id = "worldbank"
+evidence_class = "macro"
+identifier = ""
+geographies = ["*"]
+categories = ["*"]
+measures = "annual macro indicators by country"
+
+[[providers]]
+id = "osm"
+evidence_class = "footprint"
+identifier = "osm_brand"
+geographies = ["*"]
+categories = ["*"]
+measures = "mapped locations per brand (presence, not completeness)"
+
+[[providers]]
+id = "gdelt"
+evidence_class = "media"
+identifier = "aliases"
+geographies = ["*"]
+categories = ["*"]
+measures = "sampled media coverage metadata and tone (proxy, not purchases)"
+
+[[providers]]
+id = "wikidata"
+evidence_class = "entities"
+identifier = "search"
+geographies = ["*"]
+categories = ["*"]
+measures = "entity resolution: company, parent, country, industry"

@@ -120,6 +120,8 @@ class LearningMemory:
                                 (kid, status, to_timestamp(effective_at) if effective_at else utc_now(), utc_now(), by,
                                  evaluation_id, "explicit" if effective_at else "recorded_now"))
         self.link(kid, "tests" if evaluation_id else "derived_from", evaluation_id or kid, by, f"status -> {status}")
+        self._event("knowledge.status_changed", "L6", kid, {"status": status, "evaluation_id": evaluation_id,
+                                                            "effective_at": effective_at}, by)
         self.store.conn.commit()
 
     def retrieve(self, *, tags: list[str] | None = None, kinds: list[str] | None = None,
@@ -192,6 +194,9 @@ class LearningMemory:
         cur = self.store.conn.execute(
             "INSERT INTO promotions (component, experiment_id, evaluation_id, status, approved_by, previous_promotion_id, at, note) VALUES (?,?,?,?,?,?,?,?)",
             (component, ev["candidate_id"], evaluation_id, "active", approved_by, prev["promotion_id"] if prev else None, utc_now(), note))
+        self._event("promotion.approved", "L8", f"promotion:{cur.lastrowid}",
+                    {"component": component, "evaluation_id": evaluation_id, "previous": prev["promotion_id"] if prev else None},
+                    approved_by)
         self.store.conn.commit()
         return int(cur.lastrowid)
 
@@ -206,8 +211,14 @@ class LearningMemory:
             "INSERT INTO knowledge_links VALUES (?,?,?,?,?,?)",
             (f"promotion:{cur['promotion_id']}", "supersedes", f"promotion:{cur['previous_promotion_id']}", approved_by,
              "rollback", utc_now()))
+        self._event("promotion.rolled_back", "L8", f"promotion:{cur['promotion_id']}",
+                    {"component": component, "restored": cur["previous_promotion_id"]}, approved_by)
         self.store.conn.commit()
         return self.active(component)
+
+    def _event(self, event_type, layer, subject_id, payload, by):
+        from ..epistemic.events import EventLog  # noqa: PLC0415
+        EventLog(self.store).append(event_type, layer, payload, subject_id=subject_id, provenance={"by": by})
 
     def active(self, component: str) -> dict | None:
         r = self.store.conn.execute("SELECT * FROM promotions WHERE component=? AND status='active' ORDER BY promotion_id DESC LIMIT 1",

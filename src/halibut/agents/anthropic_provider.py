@@ -92,6 +92,12 @@ def pricing_from_config(cfg: dict) -> AnthropicPricing:
                             float(cfg.get("worst_case_chars_per_token") or 2.0), cfg.get("prompt_cache") or "off")
 
 
+def cache_salt(cfg: dict) -> str:
+    """Request-shaping settings included in the prompt-cache key (stable across versions)."""
+    return json.dumps({"thinking": cfg.get("thinking"), "effort": cfg.get("effort"), "prompt_cache": cfg.get("prompt_cache")},
+                      sort_keys=True)
+
+
 def parse_json_text(text: str) -> dict | None:
     """JSON object from a text reply: plain, fenced (```json ... ```), or the outermost {...} span."""
     s = text.strip()
@@ -142,8 +148,7 @@ class AnthropicProvider:
                                 float(cfg["max_spend_usd_per_run"]), scope)
         self.retries = min(int(cfg.get("retries", 1)), 2)
         # request-shaping settings are part of the prompt-cache key: changing them never reuses old answers
-        self.cache_salt = json.dumps({"thinking": thinking, "effort": effort, "prompt_cache": cfg.get("prompt_cache")},
-                                     sort_keys=True)
+        self.cache_salt = cache_salt(cfg)
         if client is None:
             try:
                 import anthropic  # noqa: PLC0415
@@ -157,24 +162,30 @@ class AnthropicProvider:
     def _redact(self, s: str) -> str:
         return s.replace(self._key, "[REDACTED]") if self._key else s
 
-    def request_kwargs(self, system: str, user: str, max_output_tokens: int) -> dict:
+    def request_kwargs(self, system: str, user: str, max_output_tokens: int, schema: dict | None = None) -> dict:
         kw = {"model": self.model, "max_tokens": max_output_tokens, "system": system,
               "messages": [{"role": "user", "content": user}]}
         if self.cfg.get("thinking"):
             kw["thinking"] = {"type": self.cfg["thinking"]}
+        oc = {}
         if self.cfg.get("effort"):
-            kw["output_config"] = {"effort": self.cfg["effort"]}
+            oc["effort"] = self.cfg["effort"]
+        if schema is not None:  # structured outputs: enforced at generation (API-supported subset of the schema)
+            from ..epistemic.schemas import api_schema  # noqa: PLC0415
+            oc["format"] = {"type": "json_schema", "schema": api_schema(schema)}
+        if oc:
+            kw["output_config"] = oc
         pc = self.cfg.get("prompt_cache") or "off"
         if pc != "off":
             kw["cache_control"] = {"type": "ephemeral", **({"ttl": "1h"} if pc == "1h" else {})}
         return kw
 
     def complete(self, system: str, user: str, *, role: str, max_output_tokens: int | None = None,
-                 run_id: str = "unscoped") -> LLMResponse:
+                 run_id: str = "unscoped", schema: dict | None = None) -> LLMResponse:
         if "json" not in (system + user).lower():
             raise ValueError("Halibut agent prompts must ask for JSON")
         max_out = int(max_output_tokens or (self.cfg.get("max_output_tokens") or {}).get(role, 1200))
-        kw = self.request_kwargs(system, user, max_out)
+        kw = self.request_kwargs(system, user, max_out, schema)
         ledger_run = run_id if run_id.startswith(self.guard.scope) else f"{self.guard.scope}:{run_id}"
         last = None
         for attempt in range(self.retries + 1):

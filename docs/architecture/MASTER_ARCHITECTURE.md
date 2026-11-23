@@ -2,8 +2,8 @@
 
 | | |
 |---|---|
-| Version | 1.0 (proposed, 2026-11-23) |
-| Status | **Proposed**: awaiting founder approval. Nothing in this document is implemented unless [CAPABILITY_MATRIX.md](CAPABILITY_MATRIX.md) says so. |
+| Version | 1.0 (2026-11-23) |
+| Status | **Accepted as the baseline architecture by the founder on 2026-11-23, with qualifications** ([ARCHITECTURE_DECISIONS.md §6.0](ARCHITECTURE_DECISIONS.md#60-founder-decisions-of-2026-11-23-approval-of-v10-with-qualifications)). R1 is implemented ([R1_IMPLEMENTATION.md](R1_IMPLEMENTATION.md)). Nothing else here is implemented unless [CAPABILITY_MATRIX.md](CAPABILITY_MATRIX.md) says so. |
 | Supersedes | The per-phase component lists in `docs/phase4_intelligence.md` §1 and `docs/phase5_agents_learning.md` §1 |
 | Governance | [ARCHITECTURE_DECISIONS.md](ARCHITECTURE_DECISIONS.md) |
 
@@ -19,6 +19,7 @@
 | [STRATEGIC_OPERATING_LOOP.md](STRATEGIC_OPERATING_LOOP.md) | Objective → … → validated learning, with outputs and quality gates |
 | [IMPLEMENTATION_ROADMAP.md](IMPLEMENTATION_ROADMAP.md) | Dependency-ordered milestones, acceptance criteria, costs, founder decisions |
 | [ARCHITECTURE_DECISIONS.md](ARCHITECTURE_DECISIONS.md) | Versioning, ADRs, ownership, contracts, change rules |
+| [R1_IMPLEMENTATION.md](R1_IMPLEMENTATION.md) | What R1 built, how it behaves, acceptance results and known limits |
 
 ---
 
@@ -68,8 +69,9 @@ quality, safety or scale if they were adopted as written.
 1. "A unified dashboard" belongs to Growth maturity, not the MVP. A CLI plus generated reports
    meets the MVP's oversight needs at far lower cost (C4, [ADR-010](ARCHITECTURE_DECISIONS.md#adr-010)).
 2. Agents should not produce numerical forecasts directly. They may **propose model
-   specifications and quantitative hypotheses**; the forecast numbers are produced by
-   registered models executed deterministically. This keeps principle B intact without going
+   specifications, quantitative hypotheses and quantitative assumptions**. AI-generated estimates
+   may be kept as labelled candidates evaluated separately (founder decision 5). The *official*
+   forecast numbers are produced by registered models executed deterministically. This keeps principle B intact without going
    back to "agents select predefined predictions". The agent decides *what* to model and *why*;
    the model computes the numbers ([ADR-004](ARCHITECTURE_DECISIONS.md#adr-004)).
 3. "Autonomous" means autonomous **investigation and reasoning within budgets**, not
@@ -578,7 +580,9 @@ needed later, mirror the same contracts.
 - **Maturity:**
   - *MVP:* generalise `validation.py`, `intel/audit.py`, `knowledge` and `hypotheses` into one
     claim ledger with types; schemas for every agent task; a failure taxonomy (format, schema,
-    unsupported, fabricated, number mismatch, leakage);
+    unsupported, fabricated, number mismatch, leakage). **R1 implemented the ledger, schemas,
+    failure taxonomy and event log** (`src/halibut/epistemic/`); the legacy tables remain the
+    learning memory's store;
   - *Growth:* fidelity audits of explanations by sampled human review, contradiction
     workflows;
   - *Full:* formal provenance graphs exportable for client audit.

@@ -1,6 +1,6 @@
 # Capability Matrix: repository audit against Master Architecture v1.0
 
-Audited 2026-11-23 at commit `f6e4904` (plus this documentation). Layers are those of
+Audited 2026-11-23 at commit `f6e4904`; **updated after R1** (see [R1_IMPLEMENTATION.md](R1_IMPLEMENTATION.md)). Rows changed by R1 are marked *(R1)*. Layers are those of
 [MASTER_ARCHITECTURE.md](MASTER_ARCHITECTURE.md#3-recommended-architecture).
 
 **Status legend**
@@ -15,8 +15,8 @@ Audited 2026-11-23 at commit `f6e4904` (plus this documentation). Layers are tho
 
 **Baseline facts**
 - About 11,400 lines of Python under `src/halibut/`.
-- 233 tests passing offline (`python -m pytest`).
-- One SQLite store with migrations 1–5 (`src/halibut/data/store.py`).
+- 259 tests passing offline (`python -m pytest`): 233 from before R1, 26 added in R1.
+- One SQLite store with migrations 1–6 (`src/halibut/data/store.py`).
 - One deployable CLI: `halibut` (`src/halibut/cli.py`).
 - Total live LLM spend to date: $0.02076. That is one Haiku smoke test and one 23-call
   benchmark, recorded in `llm_spend_ledger`.
@@ -32,11 +32,11 @@ Audited 2026-11-23 at commit `f6e4904` (plus this documentation). Layers are tho
 | Qwen provider | Partial | `agents/llm.py:QwenProvider`; `configs/llm/qwen.toml`; `tests/test_qwen_readiness.py` | Offline-tested only; never called live |
 | Mock provider | Mocked | `agents/llm.py:MockProvider`, `agents/mock.py` | Pipeline testing only. "Mock output is not intelligence" |
 | Model routing by task class | Missing | — | One provider and model per run (`intel/replay.py:llm_config_for`) |
-| Structured-output enforcement | Missing | — | Prompt-instructed JSON plus `parse_json_text`. Cause of F2 in `docs/benchmark_haiku_v1_diagnostic.md` |
-| Prompt and response cache | Implemented | `agents/llm.py:CachedProvider`, table `llm_cache` (migration 4) | Key includes provider, model, settings, role and prompt. Unparseable replies are not cached |
+| Structured-output enforcement *(R1)* | Implemented (offline-tested) | `epistemic/schemas.py`; `agents/anthropic_provider.py` (`output_config.format`); local validation in `agents/orchestrator.py` | Anthropic: enforced at generation (API-safe subset) **and** locally; Qwen and mock: locally only. Untested against the live API |
+| Prompt and response cache | Implemented | `agents/llm.py:CachedProvider`, table `llm_cache` (migration 4) | Key includes provider, model, settings, role, prompt and *(R1)* output schema. Unparseable replies are not cached |
 | Fail-closed spend control | Implemented | `agents/budget.py:SpendGuard`, `llm_spend_ledger` (migration 5) | Per-attempt reservation; application-wide caps ($5 total, $1 per run); `--max-usd` |
 | Call accounting | Implemented | `agents/llm.py:record_call`, `run_costs`; table `agent_calls` | Tokens, cost, latency, cache hits, duplicate tool calls, outcome |
-| Text of failed replies | Missing | — | The diagnostic gap behind F4 |
+| Text of failed replies *(R1)* | Implemented | `agent_calls.response_excerpt` (migration 6), `agents/llm.py:record_call` | Up to 4,000 characters; typed outcomes (truncated, refusal, invalid_json, schema_invalid) |
 | Simulation compute pool and cache | Implemented | `batch.py` (process pool, `.halibut_cache/`) | Local machine only |
 | Durable workflow / job runner | Missing | — | CLI commands run in the foreground. Ingest is idempotent (`data/ssb.py`, snapshots), but there is no resumable workflow state |
 | Scheduler | Missing | — | |
@@ -45,7 +45,7 @@ Audited 2026-11-23 at commit `f6e4904` (plus this documentation). Layers are tho
 | Observability | Partial | `fetch_log`, `ingest_runs`, `agent_calls`, run manifests (`export.py`) | No metrics or tracing system |
 | Budgeted, polite HTTP | Implemented | `data/http.py:PoliteClient`, `BudgetExhausted` | Request, byte and time budgets; project User-Agent |
 | Secrets handling | Implemented (single user) | Environment-only keys; `agents/llm.py:load_llm_config` rejects inline secrets; redaction in `agents/anthropic_provider.py` | No secret manager, no rotation |
-| Authentication and tenancy | Missing | — | Single user, single tenant |
+| Authentication and tenancy | Missing | — | Single user. Tenant columns exist on claims and validation records only (L3 row) |
 | Reproducibility | Implemented | `config.py:config_hash`, `rng.py`, `export.py` manifests, `learning/lineage.py` | Golden tests: `tests/test_golden.py`, `tests/test_reproducibility.py` |
 
 ## L2 Information Acquisition
@@ -85,11 +85,12 @@ Audited 2026-11-23 at commit `f6e4904` (plus this documentation). Layers are tho
 | Derived metrics with recomputable definitions | Implemented | `intel/signals.py`; recomputed in `validation.py` | Share metrics, L4/P4 windows, decomposition |
 | Universe and denominator discipline | Implemented | `data/catalogue.py` (`universe_dims`), `AsOfView.shares` | Shares only within one universe |
 | Market definition as an object | Partial | `intel/market.py` (TOML spec: category × geography × competitors × mode) | Not stored as a world-model entity; one market |
+| Cross-industry market coverage contract *(R1)* | Implemented | `world/coverage.py`, `configs/data/provider_coverage.toml`, `[measurement]` and competitor `identifiers` in `intel/market.py`; `halibut intel coverage` | Industry-neutral declaration checked against provider coverage; as-of evidence coverage per competitor; legacy keys still accepted |
 | Documents linked to entities | Partial | `documents`, `document_entities` | GDELT metadata only |
 | Assertions with confidence and contradiction handling | Missing | — | `epistemic_status` ∈ {observed, derived, asserted} only |
 | Product, geography and organisation hierarchies | Missing | — | |
 | Context assembly (token-budgeted slices) | Partial | `agents/orchestrator.py:evidence_bundle` | One bundle shape per role; not a general service |
-| Tenancy | Missing | — | |
+| Tenancy *(R1)* | Partial | `claims.tenant`, `validation_records.tenant`; `ClaimLedger.as_of/get` filter own + public | Other tables have none; **must be extended before client data** (founder decision 7) |
 
 ## L4 Autonomous AI Workforce
 
@@ -102,7 +103,7 @@ Audited 2026-11-23 at commit `f6e4904` (plus this documentation). Layers are tho
 | Deterministic reference workforce | Implemented | `intel/agents.py` (`ReferenceHypothesisAgent`, `ReferenceCritic`, `ReferenceScenarioDrafter`) | The benchmark baseline |
 | Original hypothesis generation | **Missing** | — | The central architectural gap |
 | Model-spec proposal by agents | Missing | — | `interfaces.py:ScenarioProposer` exists as a protocol only (Planned) |
-| Structured agent communication | Partial | JSON bundles in, JSON out | No task contracts or schema registry |
+| Structured agent communication *(R1)* | Partial | Versioned role schemas (`epistemic/schemas.py`), prompt versions v1 and v2 (`agents/orchestrator.py:PROMPTS`) | No task contracts between agents yet (R2) |
 | Tool permissions | Partial | `OFFLINE_TOOLS`, `PROPOSABLE_TOOLS`, `validation.ACTION_TYPES_ALLOWED` | Coarse two-tier |
 | Duplicate-work avoidance | Partial | Duplicate tool calls executed once and counted; cache | Nothing across investigations |
 | Disagreement preservation | Partial | Critiques kept; lessons dedupe with "same-data repetitions" labels (`learning/memory.py`) | No adjudication-by-test workflow |
@@ -138,11 +139,12 @@ Audited 2026-11-23 at commit `f6e4904` (plus this documentation). Layers are tho
 | Versioned evaluation rule | Implemented | `learning/evaluate.py` (`paired-dev-holdout-v1`) | |
 | Promotion with named approver; rollback | Implemented | `memory.promote/rollback`; `halibut learn promote --approved-by` | No promotions recorded yet |
 | Experiment lineage | Implemented | `learning/lineage.py`, `experiments` | |
-| LLM benchmark against reference | Implemented | `intel/benchmark.py` (plan on a throwaway copy, snapshot-hash check) | Failure taxonomy misclassifies format errors (F2) |
-| Cost per useful validated result | Partial | `intel/replay.py:summarize`, `intel/benchmark.py` | Does not discount predictions the reference also made (F1) |
+| LLM benchmark against reference | Implemented | `intel/benchmark.py` (plan on a throwaway copy, snapshot-hash check) | *(R1)* R1 failure taxonomy; `overlap_with_reference`; conditional-critic rule reported |
+| Offline reconstruction of a past run *(R1)* | Implemented | `intel/benchmark.py:reconstruct`, `halibut intel benchmark --reconstruct` | Cached replies + recorded outcomes; no requests; reproduced the Haiku benchmark exactly |
+| Cost per useful validated result | Partial | `intel/replay.py:summarize`, `intel/benchmark.py` | *(R1)* Counts unique predictions; the overlap with the reference is reported, but the ratio itself does not yet discount it |
 | Hypothesis testing (implications vs outcomes) | Missing | — | Predictions are scored; hypotheses as mechanisms are not tested |
-| Matched and selection-aware comparison | Missing | Done manually in the diagnostic | |
-| Duplicate-prediction removal | Missing | — | F1: 2 of 10 duplicates |
+| Matched and selection-aware comparison | Partial *(R1)* | `intel/benchmark.py:overlap` (matched identity count) | Selection-vs-random test not implemented |
+| Duplicate-prediction removal *(R1)* | Implemented | `intel/replay.py:unique_predictions`; ledger `duplicates` links | Raw and unique counts reported |
 | Error analysis | Partial | Manual diagnostics (`docs/phase3_results.md` §Diagnosis, the benchmark diagnostic) | |
 | LLM-cutoff-aware evaluation | Missing | — | |
 | Learning-loop demonstration | Implemented | `learning/demo.py`, `halibut learn demo` | |
@@ -170,7 +172,7 @@ Audited 2026-11-23 at commit `f6e4904` (plus this documentation). Layers are tho
 | Reports for people and agents | Implemented | `intel/report.py` (Markdown and JSON), `empirical/report.py`, `export.py` | |
 | Approvals | Partial | `approved` / `approved_by` / `approved_on` in `configs/llm/*.toml`; `--yes`; `--max-usd`; `promote --approved-by`; `pending_approval` research proposals | Scattered; no approvals table |
 | Budgets | Partial | LLM: `SpendGuard`; HTTP: `PoliteClient`; analyses: `time_limit_minutes` (`specs.py`) | No budget registry |
-| Audit trail | Partial | `agent_calls`, `fetch_log`, `ingest_runs`, `promotions`, `knowledge_status_history`, ledger | Not unified; not tamper-evident |
+| Audit trail *(R1)* | Partial | `epistemic/events.py` (`events_log`, hash-chained, append-only) for LLM calls, claims, validation outcomes, status changes, promotions and replays; older tables unchanged | Ingestion and fetches do not emit events yet |
 | Permissions and roles | Missing | — | |
 | Policy registry | Partial | `validation.py` constants | Hard-coded |
 | Dashboard or console | Missing (by decision) | Earlier phases: "do not build a dashboard" | Deferred ([ADR-010](ARCHITECTURE_DECISIONS.md#adr-010)) |
@@ -183,10 +185,11 @@ Audited 2026-11-23 at commit `f6e4904` (plus this documentation). Layers are tho
 | Metric recomputation | Implemented | `validation.py` + `intel/signals.compute_share` | Tolerance 1e-9 |
 | Narrative-number check | Implemented | `validation.check_numbers`, `allowed_numbers` | |
 | Evidence-quality audit | Implemented | `intel/audit.py` | Windows, denominators, universe, completeness |
-| Epistemic labels | Partial | `epistemic_status` on entities, relationships and hypotheses; knowledge kinds | No unified claim-type taxonomy |
-| Claim ledger (all types) | Missing | Split across `hypotheses`, `knowledge`, `prediction_scores` | |
-| Agent-output schemas | Missing | — | |
-| Temporal integrity guard | Partial | `store.as_of`, `empirical/backtest.py` audit (fails if a read is after the origin) | No vintage selection; no LLM-cutoff tagging |
+| Epistemic labels *(R1)* | Implemented | Claim types in `epistemic/claims.py` | Legacy knowledge kinds kept; candidate explanations still stored there as `hypothesis` (see R1 §5) |
+| Claim ledger (all types) *(R1)* | Implemented | `epistemic/claims.py`; tables `claims`, `claim_links`, `claim_status_history` (migration 6) | Written by the workflow and scorer; the scorer still reads `knowledge` |
+| Agent-output schemas *(R1)* | Implemented | `epistemic/schemas.py` (research.v2, hypothesis_selection.v2, critic.v2, smoke.v1) | Enums from the bundle; never repaired |
+| Failure taxonomy and validation records *(R1)* | Implemented | `epistemic/failures.py`; `validation_records` (migration 6) | Every rejection and drop recorded with class and raw item |
+| Temporal integrity guard | Partial | `store.as_of`, `empirical/backtest.py` audit; *(R1)* claim evidence checked as of the claim's date, forecasts must resolve after it, claims invisible before `available_at`, status as of a date | No vintage selection; no LLM-cutoff tagging |
 | Prompt-injection defences | Missing | — | No untrusted full text yet, but required before adding any |
 
 ## CLI inventory (as of audit)
@@ -195,7 +198,7 @@ Audited 2026-11-23 at commit `f6e4904` (plus this documentation). Layers are tho
 halibut validate | run | diagnose                               (simulation)
 halibut suite | sensitivity | make-targets | calibrate | backtest  (analysis)
 halibut data init | ingest | events | status | rebuild | quality
-halibut intel smoke | investigate | replay | benchmark | compare
+halibut intel smoke | investigate | replay | benchmark [--reconstruct ID] | coverage | compare
 halibut learn demo | lessons | import-backtest | score | promote | rollback
 halibut agents smoke | spend
 ```
@@ -209,10 +212,11 @@ halibut agents smoke | spend
 | 3 | experiments, knowledge, knowledge_links, evaluations, promotions |
 | 4 | prediction_scores, llm_cache, agent_calls; `knowledge.available_at` |
 | 5 | knowledge_status_history, llm_spend_ledger |
+| 6 *(R1)* | claims, claim_links, claim_status_history, validation_records, events_log (append-only triggers); `agent_calls.response_excerpt` |
 
 ## Test inventory
 
-There are 27 test modules; offline tests are in `tests/`. Coverage by layer:
+There are 31 test modules; offline tests are in `tests/`. R1 added test_epistemic_claims (7), test_epistemic_events (4), test_schemas_and_failures (9) and test_r1_pipeline (6). Coverage by layer:
 
 | Layer | Test modules |
 |---|---|
@@ -230,12 +234,12 @@ Counts are rows of the tables above. Items noted as *Planned* inside a row (Post
 
 | Layer | Implemented | Partial | Mocked | Planned | Missing | Verdict |
 |---|---|---|---|---|---|---|
-| L1 | 10 | 3 | 1 | 0 | 6 | Strong cost and reproducibility core; no routing, schemas, jobs or tenancy |
+| L1 | 12 | 3 | 1 | 0 | 4 | Strong cost and reproducibility core; *(R1)* schemas and failed-reply text added; no routing, jobs or tenancy |
 | L2 | 7 | 6 | 0 | 0 | 7 | Good for public statistics; no documents, finance, regulation or discovery |
-| L3 | 5 | 5 | 0 | 0 | 3 | Sound bitemporal core; ontology thin; no assertions or hierarchies |
-| L4 | 1 | 8 | 0 | 0 | 3 | **Weakest relative to vision**: no original hypotheses |
+| L3 | 6 | 6 | 0 | 0 | 2 | Sound bitemporal core; *(R1)* industry-neutral coverage contract; ontology thin; no assertions or hierarchies |
+| L4 | 1 | 8 | 0 | 0 | 3 | **Weakest relative to vision**: no original hypotheses (R2); *(R1)* outputs now contract-bound |
 | L5 | 7 | 4 | 0 | 0 | 4 | Rich synthetic simulation; empirically weaker than baselines; no registry or firms |
-| L6 | 8 | 2 | 0 | 0 | 4 | Solid learning discipline; hypotheses are not tested as mechanisms |
+| L6 | 10 | 3 | 0 | 0 | 2 | Solid learning discipline; *(R1)* duplicates removed, reconstruction; hypotheses not yet tested as mechanisms |
 | L7 | 2 | 3 | 0 | 0 | 5 | Mostly missing beyond labels and safety rules |
-| L8 | 2 | 4 | 0 | 0 | 2 | CLI-only; approvals scattered |
-| EI | 4 | 2 | 0 | 0 | 3 | Validators exist; no unified ledger or schemas |
+| L8 | 2 | 4 | 0 | 0 | 2 | CLI-only; approvals scattered; *(R1)* tamper-evident event log |
+| EI | 8 | 1 | 0 | 0 | 1 | *(R1)* ledger, schemas, events and failure taxonomy implemented; prompt-injection defences missing |

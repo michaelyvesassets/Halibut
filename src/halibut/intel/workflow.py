@@ -24,6 +24,8 @@ from ..data.http import Budget, BudgetExhausted, PoliteClient
 from ..data.providers import dft, gdelt, overpass, wikidata, worldbank
 from ..data.store import to_timestamp, utc_now
 from ..learning.lineage import lineage
+from ..epistemic.claims import ClaimLedger
+from ..epistemic.failures import classify_problems, record
 from ..learning.memory import LearningMemory
 from ..validation import check_action, validate_hypothesis
 from . import signals as sig
@@ -220,14 +222,40 @@ def analyse(store, market, memory, run_id, exp_id, resolutions, *, agents=None, 
     ctx = {"run_id": run_id, "market": market, "signals": signals, "lessons": lessons, "unresolved": unresolved,
            "metrics": metrics, "audit": audit, "track_record": record, "retriever": retr}
     extra_tags = [f"replay:{replay_id}"] if replay_id else []
-    hyps, _ = agents.propose(ctx)
+    hyps, extra = agents.propose(ctx)
     decomp_numbers = {round(v, 2) for d in audit.get("decomposition", {}).values() for k, v in d.items() if k.endswith("_pp")}
+    subjects = [c.id for c in market.competitors]
+    ledger = ClaimLedger(store)
+    rec = _Recorder(store, run_id, retr.as_of, ledger.events)
+    for d in extra.get("dropped", []):  # proposed items that could not become a testable hypothesis: counted, not hidden
+        rec.add(d["item"].get("kind", "hypothesis") if isinstance(d["item"], dict) else "hypothesis", "conversion", "dropped",
+                d["failure_class"], d["problems"], d["item"], agents_id=getattr(agents, "hypothesis_id", "agent"))
+    for c in extra.get("call_rejections", []):
+        rec.add(c["role"], "schema", "rejected", "call.schema_top_level", c["problems"], c["reply"],
+                agents_id=getattr(agents, "hypothesis_id", "agent"))
+    for x in extra.get("research_rejected", []):
+        rec.add(x["subject"], "schema", "rejected", x["failure_class"], x["problems"], x["item"],
+                agents_id=getattr(agents, "research_id", "agent"))
     accepted, rejected, drafts, policy_preds = [], [], [], []
+    for h in extra.get("schema_rejected", []):
+        rec.add("hypothesis", "schema", "rejected", h["failure_class"], h["validation"]["problems"], h["agent_item"],
+                agents_id=h["produced_by"])
+        rejected.append(h)
     for h in hyps:
         problems = validate_hypothesis(h, retr, metrics, retr.as_of, extra_numbers=decomp_numbers)
-        h["validation"] = {"passed": not problems, "problems": problems}
+        h["validation"] = {"passed": not problems, "problems": problems, "stage": "validation"}
+        if problems:
+            h["failure_class"] = classify_problems(problems, h.get("agent_item"), subjects=subjects)
+            rec.add("hypothesis", "validation", "rejected", h["failure_class"], problems, h.get("agent_item") or
+                    {k: h.get(k) for k in ("id", "claim", "evidence", "mode", "subjects")}, agents_id=h["produced_by"])
         (accepted if not problems else rejected).append(h)
     critiques = agents.critique(accepted, ctx)
+    for x in getattr(agents, "critic_rejected", []) or []:
+        rec.add(x["subject"], "schema", "rejected", x["failure_class"], x["problems"], x["item"],
+                agents_id=getattr(agents, "critic_id", "agent"))
+    exists = (lambda e: e in metrics or retr.exists(e))  # noqa: E731  (metrics are computed as of retr.as_of)
+    prov = {"agent_set": agents.name, "prompt_version": extra.get("prompt_version"), "schema_version": extra.get("schema_version"),
+            "experiment_id": exp_id, "replay_id": replay_id}
     for h in accepted:
         h["critiques"] = critiques.get(h["id"], [])
         h["track_record"] = record
@@ -235,6 +263,7 @@ def analyse(store, market, memory, run_id, exp_id, resolutions, *, agents=None, 
                             {"tags": ["domain:competitive_displacement", f"market:{market.id}", f"mode:{h['mode']}"] + extra_tags},
                             h["evidence"], experiment_id=exp_id, confidence=h["confidence"], record=h, available_at=retr.as_of)
         h["knowledge_id"] = kid
+        h["claim_id"] = _hypothesis_claim(ledger, h, kid, run_id, retr.as_of, exists, prov)
         v2 = hypothesis_prediction(h, retr, market, tx, method, replay_id)
         if v2:
             v2["hypothesis_knowledge_id"] = kid
@@ -248,6 +277,9 @@ def analyse(store, market, memory, run_id, exp_id, resolutions, *, agents=None, 
                                 h["evidence"], experiment_id=exp_id, record={"prediction": v2, "hypothesis": h["id"]},
                                 available_at=retr.as_of)
             memory.link(pid, "derived_from", kid, h["produced_by"])
+            fc = _forecast_claim(ledger, v2, pid, run_id, retr.as_of, exists, prov, h.get("claim_id"))
+            if fc and h.get("claim_id"):
+                ledger.link(fc, "tests", h["claim_id"], "engine:intel.forecast", commit=False)
         for les in lessons:
             memory.link(kid, "considered", les["knowledge_id"], h["produced_by"])
         for c in h["critiques"]:
@@ -255,24 +287,97 @@ def analyse(store, market, memory, run_id, exp_id, resolutions, *, agents=None, 
                                 {"tags": [f"market:{market.id}"] + extra_tags}, [kid], experiment_id=exp_id,
                                 available_at=retr.as_of)
             memory.link(cid, "critiques", kid, c.get("produced_by", agents.critic_id))
+            if h.get("claim_id"):
+                cc, _ = ledger.submit("critique", c["statement"], c.get("produced_by", agents.critic_id), as_of=retr.as_of,
+                                      run_id=run_id, payload={"target": h["claim_id"], "severity": c.get("severity") or "unrated",
+                                                              "knowledge_id": cid}, provenance=prov, commit=False)
+                if cc:
+                    ledger.link(cc, "critiques", h["claim_id"], c.get("produced_by", agents.critic_id), commit=False)
         store.conn.execute("INSERT OR REPLACE INTO hypotheses VALUES (?,?,?,?,?)",
                            (h["id"], run_id, "proposed", h["produced_by"], json.dumps(h, default=str)))
         check_action("propose_scenario")
         raw = agents.draft(h, ctx) if preview else None
         if raw:
             drafts.append(_preview(raw, h))
+            _simulated_claim(ledger, drafts[-1], run_id, retr.as_of, prov, h.get("claim_id"))
     if policy_eval and tx.get("available"):
         for p in policy_predictions(store, retr, market, tx, "engine:prediction_policies", replay_id):
             memory.submit("prediction", f"policy {p['method']}/{p['interval_method']} {p['subject']}: point "
                           f"{100 * p['point']:.2f}% for {', '.join(p['quantity']['periods'])}", "engine:prediction_policies",
                           {"tags": [f"market:{market.id}", "prediction:policy", f"method:{p['method']}"] + extra_tags},
                           p["evidence"], experiment_id=exp_id, record={"prediction": p}, available_at=retr.as_of)
+            _forecast_claim(ledger, p, None, run_id, retr.as_of, exists, prov, None)
             policy_preds.append(p)
     store.conn.commit()
     return {"retriever": retr, "signals": signals, "metrics": metrics, "lessons": lessons,
             "prior_hypotheses": prior_hypotheses, "accepted": accepted, "rejected": rejected, "drafts": drafts,
             "track_record": record, "prediction_policy": {"method": method, "promotion": promotion},
-            "audit": audit, "agent_costs": agents.costs(), "agent_set": agents.name, "policy_predictions": policy_preds}
+            "audit": audit, "agent_costs": agents.costs(), "agent_set": agents.name, "policy_predictions": policy_preds,
+            "dropped": extra.get("dropped", []), "contract_diagnostic": extra.get("contract_diagnostic", []),
+            "validation_records": rec.n}
+
+
+class _Recorder:
+    def __init__(self, store, run_id, as_of, events):
+        self.store, self.run_id, self.as_of, self.events, self.n = store, run_id, as_of, events, 0
+
+    def add(self, subject, stage, outcome, failure_class, problems, item, agents_id):
+        record(self.store, run_id=self.run_id, produced_by=agents_id, subject=subject, stage=stage, outcome=outcome,
+               failure_class=failure_class, problems=problems, item=item, as_of=self.as_of, events=self.events)
+        self.n += 1
+
+
+def _refutation(pred: dict) -> str:
+    thr = pred.get("threshold")
+    thr_s = "" if thr is None else (f" {100 * thr:.2f}%" if isinstance(thr, (int, float)) else f" {thr}")
+    return (f"Refuted if {pred.get('metric')} is not {pred.get('direction')}{thr_s} over {pred.get('periods')} "
+            f"(resolvable after {pred.get('resolvable_after')}).")
+
+
+def _hypothesis_claim(ledger, h, kid, run_id, as_of, exists, prov) -> str | None:
+    pred = h.get("prediction") or {}
+    payload = {"mode": h["mode"], "subjects": h["subjects"], "origin": h.get("origin", "reference_rule"),
+               "implications": [{"metric": pred.get("metric"), "direction": pred.get("direction"),
+                                 "threshold": pred.get("threshold"), "periods": pred.get("periods")}],
+               "refutation_criteria": _refutation(pred), "confidence": h.get("confidence"),
+               "agent_confidence": h.get("agent_confidence"), "levers": h.get("levers", []),
+               "mechanism_candidates": h.get("mechanism_candidates", []), "knowledge_id": kid}
+    cid, _ = ledger.submit("hypothesis", h["claim"], h["produced_by"], as_of=as_of, run_id=run_id, evidence=h["evidence"],
+                           exists=exists, payload=payload, provenance={**prov, "hypothesis_id": h["id"]}, commit=False)
+    return cid
+
+
+def _forecast_claim(ledger, v2, knowledge_id, run_id, as_of, exists, prov, hypothesis_claim) -> str | None:
+    """Official forecast from a registered engine policy (never from an agent; ADR-004)."""
+    version = f"{v2['method']}/{v2.get('interval_method', 'naive')}"
+    q = v2["quantity"]
+    target = q.get("numerator") or f"{(q.get('a') or {}).get('numerator')} - {(q.get('b') or {}).get('numerator')}"
+    statement = (f"{version} forecast of {q['kind']} {str(target)[:80]}: point {100 * v2['point']:.2f}% "
+                 f"(80% {100 * v2['interval80'][0]:.2f}-{100 * v2['interval80'][1]:.2f}%)")
+    payload = {"model": {"id": "intel.prediction_policy", "version": version, "engine_model_version": v2.get("model_version")},
+               "point": v2["point"], "interval80": v2["interval80"], "sd": v2.get("sd"),
+               "resolution": {"quantity": q, "resolvable_after": v2["resolvable_after"]},
+               "threshold": v2.get("threshold"), "direction": v2.get("direction"), "p_direction": v2.get("p_direction"),
+               "subject": v2.get("subject"), "knowledge_id": knowledge_id, "hypothesis_claim": hypothesis_claim}
+    cid, _ = ledger.submit("forecast", statement, "engine:intel.forecast", as_of=as_of, run_id=run_id,
+                           evidence=[e for e in v2.get("evidence", []) if isinstance(e, str)], exists=exists, payload=payload,
+                           provenance=prov, commit=False)
+    return cid
+
+
+def _simulated_claim(ledger, draft, run_id, as_of, prov, hypothesis_claim) -> str | None:
+    scen = sorted(draft["preview_final_expected_shares"])
+    payload = {"scenario": {"names": scen, "config_name": (draft.get("config") or {}).get("experiment", {}).get("name")},
+               "assumptions": ["synthetic consumer population and parameters (uncalibrated)",
+                               "scenario interventions as drafted from the hypothesis", "tiny preview run (single seed)"],
+               "conditional": True, "calibration": "synthetic_uncalibrated",
+               "outputs": {"final_expected_shares": draft["preview_final_expected_shares"]}, "hypothesis_claim": hypothesis_claim,
+               "label": draft.get("label")}
+    cid, _ = ledger.submit("simulated_outcome", f"Synthetic scenario preview for {draft['hypothesis']} ({len(scen)} scenarios)",
+                           "engine:scenario_preview", as_of=as_of, run_id=run_id, payload=payload, provenance=prov, commit=False)
+    if cid and hypothesis_claim:
+        ledger.link(cid, "derived_from", hypothesis_claim, "engine:scenario_preview", commit=False)
+    return cid
 
 
 def _preview(raw: dict, h: dict) -> dict:

@@ -19,6 +19,15 @@ mode = "annihilation"               # competitor-targeted displacement analysis
 focal = "byd"                       # the challenger whose displacement potential is investigated
 target = "volkswagen"               # the incumbent brand whose position is investigated
 
+# Industry-neutral declaration (market coverage contract v1, src/halibut/world/coverage.py).
+[measurement]
+category_key = "road_vehicles.cars"
+universe = "first UK registrations of cars (DfT VEH0160): new vehicles and imports at first UK registration"
+unit = "vehicles registered (count)"
+period = "quarter"
+share_basis = "share of all first registrations of cars in the period; segment shares within the fuel segment"
+category_taxonomy = "DfT body type 'Cars'"
+
 [resolution]
 wikidata_type_hints = ["Q786820"]   # automobile manufacturer
 keywords = ["automobile", "car manufacturer", "automaker", "automotive", "vehicle manufacturer"]

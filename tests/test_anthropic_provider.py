@@ -226,7 +226,10 @@ def test_refusal_truncation_and_thinking_blocks(store):
     r3 = p.complete(SYS, USER, role="smoke", run_id="smoke:1")
     assert r3.data == {"ok": True}  # text read by block type, fenced JSON accepted
     record_call(store, "smoke:1", "agent", "smoke", r1, "h")
-    assert store.conn.execute("SELECT outcome FROM agent_calls").fetchone()[0] == "unparseable: stop_reason=refusal"
+    row = store.conn.execute("SELECT outcome, response_excerpt FROM agent_calls").fetchone()
+    assert row[0] == "refusal: stop_reason=refusal" and row[1] == ""  # typed outcome; failed-reply text kept (empty here)
+    from halibut.epistemic.failures import classify_outcome
+    assert classify_outcome(row[0]) == classify_outcome("unparseable: stop_reason=refusal") == "call.refusal"
     # the refusal was not cached: the identical prompt is sent again (and charged again)
     cached.complete(SYS, USER, role="smoke", run_id="smoke:1")
     assert len(http.requests) == 4 and cached.hits == 0
@@ -294,7 +297,7 @@ def test_benchmark_plan_and_anthropic_run_on_fixtures(tmp_path, monkeypatch):
     origins = ["2024-11-23", "2025-05-23", "2025-11-23"]
     p = bm.plan(tmp_path / "s.sqlite", tmp_path / "m.toml", origins, agents="anthropic")
     assert p["provider"] == "anthropic" and p["model"] == "claude-haiku-5-5" and p["calls"] == 9 and p["fits_per_run_cap"]
-    roles = {orch.RESEARCH_SYSTEM: "research", orch.HYPOTHESIS_SYSTEM: "hypothesis", orch.CRITIC_SYSTEM: "critic"}
+    roles = {v: k for k, v in orch.PROMPTS["v2"].items()}
 
     def answer(body):  # deterministic mock agent behind the real SDK and wire format
         data = responder(roles[body["system"]], json.loads(body["messages"][0]["content"].split("BUNDLE:", 1)[1]))
@@ -316,6 +319,10 @@ def test_benchmark_plan_and_anthropic_run_on_fixtures(tmp_path, monkeypatch):
     assert a["cost_usd"] == pytest.approx(len(http.requests) * (900 * 0.10 + 300 * 0.50) / 1e6)
     assert a["paid_attempts"] == len(http.requests) and a["failed_attempts_charged"] == 0 and a["failed_llm_calls"] == {}
     assert a["latency_mean_s"] is not None and "validation_failure_types" in a
+    # every agent request carried its strict output contract (API-safe subset: no maxItems/maxLength)
+    fmt = [r["body"]["output_config"]["format"] for r in http.requests]
+    assert all(f["type"] == "json_schema" and f["schema"]["additionalProperties"] is False for f in fmt)
+    assert all("maxItems" not in json.dumps(f) and "maxLength" not in json.dumps(f) for f in fmt)
     if a["supported"]:
         assert a["cost_per_useful_validated_result_usd"] == pytest.approx(a["cost_usd"] / a["supported"])
     store.close()
