@@ -319,3 +319,12 @@ def test_benchmark_plan_and_anthropic_run_on_fixtures(tmp_path, monkeypatch):
     if a["supported"]:
         assert a["cost_per_useful_validated_result_usd"] == pytest.approx(a["cost_usd"] / a["supported"])
     store.close()
+
+
+def test_benchmark_max_usd_tightens_the_per_run_cap(monkeypatch):
+    from halibut.intel import replay as rp
+    monkeypatch.setattr(rp, "RUN_CAP_USD", 0.073)
+    assert rp.llm_config_for("anthropic")["max_spend_usd_per_run"] == 0.073
+    assert rp.llm_config_for("qwen")["max_spend_usd_per_run"] == 0.073
+    monkeypatch.setattr(rp, "RUN_CAP_USD", 5.0)  # never loosens the configured cap
+    assert rp.llm_config_for("anthropic")["max_spend_usd_per_run"] == 1.0

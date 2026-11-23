@@ -42,6 +42,7 @@ def add_intel_commands(sub) -> None:
     bm.add_argument("--model", help="Anthropic model id priced in configs/llm/anthropic.toml (default: its llm.model)")
     bm.add_argument("--origin", action="append")
     bm.add_argument("--dry-run", action="store_true", help="measure prompts and worst-case cost on a throwaway copy; no network")
+    bm.add_argument("--max-usd", type=float, help="hard per-run cap for this benchmark (tighter than the config's)")
     bm.add_argument("--yes", action="store_true", help="required for a PAID run (qwen/anthropic), after reading the plan")
     bm.add_argument("--out", default="results/intel/benchmarks")
     cp = isub.add_parser("compare", help="compare replay summaries (quality, runtime, cost)")
@@ -194,13 +195,23 @@ def _benchmark(store, args) -> int:
     from . import benchmark as bm  # noqa: PLC0415
     from ..agents.llm import NotApproved, SpendLimitReached  # noqa: PLC0415
     kind = _agent_kind(args)
+    if args.max_usd is not None:
+        from . import replay as rp_mod  # noqa: PLC0415
+        rp_mod.RUN_CAP_USD = args.max_usd  # enforced by the SpendGuard on every attempt
     p = bm.plan(args.db, args.market, args.origin, agents=kind)
     print(f"plan ({p['provider']} {p['model']}): {p['calls']} LLM calls {p['by_role']}; prompts {p['prompt_chars_total']:,} chars; worst case "
           f"${p['worst_case_usd']:.4f} (${p['worst_case_with_retries_usd']:.4f} with retries) vs per-run cap "
           f"${p['per_run_cap_usd']} / total cap ${p['total_cap_usd']} -> {'fits' if p['fits_per_run_cap'] else 'EXCEEDS CAP'}")
     if args.dry_run:
         return 0
-    if not p["fits_per_run_cap"]:
+    if args.max_usd is not None:
+        # the guard stops every attempt at --max-usd; the failure-free worst case must fit under it
+        fits = p["worst_case_usd"] <= args.max_usd
+        print(f"hard cap ${args.max_usd} enforced per attempt by the spend guard; failure-free worst case "
+              f"${p['worst_case_usd']:.4f} -> {'fits' if fits else 'EXCEEDS'}")
+    else:
+        fits = p["fits_per_run_cap"]
+    if not fits:
         print("refused: worst case exceeds the per-run cap", file=sys.stderr)
         return 3
     if kind != "mock" and not args.yes:

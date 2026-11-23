@@ -71,7 +71,8 @@ def _handle(args) -> int:
             print("  dry run: no request sent")
             return 0
         scope = f"smoke:{utc_now()}"
-        q = _provider({**cfg, "max_spend_usd_per_run": smoke_cap}, store, scope)
+        # a smoke test is exactly one request: no retries
+        q = _provider({**cfg, "max_spend_usd_per_run": smoke_cap, "retries": 0}, store, scope)
         r = q.complete(SMOKE_SYSTEM, SMOKE_USER, role="smoke", max_output_tokens=max_out, run_id=scope)
         ok = isinstance(r.data, dict) and r.data.get("ok") is True
         extra = (f"stop_reason={getattr(r, 'stop_reason', None)} cache_read={getattr(r, 'cache_read_tokens', 0)}"

@@ -32,6 +32,7 @@ from .workflow import analyse
 
 QWEN_CONFIG = "configs/llm/qwen.toml"
 ANTHROPIC_CONFIG = "configs/llm/anthropic.toml"
+RUN_CAP_USD: float | None = None  # optional tighter per-run cap for this process (benchmark --max-usd)
 DEFAULT_ORIGINS = ["2021-11-23", "2022-05-23", "2022-11-23", "2023-05-23", "2023-11-23",
                    "2024-05-23", "2024-11-23", "2025-05-23", "2025-11-23", "2026-05-23"]
 
@@ -46,8 +47,7 @@ def make_agents(kind: str, store, run_id: str, faults: bool):
         return LLMAgentSet(MockProvider(responder), store, run_id, faults=faults)
     if kind == "qwen":
         from ..agents.llm import QwenProvider, load_llm_config  # noqa: PLC0415
-        cfg = load_llm_config(QWEN_CONFIG)
-        return LLMAgentSet(QwenProvider(cfg, store, scope=run_id.split(":")[0]), store, run_id)
+        return LLMAgentSet(QwenProvider(llm_config_for(kind), store, scope=run_id.split(":")[0]), store, run_id)
     if kind == "anthropic" or kind.startswith("anthropic:"):
         from ..agents.anthropic_provider import AnthropicProvider  # noqa: PLC0415
         return LLMAgentSet(AnthropicProvider(llm_config_for(kind), store, scope=run_id.split(":")[0]), store, run_id)
@@ -59,8 +59,12 @@ def llm_config_for(kind: str) -> dict:
     'mock' and 'planning' are priced with the Qwen config, as before."""
     from ..agents.llm import load_llm_config  # noqa: PLC0415
     if kind == "anthropic" or kind.startswith("anthropic:"):
-        return load_llm_config(ANTHROPIC_CONFIG, model=kind.split(":", 1)[1] if ":" in kind else None)
-    return load_llm_config(QWEN_CONFIG)
+        cfg = load_llm_config(ANTHROPIC_CONFIG, model=kind.split(":", 1)[1] if ":" in kind else None)
+    else:
+        cfg = load_llm_config(QWEN_CONFIG)
+    if RUN_CAP_USD is not None and cfg.get("max_spend_usd_per_run") is not None:
+        cfg["max_spend_usd_per_run"] = min(float(cfg["max_spend_usd_per_run"]), RUN_CAP_USD)
+    return cfg
 
 
 def replay(store, market_path, origins=None, agents: str = "reference", faults: bool = False, final_as_of: str | None = None,
