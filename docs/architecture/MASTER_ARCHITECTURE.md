@@ -23,6 +23,9 @@
 | [R2_IMPLEMENTATION.md](R2_IMPLEMENTATION.md) | The first complete intelligence loop: what works, examples, limits |
 | [INVESTIGATION_RESULT_CONTRACT.md](INVESTIGATION_RESULT_CONTRACT.md) | The result document, statuses and read-only API for frontends |
 | [R2_LIVE_VALIDATION_PLAN.md](R2_LIVE_VALIDATION_PLAN.md) | The pre-registered first live R2 experiment: design, cost, criteria, leakage |
+| [R2_POSTMORTEM_r2v-b16fc9281536.md](R2_POSTMORTEM_r2v-b16fc9281536.md) | Root cause and reasoning assessment of the first live R2 run |
+| [R2_STEP1_REVALIDATION_PLAN.md](R2_STEP1_REVALIDATION_PLAN.md) | Mixed cached/live engineering revalidation (approved, not yet run) |
+| [R2_STEP2_PROPOSAL.md](R2_STEP2_PROPOSAL.md) | Proposal: competing mechanisms, discriminating predictions, held-out comparisons |
 
 ---
 

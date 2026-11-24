@@ -99,6 +99,7 @@ def evaluate_document(doc: dict) -> dict:
         "metrics_version": METRICS_VERSION, "investigation_id": doc["investigation_id"], "agents": doc["provenance"]["agents"],
         "as_of": doc["objective"]["as_of"], "evaluate_as_of": doc["objective"]["evaluate_as_of"], "status": doc["status"],
         "stop_reason": doc["stop_reason"], "panel_fingerprint": doc["evidence"]["panel"].get("fingerprint"),
+        "completion": (doc["failures"].get("completion") or {}).get("state"),
         "hypotheses": {"proposed": n_acc + len(rej_h) + len(dup_h), "accepted": n_acc, "rejected": len(rej_h),
                        "duplicates": len(dup_h), "original": sum(1 for h in hyps if h["data"].get("novelty") == "original"),
                        "restatements": sum(1 for h in hyps if h["data"].get("novelty") == "restatement"),

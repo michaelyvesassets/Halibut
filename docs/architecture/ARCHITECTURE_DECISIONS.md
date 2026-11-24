@@ -346,7 +346,17 @@ Scope authorised: **R1 only**. No paid API calls.
 
 ### ADR-020
 **Malformed output is rejected at the level of the structure that violates the contract (per array), never repaired.**
-- **Status:** Proposed (2026-11-24, from the postmortem of r2v-b16fc9281536); refines ADR-009.
+- **Status:** Accepted by the founder (2026-11-24), subject to these safeguards (implemented and tested):
+  - invalid lists stay explicitly rejected and auditable (`validation_records`, failure class `schema.array_limit`,
+    items kept verbatim);
+  - partial acceptance never conceals invalid evidence or dependent claims: every accepted item is validated on its
+    own, and no hypothesis can reference an explanation;
+  - rejected explanations and items are never passed to downstream agents (the critic and strategist payloads hold
+    accepted hypotheses and evidence only);
+  - every completed investigation is marked `clean` or `partial_rejection` (`failures.completion`);
+  - the original failed experiment and its pre-registered criteria stay unchanged.
+
+  Refines ADR-009.
 - **Context:** Claude structured outputs do not enforce `maxItems` and similar keywords. A reply with one over-long
   array (5 explanations against 4) was rejected whole, discarding 7 valid hypotheses and stopping both investigations.
 - **Decision:**

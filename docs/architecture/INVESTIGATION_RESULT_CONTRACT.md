@@ -33,7 +33,7 @@ A frontend needs nothing else to render an investigation.
 | `stages` | The item arrays of §2, in loop order |
 | `experiment_protocol` | One `experiment_protocol` item or `null` |
 | `links` | Every relation between items: `{from, relation, to}` |
-| `failures` | `items` (every rejection or drop, with class and problems), `counts` by class, and `calls` (failed LLM calls) |
+| `failures` | `items` (every rejection or drop, with class and problems), `counts` by class, `calls` (failed LLM calls) and `completion` (`state`: `clean`, `partial_rejection` or `not_completed`; `rejected_arrays`; the downstream rule, ADR-020) |
 | `agents` | Routing (role → model), every call (outcome, tokens, cost, cache hit, latency), totals |
 | `approvals` | Approval records created by this run (e.g. the experiment request), with status |
 | `provenance` | Engine, prompt, schema, registry-rule and test-spec versions; market spec sha256; panel snapshot |
@@ -76,7 +76,7 @@ Every item in `stages.*`, `evidence.metrics` and `experiment_protocol` has the s
 
 | `status` | Meaning |
 |---|---|
-| `completed` | The loop ran to the end. Some stages may still be empty, with reasons in `failures` (e.g. no option passed validation) |
+| `completed` | The loop ran to the end. Some stages may still be empty, with reasons in `failures` (e.g. no option passed validation). `failures.completion.state` says whether it was `clean` or had a `partial_rejection`; dashboards must show the difference |
 | `stopped` | A stopping rule fired: the Hypothesis Generator's reply was unusable (truncated, refused, invalid JSON, schema violation) or the budget was exhausted. `stop_reason` says which. Items already produced are kept |
 | `insufficient_evidence` | There is no transaction panel, or fewer than 8 quarters as of the date. No agent was called |
 | `invalid_market` | The market fails the coverage contract ([ADR-014](ARCHITECTURE_DECISIONS.md#adr-014)). No agent was called |

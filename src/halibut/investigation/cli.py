@@ -39,6 +39,16 @@ def add_investigation_commands(sub) -> None:
     v.add_argument("--max-usd", type=float, help="hard cap for all live calls of the experiment (smoke included)")
     v.add_argument("--out", default="results/r2_validation")
     v.add_argument("--provider-config", help="live: provider config to use (e.g. a temporary approved copy outside the repo)")
+    rv = s.add_parser("revalidate", help="R2 Step 1: mixed cached/live engineering revalidation of a past live run")
+    rv.add_argument("market")
+    rv.add_argument("--original-run", required=True, help="the original run directory (results/r2_validation/run-...)")
+    rv.add_argument("--origins", nargs="+", required=True)
+    rv.add_argument("--evaluate-at", required=True)
+    rv.add_argument("--live", action="store_true", help="PAID: smoke + critic and strategist per origin (generator from cache)")
+    rv.add_argument("--approval")
+    rv.add_argument("--max-usd", type=float)
+    rv.add_argument("--provider-config")
+    rv.add_argument("--out", default="results/r2_validation")
     s.add_parser("list", help="list stored investigations")
     sh = s.add_parser("show", help="summary of one investigation (or --json for the full result document)")
     sh.add_argument("investigation_id")
@@ -92,6 +102,20 @@ def _inv(args) -> int:
                 return 2
             print(json.dumps(doc, indent=1, default=str) if args.json else summary(doc))
             return 0
+        if args.inv_command == "revalidate":
+            from .revalidation import revalidation_markdown, run_revalidation  # noqa: PLC0415
+            try:
+                rep = run_revalidation(store, args.db, args.market, args.original_run, args.origins, args.evaluate_at,
+                                       live=args.live, approval_id=args.approval, max_usd=args.max_usd, out_dir=args.out,
+                                       provider_config=args.provider_config)
+            except AuthorizationError as exc:
+                print(f"refused: {exc}", file=sys.stderr)
+                return 3
+            print(revalidation_markdown(rep))
+            print(f"\nresults: {rep['output_dir']}")
+            if not rep["identity_preflight"]["identical"]:
+                return 5
+            return 0 if (not args.live or rep["verdict"]["pipeline_ready"]) else 4
         if args.inv_command == "validate":
             from .live_validation import markdown, run_validation  # noqa: PLC0415
             try:
@@ -153,7 +177,9 @@ def plan_cost(max_usd) -> str:
 def summary(doc: dict) -> str:
     st = doc["stages"]
     hy = st["hypotheses"]
+    comp = (doc["failures"].get("completion") or {}).get("state")
     lines = [f"{doc['investigation_id']}  {doc['objective']['market_id']}  status {doc['status']}"
+             + (f" [{comp}]" if comp else "")
              + (f" ({doc['stop_reason']})" if doc["stop_reason"] else ""),
              f"  as of {doc['objective']['as_of'][:10]}; evaluated {str(doc['objective']['evaluate_as_of'])[:10]}; "
              f"content {doc['content_hash'][:16]}",

@@ -571,6 +571,19 @@ def _lessons(R: _Run, ctx, accepted, tests_by_h):
                                       {"promotion": "requires the evaluation rule and founder approval"}))
 
 
+def _completion(status: str, failures: list) -> dict:
+    """ADR-020: a completed investigation is 'clean' only if nothing an agent produced was rejected or dropped; otherwise it
+    is 'partial_rejection', with every rejected array and item listed. Rejected material is never passed to later agents."""
+    agent_rejections = [f for f in failures if f["stage"] in ("schema", "validation", "conversion", "call")]
+    arrays = [{"subject": f["subject"], "problems": f["problems"]} for f in failures if f["failure_class"] == "schema.array_limit"]
+    if status != "completed":
+        state = "not_completed"
+    else:
+        state = "partial_rejection" if agent_rejections else "clean"
+    return {"state": state, "rejected_arrays": arrays, "rejected_or_dropped_items": len(agent_rejections),
+            "downstream_rule": "rejected explanations and items are never passed to the critic or strategist"}
+
+
 def _call_summary(role, res) -> dict:
     r = res.get("response")
     return {"role": role, "outcome": res["outcome"], "failure_class": res["failure_class"],
@@ -596,7 +609,8 @@ def _document(R: _Run, ctx, status, reason, evidence, world, panel) -> dict:
                       "strategic_proposal": "a proposal for human review; not executable; needs approval and legal review",
                       "experiment_protocol": "a draft; Halibut never executes interventions"},
            "evidence": evidence, "world_model": world, "stages": R.stages, "experiment_protocol": R.protocol,
-           "links": R.links, "failures": {"items": R.failures, "counts": counts, "calls": [c for c in R.calls
+           "links": R.links, "failures": {"items": R.failures, "counts": counts, "completion": _completion(status, R.failures),
+                                          "calls": [c for c in R.calls
                                                                                          if c["outcome"] != "ok"]},
            "agents": {"routing": ctx["router"].describe(), "calls": R.calls,
                       "costs": {"calls": len(R.calls), "input_tokens": sum(c["input_tokens"] or 0 for c in R.calls),
