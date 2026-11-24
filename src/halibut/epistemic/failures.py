@@ -21,6 +21,20 @@ Item level (one proposed hypothesis / action / critique):
   policy.lever_or_prohibited     an unregistered lever or a prohibited tactic
   temporal.hindsight             evidence not available at as-of, or a test resolving before as-of
   schema.other / validation.other anything else (with the raw problems recorded)
+
+Deterministic execution (typed, EXPECTED failures of one item; the item is kept or rejected with the reason and the
+rest of the investigation continues; no value is ever invented in its place):
+  model.target_unavailable        the target has no observations (e.g. a gap target with no second entity)
+  model.insufficient_history      too few quarters to execute a model
+  model.unknown_family            a family that cannot forecast
+  numeric.nonfinite               NaN or infinity in an agent number, an input series or a model/simulation output
+  option.effect_target_unsupported an option's intended effect has no measurable target in this measurement set
+  option.not_simulated            no baseline is available for the option's target, so it is not simulated
+
+Engine (never expected):
+  internal.error                  an unexpected programming error. The investigation is stored with status 'stopped',
+                                  stop_reason 'internal_error: ...' and completion 'not_completed', and the error is
+                                  re-raised (InvestigationInternalError): it is never shown as a successful investigation
 """
 
 from __future__ import annotations
@@ -74,7 +88,9 @@ def classify_item(item, *, subjects=(), kinds=None, metric_ids=None) -> list[str
     if not isinstance(item, dict):
         return ["schema.other"]
     ev = item.get("evidence")
-    if not isinstance(ev, list) or not all(isinstance(e, str) for e in ev):
+    if "evidence" not in item:  # items of other shapes (R2 options, critiques) carry no 'evidence' field
+        pass
+    elif not isinstance(ev, list) or not all(isinstance(e, str) for e in ev):
         out.append("format.evidence_not_id_list")
     else:
         if any(not ID_RE.match(e) and e.startswith(ID_PREFIXES) for e in ev):
@@ -91,6 +107,8 @@ def classify_item(item, *, subjects=(), kinds=None, metric_ids=None) -> list[str
 
 def classify_problems(problems: list[str], item=None, *, subjects=()) -> str:
     """Primary class for a rejection, from validator/schema problems plus (when available) the raw item."""
+    if any("expected a finite number" in p for p in problems):
+        return "numeric.nonfinite"
     if item is not None:
         c = classify_item(item, subjects=subjects)
         if c:
@@ -106,6 +124,8 @@ def classify_problems(problems: list[str], item=None, *, subjects=()) -> str:
         return "unsupported.kind_or_subject"
     if "expected array" in text and ".evidence" in text:
         return "format.evidence_not_id_list"
+    if "expected a finite number" in text:
+        return "numeric.nonfinite"
     if "metric not found" in text or "does not exist" in text:
         return "fabricated.evidence_id"
     if "does not match any evidence value" in text:

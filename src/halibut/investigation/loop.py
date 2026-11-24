@@ -21,6 +21,7 @@ from __future__ import annotations
 import dataclasses
 import hashlib
 import json
+import traceback
 from pathlib import Path
 
 from ..agents.loop_agents import AGENT_IDS, PROMPT_VERSION, call_role
@@ -58,6 +59,7 @@ class _Run:
         self.stages = {k: [] for k in art.STAGES}
         self.links, self.failures, self.calls, self.approvals_ = [], [], [], []
         self.protocol = None
+        self.partial = {}  # evidence and world, once built (kept if the loop fails)
 
     def fail(self, subject, stage, outcome, cls, problems, item, by):
         record(self.store, run_id=self.input_id, produced_by=by, subject=subject, stage=stage, outcome=outcome,
@@ -139,8 +141,16 @@ def run_investigation(store, market_path, *, as_of: str | None = None, evaluate_
             status, reason = "insufficient_evidence", f"no transaction panel: {exc}"[:500]
         if panel is not None and len(panel.periods) < 8:
             status, reason = "insufficient_evidence", f"{len(panel.periods)} quarters available as of {t0}; at least 8 needed"
+    internal = None
     if status == "completed":
-        status, reason, evidence, world = _loop(R, ctx, panel, evidence)
+        try:
+            status, reason, evidence, world = _loop(R, ctx, panel, evidence)
+        except Exception as exc:  # noqa: BLE001  an unexpected engine error: stored visibly, then re-raised below
+            internal = exc
+            evidence, world = R.partial.get("evidence", evidence), R.partial.get("world", world)
+            status, reason = "stopped", f"internal_error: {type(exc).__name__}: {exc}"[:500]
+            R.failures.append({"subject": "engine", "stage": "internal", "outcome": "error", "failure_class": "internal.error",
+                               "problems": [f"{type(exc).__name__}: {exc}"[:300]] + _where(exc), "ref": None})
     doc = _document(R, ctx, status, reason, evidence, world, panel)
     problems = art.validate(doc)
     if problems:
@@ -148,11 +158,28 @@ def run_investigation(store, market_path, *, as_of: str | None = None, evaluate_
     store.conn.execute("INSERT INTO investigations VALUES (?,?,?,?,?,?,?,?,?)",
                        (R.id, market.id, tenant, t0, t_eval, status, doc["content_hash"], json.dumps(doc, sort_keys=True,
                                                                                                     default=str), utc_now()))
-    R.events.append("investigation.completed", "L4", {"status": status, "content_hash": doc["content_hash"],
-                                                      "stop_reason": reason}, run_id=input_id, subject_id=R.id, tenant=tenant)
+    R.events.append("investigation.internal_error" if internal else "investigation.completed", "L4",
+                    {"status": status, "content_hash": doc["content_hash"], "stop_reason": reason}, run_id=input_id,
+                    subject_id=R.id, tenant=tenant)
     store.conn.commit()
     log(f"{R.id}: {status}" + (f" ({reason})" if reason else ""))
+    if internal is not None:
+        raise InvestigationInternalError(doc) from internal
     return doc
+
+
+class InvestigationInternalError(RuntimeError):
+    """An unexpected engine error inside an investigation. The partial document (status 'stopped', stop_reason
+    'internal_error: ...', failure class internal.error) has already been stored; ``doc`` carries it."""
+
+    def __init__(self, doc: dict):
+        super().__init__(doc["stop_reason"])
+        self.doc = doc
+
+
+def _where(exc) -> list[str]:
+    tb = traceback.extract_tb(exc.__traceback__)
+    return [f"at {Path(f.filename).name}:{f.lineno} in {f.name}" for f in tb[-3:]]
 
 
 def _loop(R: _Run, ctx: dict, panel, evidence: dict):
@@ -178,6 +205,7 @@ def _loop(R: _Run, ctx: dict, panel, evidence: dict):
     world = {"slice_id": slice_["slice_id"], "market": slice_["market"],
              "entities": [{"id": c.id, "name": c.name, "identifiers": c.identifiers} for c in market.competitors],
              "anomalies": slice_["anomalies"]}
+    R.partial = {"evidence": evidence, "world": world}
     prov = {"market_id": market.id, "investigation": R.input_id, "slice_id": slice_["slice_id"], "prompt_version": PROMPT_VERSION}
     gen_by = AGENT_IDS["hypothesis_generator"]
 
@@ -326,8 +354,9 @@ def _loop(R: _Run, ctx: dict, panel, evidence: dict):
         options = [o for o in options if o]
     else:
         R.fail("strategist", "call", "failed", sres["failure_class"] or "call.error", [sres["outcome"]], {}, AGENT_IDS["strategist"])
-    if options:
-        best = max(options, key=lambda o: strategy.min_effect_pp(o["sims"]))  # first of equals (stable order)
+    simulated = [o for o in options if o["sims"]]  # an option without a simulation cannot be sized for an experiment
+    if simulated:
+        best = max(simulated, key=lambda o: strategy.min_effect_pp(o["sims"]))  # first of equals (stable order)
         proto = strategy.experiment_protocol(market, best["option"], best["criteria"][0], panel, best["sims"])
         aid = approvals.request(store, "experiment", proto["protocol_id"], ENGINE,
                                 payload={"pre_registration_hash": proto["pre_registration_hash"], "option": best["claim_id"],
@@ -394,7 +423,12 @@ def _model(R: _Run, panel, fam, target, asm, h, t, spec, prov):
         R.failures.append({"subject": "model_spec", "stage": "validation", "outcome": "rejected",
                            "failure_class": "model.spec_rejected", "problems": mv["validation"]["problems"][:5], "ref": fam})
         return
-    out = reg.execute(mv["spec"], panel)
+    try:
+        out = reg.execute(mv["spec"], panel)
+    except reg.ModelUnavailable as exc:
+        R.failures.append({"subject": "model_spec", "stage": "execution", "outcome": "unavailable",
+                           "failure_class": exc.failure_class, "problems": exc.problems[:5], "ref": fam})
+        return
     quantity = {**target, "periods": spec["target_periods"], "market_id": panel.market_id, "panel_source": panel.source}
     payload = {"model": {"id": fam, "version": mv["model_version_id"]}, "point": out["point"], "interval80": out["interval80"],
                "sd": out["sd"], "resolution": {"quantity": quantity, "resolvable_after": spec["expected_resolvable_after"]},
@@ -422,7 +456,8 @@ def _model(R: _Run, panel, fam, target, asm, h, t, spec, prov):
 
 
 def official_baseline(R: _Run, panel, target: dict, prov) -> dict:
-    """Best validated forecast for a target (lowest backtest MAE), else persistence labelled unvalidated."""
+    """Best validated forecast for a target (lowest backtest MAE), else persistence labelled unvalidated, else (no usable
+    observations) status 'unavailable' with point None and a typed failure class. Never an invented value."""
     best = None
     for fam in reg.FORECAST_FAMILIES:
         mv = reg.register(R.store, {"family": fam, "target": target, "assumptions": []}, panel, registered_by=ENGINE,
@@ -431,11 +466,15 @@ def official_baseline(R: _Run, panel, target: dict, prov) -> dict:
             mae = mv["validation"]["backtest"]["mae"]
             if best is None or mae < best[0]:
                 best = (mae, fam, mv)
-    if best:
-        out = reg.execute(best[2]["spec"], panel)
-        return {**out, "model": best[1], "model_version_id": best[2]["model_version_id"], "status": "validated"}
-    out = reg.execute({"family": "baseline.level", "target": target}, panel)
-    return {**out, "model": "baseline.level", "model_version_id": None, "status": "unvalidated"}
+    try:
+        if best:
+            out = reg.execute(best[2]["spec"], panel)
+            return {**out, "model": best[1], "model_version_id": best[2]["model_version_id"], "status": "validated"}
+        out = reg.execute({"family": "baseline.level", "target": target}, panel)
+        return {**out, "model": "baseline.level", "model_version_id": None, "status": "unvalidated"}
+    except reg.ModelUnavailable as exc:
+        return {"point": None, "sd": None, "interval80": None, "model": None, "model_version_id": None,
+                "status": "unavailable", "failure_class": exc.failure_class, "problems": exc.problems}
 
 
 def _option(R: _Run, ctx, panel, metrics, o, by_ref, allowed, baselines, prov):
@@ -451,11 +490,32 @@ def _option(R: _Run, ctx, panel, metrics, o, by_ref, allowed, baselines, prov):
         return None
     e = o["intended_effect"]
     tgt = {"template": e["template"], "entity": e["entity"], "entity_b": None}
-    key = (tgt["template"], tgt["entity"])
-    if key not in baselines:
-        baselines[key] = official_baseline(R, panel, tgt, prov)
-    base = baselines[key]
-    sims = strategy.simulate(o, base, base["status"])
+    unsupported = strategy.effect_target_problems(e, panel)
+    if unsupported:
+        base = {"point": None, "interval80": None, "model": None, "model_version_id": None, "status": "unavailable",
+                "failure_class": "option.effect_target_unsupported", "problems": unsupported}
+    else:
+        key = (tgt["template"], tgt["entity"])
+        if key not in baselines:
+            baselines[key] = official_baseline(R, panel, tgt, prov)
+        base = baselines[key]
+    sims = []
+    if base["status"] != "unavailable":
+        try:
+            sims = strategy.simulate(o, base, base["status"])
+        except reg.ModelUnavailable as exc:
+            base = {**base, "failure_class": exc.failure_class, "problems": exc.problems}
+    simulation = {"status": "simulated" if sims else "not_simulated",
+                  **({} if sims else {"failure_class": base.get("failure_class", "option.not_simulated"),
+                                      "reason": "; ".join(base.get("problems", []))[:400]})}
+    if not sims:  # the option is kept (it passed validation); it is not an agent-output rejection, so it is recorded in
+        # the document and the event log, not in validation_records (whose stages are agent-output stages)
+        cls = "option.effect_target_unsupported" if unsupported else "option.not_simulated"
+        R.failures.append({"subject": "strategic_option", "stage": "simulation", "outcome": "not_simulated",
+                           "failure_class": cls, "problems": [simulation["failure_class"] + ": " + simulation["reason"]],
+                           "ref": o.get("ref")})
+        R.events.append("option.not_simulated", "L7", {"ref": o.get("ref"), "failure_class": cls,
+                                                       "reason": simulation["reason"]}, run_id=R.input_id, tenant=R.tenant)
     compliance = strategy.compliance_checklist(market, o, metrics)
     hyp_claims = [by_ref[r]["claim_id"] for r in o["linked_hypotheses"]]
     payload = {"ref": o["ref"], "mode": o["mode"], "levers": o["levers"], "intended_effect": e,
@@ -463,7 +523,7 @@ def _option(R: _Run, ctx, panel, metrics, o, by_ref, allowed, baselines, prov):
                "competitor_responses": o["competitor_responses"],
                "cost": o["cost"] if o["cost"]["known"] else {"known": False, "basis": o["cost"]["basis"]},
                "risks": o["risks"], "uncertainty": o["uncertainty"], "success_criteria": criteria,
-               "requires_approval": True, "compliance": compliance, "executable": False}
+               "requires_approval": True, "compliance": compliance, "executable": False, "simulation": simulation}
     oc = R.claim("strategic_proposal", o["title"], by, payload, evidence=o["supporting_evidence"],
                  exists=lambda x: x in metrics, provenance=prov)
     if not oc:
@@ -581,6 +641,8 @@ def _completion(status: str, failures: list) -> dict:
     else:
         state = "partial_rejection" if agent_rejections else "clean"
     return {"state": state, "rejected_arrays": arrays, "rejected_or_dropped_items": len(agent_rejections),
+            "unavailable_items": sum(1 for f in failures if f["stage"] in ("simulation", "execution")),
+            "internal_error": any(f["failure_class"] == "internal.error" for f in failures),
             "downstream_rule": "rejected explanations and items are never passed to the critic or strategist"}
 
 

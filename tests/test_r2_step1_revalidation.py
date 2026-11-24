@@ -87,7 +87,8 @@ def test_step1_sends_only_smoke_critic_and_strategist(uk, tmp_path):
     assert c["historical_generator_total_usd"] > 0 and 0 < c["incremental_live_total_usd"] <= 0.04
     for v in c["per_origin"].values():
         assert v["total_equivalent_investigation_usd"] == pytest.approx(
-            v["incremental_live_usd"] + v["historical_generator_usd (r2v-b16fc9281536, recorded reply reused)"])
+            v["incremental_live_usd"] + v["historical_generator_usd (r2v-b16fc9281536, recorded reply reused)"]
+            + v["historical_reused_critic_strategist_usd"])
     out = Path(r["output_dir"])
     man = json.loads((out / "manifest.json").read_text())
     assert all(f["result_class"] == "mixed_cached_live" for f in man["investigations"])
@@ -137,3 +138,74 @@ def test_completion_state_distinguishes_clean_from_partial_rejection():
                                       "problems": ["$.explanations: more than 4 items (5)"]}])
     assert part["state"] == "partial_rejection" and part["rejected_arrays"][0]["subject"] == "explanation"
     assert _completion("stopped", [])["state"] == "not_completed"
+
+
+def test_reuse_sends_no_request_already_paid_for_and_gives_the_same_result(uk, tmp_path):
+    """A second revalidation that reuses the first one's PAID critic/strategist replies sends only the smoke test, and its
+    documents have the same content hash: the reuse is exact, not an approximation."""
+    from halibut.investigation.revalidation import reusable_calls, run_revalidation
+    store, orig_dir = _original_run(uk, tmp_path)
+    kw = dict(live=True, max_usd=0.04, environ=ENV, cfg_overrides={"approved": True}, log=lambda *_: None)
+    first = run_revalidation(store, tmp_path / "s.sqlite", uk / "m.toml", orig_dir, ORIGINS, EVAL, approval_id=_approve(store),
+                             out_dir=tmp_path / "rv1", http_client=fake_claude([]), **kw)
+    assert reusable_calls(store, ["r2r-not-an-experiment"]) == {}
+    assert len(reusable_calls(store, [first["experiment_id"]])) == 2 * len(ORIGINS)
+    sent = []
+    second = run_revalidation(store, tmp_path / "s.sqlite", uk / "m.toml", orig_dir, ORIGINS, EVAL,
+                              approval_id=_approve(store), out_dir=tmp_path / "rv2", http_client=fake_claude(sent),
+                              reuse_from=[first["experiment_id"]], **kw)
+    assert len(sent) == 1 and sent[0]["system"].startswith("You are a connectivity check")  # smoke only
+    assert second["plan_step1"]["calls"] == 1 and len(second["plan_step1"]["reused_calls"]) == 2 * len(ORIGINS)
+    assert all(x["reused"] and x["source"]["experiment"] == first["experiment_id"] for x in second["reuse_log"])
+    for o in ORIGINS:
+        a = json.loads((Path(first["output_dir"]) / f"investigations/mixed_cached_live_claude_{o}.json").read_text())
+        b = json.loads((Path(second["output_dir"]) / f"investigations/mixed_cached_live_claude_{o}.json").read_text())
+        assert a["content_hash"] == b["content_hash"]
+    store.close()
+
+
+def test_reuse_never_covers_a_changed_request(uk, tmp_path, monkeypatch):
+    """If the request differs (here: the strategist schema), the recorded reply is not reused; the call goes live."""
+    from halibut.epistemic import schemas as sch
+    from halibut.investigation import loop as loop_mod
+    from halibut.investigation.revalidation import run_revalidation
+    store, orig_dir = _original_run(uk, tmp_path)
+    kw = dict(live=True, max_usd=0.04, environ=ENV, cfg_overrides={"approved": True}, log=lambda *_: None)
+    first = run_revalidation(store, tmp_path / "s.sqlite", uk / "m.toml", orig_dir, ORIGINS, EVAL, approval_id=_approve(store),
+                             out_dir=tmp_path / "rv1", http_client=fake_claude([]), **kw)
+    real = sch.strategist_schema
+    monkeypatch.setattr(loop_mod.sch, "strategist_schema", lambda *a: {**real(*a), "description": "changed"})
+    sent = []
+    second = run_revalidation(store, tmp_path / "s.sqlite", uk / "m.toml", orig_dir, ORIGINS, EVAL,
+                              approval_id=_approve(store), out_dir=tmp_path / "rv2", http_client=fake_claude(sent),
+                              reuse_from=[first["experiment_id"]], **kw)
+    systems = [b["system"] for b in sent]
+    assert systems.count(loop_agents.STRATEGIST_SYSTEM) == len(ORIGINS) and loop_agents.CRITIC_SYSTEM not in systems
+    assert {x["role"] for x in second["reuse_log"] if not x["reused"]} == {"strategist"}
+    store.close()
+
+
+def test_an_internal_error_is_visible_stops_spending_and_keeps_the_records(uk, tmp_path, monkeypatch):
+    from halibut.investigation import loop as loop_mod
+    from halibut.investigation.revalidation import run_revalidation
+    store, orig_dir = _original_run(uk, tmp_path)
+
+    def boom(*a, **k):
+        raise ZeroDivisionError("planted defect")
+    monkeypatch.setattr(loop_mod.strategy, "simulate", boom)
+    sent = []
+    r = run_revalidation(store, tmp_path / "s.sqlite", uk / "m.toml", orig_dir, ORIGINS, EVAL, live=True,
+                         approval_id=_approve(store), max_usd=0.04, out_dir=tmp_path / "rv", environ=ENV,
+                         http_client=fake_claude(sent), cfg_overrides={"approved": True}, log=lambda *_: None)
+    first, *rest = sorted(ORIGINS)
+    assert r["internal_errors"][first].startswith("internal_error: ZeroDivisionError")
+    assert all(r["internal_errors"][o].startswith("not run") for o in rest)
+    assert len(sent) == 3  # smoke + the first origin's critic and strategist; nothing after the defect
+    assert r["verdict"]["pipeline_ready"] is False
+    out = Path(r["output_dir"])
+    d = json.loads((out / f"investigations/mixed_cached_live_claude_{first}.json").read_text())
+    assert d["status"] == "stopped" and d["failures"]["completion"]["internal_error"]
+    rec = json.loads((out / "execution_records.json").read_text())
+    assert rec["internal_errors"] == r["internal_errors"] and (out / "comparison.md").exists()
+    assert "INTERNAL ERRORS" in (out / "comparison.md").read_text()
+    store.close()

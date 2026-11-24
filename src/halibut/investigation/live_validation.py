@@ -28,7 +28,7 @@ from ..intel.market import load_market
 from ..world.panel import build_panel, next_quarters
 from . import artifact as art
 from .evaluation import evaluate_document, overlap
-from .loop import run_investigation
+from .loop import InvestigationInternalError, run_investigation
 
 EXPERIMENT_VERSION = "r2_live_validation.v1"
 SMOKE_CAP_USD = 0.01
@@ -167,7 +167,7 @@ def run_validation(store, market_path, origins, evaluate_as_of, *, live: bool = 
             docs[kind][o] = run_investigation(store, market_path, as_of=o, evaluate_as_of=evaluate_as_of, agents=kind,
                                               log=lambda *_: None)
     plan = _plan_live(docs["mock"], max_usd, cfg)
-    smoke = None
+    smoke, internal = None, {}
     if live and not plan["fits_cap_without_retries"]:
         raise approvals.AuthorizationError(f"the plan's worst case ${plan['worst_case_usd']:.4f} exceeds the cap ${max_usd}; "
                                            "nothing was sent")
@@ -178,13 +178,25 @@ def run_validation(store, market_path, origins, evaluate_as_of, *, live: bool = 
             for o in origins:
                 router = Router("anthropic", store, scope=exp_id, max_usd=max_usd, environ=environ, http_client=http_client,
                                 cfg_overrides=cfg_overrides, provider_config=cfg_path)
-                docs["anthropic"][o] = run_investigation(store, market_path, as_of=o, evaluate_as_of=evaluate_as_of,
-                                                         agents="anthropic", router=router, approval_id=approval_id,
-                                                         max_usd=max_usd, approval_subject=subject, log=lambda *_: None)
-                log(f"{o}: anthropic investigation {docs['anthropic'][o]['status']}")
+                try:
+                    docs["anthropic"][o] = run_investigation(store, market_path, as_of=o, evaluate_as_of=evaluate_as_of,
+                                                             agents="anthropic", router=router, approval_id=approval_id,
+                                                             max_usd=max_usd, approval_subject=subject, log=lambda *_: None)
+                except InvestigationInternalError as exc:  # stored as 'stopped' (internal_error); stop paying
+                    docs["anthropic"][o], internal[o] = exc.doc, exc.doc["stop_reason"]
+                log(f"{o}: anthropic investigation {docs['anthropic'][o]['status']}"
+                    + (f" INTERNAL ERROR: {internal[o]}" if o in internal else ""))
+                if o in internal:
+                    for x in [x for x in origins if x > o]:
+                        internal[x] = f"not run: an internal error in {o} stopped further paid investigations"
+                    break
     spend = store.conn.execute("""SELECT COALESCE(SUM(CASE WHEN status='settled' THEN actual_usd ELSE reserved_usd END), 0),
         COUNT(*) FROM llm_spend_ledger WHERE run_id LIKE ?""", (exp_id + "%",)).fetchone()
     report = _report(exp_id, market, origins, evaluate_as_of, pf, plan, smoke, docs, spend, max_usd, live, cfg, approval_id)
+    if internal:
+        report["internal_errors"] = internal
+        report["verdict"] = {**report["verdict"], "pipeline_ready": False,
+                             "internal_error": "an unexpected engine error occurred; see internal_errors"}
     out = Path(out_dir) / exp_id
     (out / "investigations").mkdir(parents=True, exist_ok=True)
     files = []

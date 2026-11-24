@@ -49,6 +49,9 @@ def add_investigation_commands(sub) -> None:
     rv.add_argument("--max-usd", type=float)
     rv.add_argument("--provider-config")
     rv.add_argument("--out", default="results/r2_validation")
+    rv.add_argument("--reuse-from", nargs="*", default=[],
+                    help="earlier revalidation experiment ids whose PAID critic/strategist replies may be reused when the "
+                         "request is byte-identical (verified offline first and again at call time)")
     s.add_parser("list", help="list stored investigations")
     sh = s.add_parser("show", help="summary of one investigation (or --json for the full result document)")
     sh.add_argument("investigation_id")
@@ -107,11 +110,14 @@ def _inv(args) -> int:
             try:
                 rep = run_revalidation(store, args.db, args.market, args.original_run, args.origins, args.evaluate_at,
                                        live=args.live, approval_id=args.approval, max_usd=args.max_usd, out_dir=args.out,
-                                       provider_config=args.provider_config)
+                                       provider_config=args.provider_config, reuse_from=args.reuse_from)
             except AuthorizationError as exc:
                 print(f"refused: {exc}", file=sys.stderr)
                 return 3
             print(revalidation_markdown(rep))
+            if rep.get("internal_errors"):
+                print(f"\nINTERNAL ERROR: {rep['internal_errors']}\nresults: {rep['output_dir']}", file=sys.stderr)
+                return 6
             print(f"\nresults: {rep['output_dir']}")
             if not rep["identity_preflight"]["identical"]:
                 return 5

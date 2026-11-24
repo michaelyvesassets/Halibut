@@ -15,6 +15,8 @@ Two views of each schema:
 
 from __future__ import annotations
 
+import math
+
 SCHEMA_VERSIONS = {"research": "research.v2", "hypothesis": "hypothesis_selection.v2", "critic": "critic.v2", "smoke": "smoke.v1"}
 KINDS = ("momentum", "displacement", "exposure")
 SEVERITIES = ("low", "medium", "high")
@@ -88,6 +90,8 @@ def validate(x, schema: dict, path: str = "$") -> list[str]:
         ok = isinstance(x, int) and not isinstance(x, bool)
     elif t == "number":
         ok = isinstance(x, (int, float)) and not isinstance(x, bool)
+        if ok and not math.isfinite(x):  # json.loads accepts NaN and Infinity; JSON Schema does not
+            return [f"{path}: expected a finite number, got {x!r}"]
     elif t:
         ok = isinstance(x, _TYPES[t])
     else:

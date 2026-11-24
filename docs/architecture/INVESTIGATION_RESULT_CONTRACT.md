@@ -33,7 +33,7 @@ A frontend needs nothing else to render an investigation.
 | `stages` | The item arrays of §2, in loop order |
 | `experiment_protocol` | One `experiment_protocol` item or `null` |
 | `links` | Every relation between items: `{from, relation, to}` |
-| `failures` | `items` (every rejection or drop, with class and problems), `counts` by class, `calls` (failed LLM calls) and `completion` (`state`: `clean`, `partial_rejection` or `not_completed`; `rejected_arrays`; the downstream rule, ADR-020) |
+| `failures` | `items` (every rejection, drop or unavailable item, with class and problems), `counts` by class, `calls` (failed LLM calls) and `completion` (`state`: `clean`, `partial_rejection` or `not_completed`; `rejected_arrays`; `unavailable_items`, the options not simulated and models not executed; `internal_error`; the downstream rule, ADR-020/021) |
 | `agents` | Routing (role → model), every call (outcome, tokens, cost, cache hit, latency), totals |
 | `approvals` | Approval records created by this run (e.g. the experiment request), with status |
 | `provenance` | Engine, prompt, schema, registry-rule and test-spec versions; market spec sha256; panel snapshot |
@@ -62,7 +62,7 @@ Every item in `stages.*`, `evidence.metrics` and `experiment_protocol` has the s
 | `forecasts` | `forecast` (**official**) | open, scored | model (family, version id), point, interval80, resolution, score | `from_model`, `informs` → test |
 | `estimates` | `estimate` (**not official**) | proposed | value, interval, label, model_version, score | `from_model`, `informs` |
 | `simulations` | `simulated_outcome` | recorded | scenario, outcome_range, baseline, assumed effect and offsets, assumptions, baseline_status | `simulates` → option |
-| `strategic_options` | `strategic_proposal` | proposed | mode, levers, intended_effect, linked_hypotheses, supporting_evidence, assumptions, competitor_responses, cost (`known: false` when unknown), risks, uncertainty, success_criteria, compliance, `executable: false` | `relies_on` → hypotheses, `simulated_by` → simulations |
+| `strategic_options` | `strategic_proposal` | proposed | mode, levers, intended_effect, linked_hypotheses, supporting_evidence, assumptions, competitor_responses, cost (`known: false` when unknown), risks, uncertainty, success_criteria, compliance, `executable: false`, **simulation** (`status`: `simulated` or `not_simulated`, with `failure_class` and `reason` when not simulated; ADR-021) | `relies_on` → hypotheses, `simulated_by` → simulations |
 | `experiment_protocol` | `experiment_protocol` | draft_not_executable | design, primary_metric, power, guardrails, stop_rules, measurement, operator, pre_registration_hash | `tests` → option, hypotheses |
 | `lessons` | `lesson` / `question` | proposed | knowledge_id, status_detail / needs | `derived_from` or `about` → hypothesis, `evaluated_by` → results |
 
@@ -70,14 +70,15 @@ Every item in `stages.*`, `evidence.metrics` and `experiment_protocol` has the s
 - an `estimate` must never be shown as a forecast;
 - a `simulated_outcome` must be shown as conditional on its scenario and assumptions;
 - a `strategic_proposal` must be shown as a proposal awaiting human, legal and compliance review;
-- `survived` must be shown with its `status_detail.strength` and the label "not causal proof".
+- `survived` must be shown with its `status_detail.strength` and the label "not causal proof";
+- a `strategic_proposal` with `simulation.status = not_simulated` has no simulated outcome: show its reason, never a number.
 
 ## 3. Investigation statuses
 
 | `status` | Meaning |
 |---|---|
 | `completed` | The loop ran to the end. Some stages may still be empty, with reasons in `failures` (e.g. no option passed validation). `failures.completion.state` says whether it was `clean` or had a `partial_rejection`; dashboards must show the difference |
-| `stopped` | A stopping rule fired: the Hypothesis Generator's reply was unusable (truncated, refused, invalid JSON, schema violation) or the budget was exhausted. `stop_reason` says which. Items already produced are kept |
+| `stopped` | A stopping rule fired: the Hypothesis Generator's reply was unusable (truncated, refused, invalid JSON, schema violation) or the budget was exhausted. `stop_reason` says which. Items already produced are kept. **`stop_reason` starting `internal_error:`** means an unexpected engine defect (failure class `internal.error`, `completion.internal_error: true`): dashboards must show it as an engine failure, never as a result (ADR-021) |
 | `insufficient_evidence` | There is no transaction panel, or fewer than 8 quarters as of the date. No agent was called |
 | `invalid_market` | The market fails the coverage contract ([ADR-014](ARCHITECTURE_DECISIONS.md#adr-014)). No agent was called |
 

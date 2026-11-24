@@ -1,6 +1,6 @@
 # R2 Step 1: mixed cached/live engineering revalidation (plan)
 
-Status: **approved by the founder on 2026-11-24 (cap $0.04); prepared, tested and rehearsed offline; not run.**
+Status: **approved by the founder on 2026-11-24 (cap $0.04); run as `r2r-57fa83dc8f2f`, which crashed (engine defect; $0.0033458 spent). See [R2_STEP1_FAILURE_INVESTIGATION_r2r-57fa83dc8f2f.md](R2_STEP1_FAILURE_INVESTIGATION_r2r-57fa83dc8f2f.md). A re-run reusing the paid 2025-11-23 critic and strategist replies (3 live calls, cap $0.02) is prepared and needs a new approval.**
 It runs only through `scripts/r2_step1_revalidation.sh`. Code: `src/halibut/investigation/revalidation.py`.
 Related: [R2_POSTMORTEM_r2v-b16fc9281536.md](R2_POSTMORTEM_r2v-b16fc9281536.md),
 [R2_LIVE_VALIDATION_PLAN.md](R2_LIVE_VALIDATION_PLAN.md), [ADR-020](ARCHITECTURE_DECISIONS.md#adr-020).

@@ -368,3 +368,48 @@ Scope authorised: **R1 only**. No paid API calls.
 - **Consequences:** a single count violation no longer erases unrelated valid work, and every rejection stays visible
   in the validation records.
 
+
+### ADR-021
+**Typed failure states at the boundary between AI output and deterministic execution; internal errors are never
+hidden; already-paid replies are reused only when byte-identical.**
+- **Status:** Proposed (2026-11-24) after the crash of R2 Step 1 (`r2r-57fa83dc8f2f`). Implemented and tested offline;
+  awaiting founder review. Details: [R2_STEP1_FAILURE_INVESTIGATION_r2r-57fa83dc8f2f.md](R2_STEP1_FAILURE_INVESTIGATION_r2r-57fa83dc8f2f.md).
+- **Context:** a schema-valid strategist option named an intended effect on `segment_share_gap` with one entity. The
+  loop.v1 schema carries no second entity. The registry rejected every model for the empty target, then an unguarded
+  fallback called `execute`, which raised an IndexError. That aborted the whole run before any record was written.
+- **Decision:**
+  1. **Typed, expected failures.** `models.registry.ModelUnavailable` carries one of these failure classes:
+     - `model.target_unavailable`;
+     - `model.insufficient_history`;
+     - `model.unknown_family`;
+     - `numeric.nonfinite`.
+
+     `execute` and `share_shift` raise it instead of indexing empty data or returning NaN or infinity. The local
+     schema validator rejects non-finite numbers, which `json.loads` accepts.
+  2. **No invented values.** If no baseline exists, `official_baseline` returns status `unavailable` with point
+     `None`.
+  3. **Item isolation.** An option whose effect has no measurable target, or no baseline, is kept as a proposal with
+     `data.simulation = {status: not_simulated, failure_class, reason}`. It is never simulated and never sized for an
+     experiment protocol. Execution failures of hypothesis-test models are recorded and skipped.
+  4. **Engine errors are visible.** Any unexpected exception inside the loop has three effects:
+     - the partial document is stored with status `stopped`, `stop_reason` `internal_error: <type>: <message>`, failure
+       class `internal.error` and completion `not_completed`;
+     - an `investigation.internal_error` event is written;
+     - `InvestigationInternalError` is re-raised.
+
+     The validation and revalidation runners catch it per origin and stop further paid investigations. They write
+     documents and execution records before any reporting, and mark `pipeline_ready = false`. The CLI exits with code 6.
+  5. **Verified reuse.** `--reuse-from <experiment>` answers a critic or strategist request from a reply already paid
+     for, under two conditions:
+     - its ledger entry `<experiment>:<run_id>` is settled;
+     - the request has the same prompt fingerprint and the same cache key (model, settings, system prompt, evidence
+       bundle and output schema).
+
+     Anything else goes live. The preflight lists the reused calls, and the plan's cost excludes them.
+- **Not changed:**
+  - prompts (`loop.v1`), agent schemas and the pre-registered criteria (hash `c9fcd277…`);
+  - the strategist schema's missing `entity_b`, which is deferred to a new prompt version because changing it would
+    break identity with the recorded replies.
+- **Consequences:** no single proposal can abort an investigation, and no unavailable number is replaced by a guess. A
+  defect is reported as a defect, not as a successful or merely empty investigation. Failed paid runs can be resumed
+  without paying twice.

@@ -33,7 +33,7 @@ from ..intel.market import load_market
 from . import artifact as art
 from .evaluation import evaluate_document
 from .live_validation import CRITERIA, CRITERIA_HASH, THRESHOLDS, _report, _smoke, execution_records, markdown, preflight
-from .loop import run_investigation
+from .loop import InvestigationInternalError, run_investigation
 
 VERSION = "r2_engineering_revalidation.v1"
 LABEL = ("MIXED CACHED/LIVE ENGINEERING REVALIDATION: generator replies are the RECORDED replies of r2v-b16fc9281536 "
@@ -71,7 +71,10 @@ CRITERIA_INTERPRETATION = {  # frozen criteria unchanged; how the validator chan
     "A6_spend_within_cap": "unaffected; the cap is this run's ($0.04), and the original run's generator spend is reported "
                            "separately as historical",
     "A2_all_live_investigations_completed": "a 'completed' investigation may now carry a partial rejection (ADR-020); "
-                                            "the completion state (clean / partial_rejection) is reported next to it",
+                                            "the completion state (clean / partial_rejection) is reported next to it; "
+                                            "an option kept but not simulated (typed reason, ADR-021) does not make an "
+                                            "investigation incomplete, while an internal engine error does (status "
+                                            "'stopped', stop_reason 'internal_error: ...'), so A2 fails",
     "A3_no_truncation_refusal_or_top_level_schema_failure": "an over-long array is now rejected as an ARRAY, not as the "
                                                             "whole reply, so A3 can pass while the explanations array was "
                                                             "rejected; array rejections are reported separately",
@@ -142,18 +145,70 @@ class _AlwaysLive(CachedProvider):
         return r
 
 
+def reusable_calls(store, experiment_ids) -> dict:
+    """Critic/strategist replies that were PAID FOR in earlier revalidation experiments and may be reused instead of being
+    bought again: {(role, prompt_hash): source}. A reply qualifies only if its agent_calls row is a successful, non-cached,
+    charged call whose spend scope '<experiment>:<run_id>' is settled in the ledger. The cache key (provider, model, role,
+    system prompt, evidence bundle, settings and output schema) must still match at reuse time, or the call goes live."""
+    out = {}
+    for exp in experiment_ids or ():
+        for r in store.conn.execute(
+                f"""SELECT a.call_id, a.run_id, a.role, a.model, a.prompt_hash, a.actual_cost_usd, a.input_tokens,
+                    a.output_tokens, a.at FROM agent_calls a WHERE a.role IN ({",".join("?" * len(LIVE_ROLES))})
+                    AND a.cache_hit=0 AND a.outcome='ok' AND a.actual_cost_usd > 0 ORDER BY a.call_id""", LIVE_ROLES):
+            led = store.conn.execute("SELECT note FROM llm_spend_ledger WHERE run_id=? AND status='settled' AND settled_at=?",
+                                     (f"{exp}:{r['run_id']}", r["at"])).fetchone()
+            if led is None:
+                continue
+            note = led["note"] or ""
+            out.setdefault((r["role"], r["prompt_hash"]), {
+                "experiment": exp, "agent_call_id": r["call_id"], "model": r["model"], "paid_usd": r["actual_cost_usd"],
+                "tokens": [r["input_tokens"], r["output_tokens"]], "at": r["at"],
+                "request_id": note.split("request_id=")[1].split(";")[0] if "request_id=" in note else None})
+    return out
+
+
+class _ReuseOrLive(_AlwaysLive):
+    """Critic/strategist: reuse a reply already PAID FOR (see reusable_calls) when the request is byte-identical (same prompt
+    fingerprint and same cache key); otherwise behave as _AlwaysLive (live, never a stale cache read). Every decision is
+    logged in ``self.log``."""
+
+    def __init__(self, inner, store, reusable: dict):
+        super().__init__(inner, store)
+        self.reusable, self.log = reusable or {}, []
+
+    def complete(self, system, user, *, role, max_output_tokens=None, run_id="unscoped", schema=None):
+        ph = hashlib.sha256((system + user).encode()).hexdigest()[:16]
+        src = self.reusable.get((role, ph))
+        hit = src is not None and self.store.conn.execute("SELECT 1 FROM llm_cache WHERE cache_key=?",
+                                                          (self.key(system, user, role, schema),)).fetchone() is not None
+        self.log.append({"role": role, "prompt_hash": ph, "reused": hit, "source": src if hit else None,
+                         "why_not": None if hit else ("no paid reply with this prompt fingerprint" if src is None
+                                                      else "cache key differs (schema, model or settings changed)")})
+        if hit:
+            return CachedProvider.complete(self, system, user, role=role, max_output_tokens=max_output_tokens,
+                                           run_id=run_id, schema=schema)
+        return super().complete(system, user, role=role, max_output_tokens=max_output_tokens, run_id=run_id, schema=schema)
+
+
 class RevalidationRouter(Router):
-    """Generator: cache-only. Critic and strategist: live (``mode='live'``) or refused (``mode='preflight'``)."""
+    """Generator: cache-only. Critic and strategist: live (``mode='live'``) or refused (``mode='preflight'``); with
+    ``reuse`` (from reusable_calls), a byte-identical request already paid for is answered by its recorded reply."""
 
     def __init__(self, store, scope, cfg, *, mode: str, max_usd=None, environ=None, http_client=None, cfg_overrides=None,
-                 provider_config=None):
+                 provider_config=None, reuse: dict | None = None):
         super().__init__("anthropic", store, scope, max_usd=max_usd, environ=environ, http_client=http_client,
                          cfg_overrides=cfg_overrides, provider_config=provider_config)
         from ..agents.anthropic_provider import cache_salt  # noqa: PLC0415
         self.mode, self._salt = mode, cache_salt(cfg)
         self._gen = _RecordingCache(_CacheOnly("anthropic", self.routing["roles"]["hypothesis_generator"]["model"], self._salt), store)
-        self._stub = CachedProvider(_NotInPreflight("anthropic", cfg["model"], self._salt), store)
+        self.reuse = reuse or {}
+        self._stub = _ReuseOrLive(_NotInPreflight("anthropic", cfg["model"], self._salt), store, self.reuse)
         self._live = {}
+
+    @property
+    def reuse_log(self) -> list:
+        return self._stub.log + [x for p in self._live.values() for x in p.log]
 
     def describe(self) -> dict:
         d = super().describe()
@@ -168,7 +223,7 @@ class RevalidationRouter(Router):
         cached, max_out = super().provider(role)
         key = ("live", cached.model)
         if key not in self._live:
-            self._live[key] = _AlwaysLive(cached.inner, self.store)
+            self._live[key] = _ReuseOrLive(cached.inner, self.store, self.reuse)
         return self._live[key], max_out
 
 
@@ -199,8 +254,10 @@ def _original_fingerprints(store, original) -> dict:
     return out
 
 
-def identity_preflight(db_path, market_path, original, origins, evaluate_as_of, cfg) -> dict:
-    """On a THROWAWAY copy: rebuild each generator request and check it is the recorded one. No network."""
+def identity_preflight(db_path, market_path, original, origins, evaluate_as_of, cfg, reuse_from=()) -> dict:
+    """On a THROWAWAY copy: rebuild each generator request and check it is the recorded one. No network. With
+    ``reuse_from``, critic/strategist requests identical to replies paid for in those experiments are answered from their
+    recorded reply, and ``per_origin[o]['reuse']`` lists which live-role calls are covered (the rest stay live)."""
     tmp = Path(tempfile.mkdtemp(prefix="halibut_revalidate_")) / "p.sqlite"
     a, b = sqlite3.connect(db_path), sqlite3.connect(tmp)
     a.backup(b)
@@ -208,10 +265,16 @@ def identity_preflight(db_path, market_path, original, origins, evaluate_as_of, 
     st = Store(tmp)
     try:
         orig = _original_fingerprints(st, original)
+        reuse = reusable_calls(st, reuse_from)
         rows = {}
         for o in origins:
-            r = RevalidationRouter(st, "preflight", cfg, mode="preflight")
-            d = run_investigation(st, market_path, as_of=o, evaluate_as_of=evaluate_as_of, agents="mock", router=r, log=lambda *_: None)
+            r = RevalidationRouter(st, "preflight", cfg, mode="preflight", reuse=reuse)
+            internal = None
+            try:
+                d = run_investigation(st, market_path, as_of=o, evaluate_as_of=evaluate_as_of, agents="mock", router=r,
+                                      log=lambda *_: None)
+            except InvestigationInternalError as exc:  # an engine defect reached offline: reported, nothing is sent
+                d, internal = exc.doc, exc.doc["stop_reason"]
             last = getattr(r._gen, "last", {})
             cached = st.conn.execute("SELECT provider, model, created_at FROM llm_cache WHERE cache_key=?",
                                      (last.get("key", ""),)).fetchone()
@@ -225,7 +288,11 @@ def identity_preflight(db_path, market_path, original, origins, evaluate_as_of, 
                       "prompt_version": got["prompt_version"] == want["prompt_version"],
                       "prompt_size": got["prompt_chars"] == want["prompt_chars"], "schema_size": got["schema_chars"] == want["schema_chars"],
                       "evidence_fingerprint": got["panel_fingerprint"] == want["panel_fingerprint"]}
-            rows[o] = {"original": want, "rebuilt": got, "checks": checks, "identical": all(checks.values())}
+            rows[o] = {"original": want, "rebuilt": got, "checks": checks, "identical": all(checks.values()),
+                       "reuse": {role: next((x for x in r.reuse_log if x["role"] == role and x["reused"]), None)
+                                 for role in LIVE_ROLES},
+                       "offline_status": d["status"], "offline_completion": d["failures"]["completion"]["state"],
+                       "internal_error": internal}
         return {"identical": all(v["identical"] for v in rows.values()), "per_origin": rows}
     finally:
         st.close()
@@ -278,16 +345,21 @@ def strategist_assessment(docs: dict, reference_docs: dict) -> dict:
                                 "large_effect_flag": abs(e["magnitude_high_pp"]) > 2.0},
                 "assumptions": len(v["assumptions"]), "competitor_responses": v["competitor_responses"],
                 "measurable_outcomes": len(v["success_criteria"]), "simulations": len(sims),
+                "simulation_status": v.get("simulation", {}).get("status"),
                 "compliance_flags": v["compliance"]["flags"]})
-        rej = [f for f in d["failures"]["items"] if f["subject"] == "strategic_option"]
+        rej = [f for f in d["failures"]["items"] if f["subject"] == "strategic_option" and f["stage"] != "simulation"]
+        nsim = [f for f in d["failures"]["items"] if f["subject"] == "strategic_option" and f["stage"] == "simulation"]
         out[o] = {"accepted": opts, "rejected": [{"failure_class": f["failure_class"], "problems": f["problems"]} for f in rej],
+                  "not_simulated": [{"failure_class": f["failure_class"], "problems": f["problems"], "ref": f["ref"]} for f in nsim],
                   "distinct_lever_sets": len({tuple(sorted(o_["levers"])) for o_ in opts})}
     return out
 
 
 def run_revalidation(store, db_path, market_path, original_run_dir, origins, evaluate_as_of, *, live=False, approval_id=None,
                      max_usd=None, out_dir="results/r2_validation", environ=None, http_client=None, cfg_overrides=None,
-                     provider_config=None, log=print) -> dict:
+                     provider_config=None, reuse_from=(), log=print) -> dict:
+    """``reuse_from``: earlier revalidation experiment ids whose PAID critic/strategist replies may be reused when the
+    request is byte-identical (verified by the preflight and again at call time). Every other call is live."""
     from ..agents.llm import load_llm_config  # noqa: PLC0415
     market = load_market(market_path)
     rt = load_routing()
@@ -299,16 +371,21 @@ def run_revalidation(store, db_path, market_path, original_run_dir, origins, eva
         raise ValueError(f"origins {origins} differ from the original experiment's {sorted(original['docs']['anthropic'])}")
     exp_id = "r2r-" + hashlib.sha256(json.dumps([original["experiment_id"], origins, utc_now()]).encode()).hexdigest()[:12]
     subject = f"r2_revalidation:{market.id}"
-    ident = identity_preflight(db_path, market_path, original, origins, evaluate_as_of, cfg)
+    ident = identity_preflight(db_path, market_path, original, origins, evaluate_as_of, cfg, reuse_from)
     log(f"identity preflight: {'IDENTICAL' if ident['identical'] else 'MISMATCH'}")
     from .live_validation import _plan_live  # noqa: PLC0415
     plan = _plan_live(original["docs"]["mock"], max_usd, cfg)
-    live_rows = [r for o in plan["per_origin"].values() for r in o if r["role"] in LIVE_ROLES]
+    reused_rows = [{**r, "origin": o, "reused_from": ident["per_origin"][o]["reuse"][r["role"]]["source"]}
+                   for o, rows_ in plan["per_origin"].items() for r in rows_
+                   if r["role"] in LIVE_ROLES and ident["per_origin"].get(o, {}).get("reuse", {}).get(r["role"])]
+    live_rows = [r for o, rows_ in plan["per_origin"].items() for r in rows_ if r["role"] in LIVE_ROLES
+                 and not ident["per_origin"].get(o, {}).get("reuse", {}).get(r["role"])]
     worst = sum(r["worst_case_usd"] for r in live_rows) + plan["smoke_worst_case_usd"]
     retries = 1 + min(int(cfg.get("retries", 1)), 2)
     plan5 = {"calls": 1 + len(live_rows), "worst_case_usd": worst,
              "worst_case_with_retries_usd": sum(r["worst_case_usd"] for r in live_rows) * retries + plan["smoke_worst_case_usd"],
-             "cap_usd": max_usd, "rows": live_rows, "generator_calls": 0}
+             "cap_usd": max_usd, "rows": live_rows, "generator_calls": 0,
+             "reused_calls": [{"origin": r["origin"], "role": r["role"], "source": r["reused_from"]} for r in reused_rows]}
     if live:
         if not ident["identical"]:
             raise approvals.AuthorizationError("identity preflight failed: the generator requests are not the recorded ones; "
@@ -320,17 +397,45 @@ def run_revalidation(store, db_path, market_path, original_run_dir, origins, eva
     EventLog(store).append("revalidation.started", "L6", {"original": original["experiment_id"], "live": live,
                                                           "identity": ident["identical"], "max_usd": max_usd},
                            run_id=exp_id, subject_id=approval_id, provenance={"version": VERSION}, commit=True)
-    smoke, new = None, {}
+    smoke, new, internal, reuse_log = None, {}, {}, []
     if live:
         smoke = _smoke(store, exp_id, cfg, environ, http_client)
         log(f"smoke: {'OK' if smoke.get('ok') else 'FAILED'}")
         if smoke.get("ok"):
+            reuse = reusable_calls(store, reuse_from)
             for o in origins:
                 r = RevalidationRouter(store, exp_id, cfg, mode="live", max_usd=max_usd, environ=environ, http_client=http_client,
-                                       cfg_overrides=cfg_overrides, provider_config=cfg_path)
-                new[o] = run_investigation(store, market_path, as_of=o, evaluate_as_of=evaluate_as_of, agents="anthropic", router=r,
-                                           approval_id=approval_id, max_usd=max_usd, approval_subject=subject, log=lambda *_: None)
-                log(f"{o}: {new[o]['status']} [{new[o]['failures']['completion']['state']}]")
+                                       cfg_overrides=cfg_overrides, provider_config=cfg_path, reuse=reuse)
+                try:
+                    new[o] = run_investigation(store, market_path, as_of=o, evaluate_as_of=evaluate_as_of, agents="anthropic",
+                                               router=r, approval_id=approval_id, max_usd=max_usd, approval_subject=subject,
+                                               log=lambda *_: None)
+                except InvestigationInternalError as exc:  # stored as 'stopped'; no further paid calls on a defective engine
+                    new[o], internal[o] = exc.doc, exc.doc["stop_reason"]
+                except approvals.AuthorizationError:
+                    raise
+                except Exception as exc:  # noqa: BLE001  outside the loop (no document): recorded, then stop spending
+                    internal[o] = f"internal_error (no document): {type(exc).__name__}: {exc}"[:500]
+                reuse_log += [{"origin": o, **x} for x in r.reuse_log]
+                log(f"{o}: " + (f"{new[o]['status']} [{new[o]['failures']['completion']['state']}]" if o in new else "")
+                    + (f" INTERNAL ERROR: {internal[o]}" if o in internal else ""))
+                if o in internal:
+                    skipped = [x for x in origins if x > o]
+                    for x in skipped:
+                        internal[x] = f"not run: an internal error in {o} stopped further paid investigations"
+                    break
+    out = Path(out_dir) / exp_id  # raw records first, so a failure in the reporting below cannot lose them
+    (out / "investigations").mkdir(parents=True, exist_ok=True)
+    files = []
+    for o, d in new.items():
+        name = f"investigations/mixed_cached_live_claude_{o}.json"
+        (out / name).write_text(json.dumps(d, indent=1, sort_keys=True, default=str) + "\n")
+        files.append({"file": name, "result_class": "mixed_cached_live", "origin": o, "investigation_id": d["investigation_id"],
+                      "content_hash": d["content_hash"], "status": d["status"], "completion": d["failures"]["completion"]["state"]})
+    docs_ = {"reference": original["docs"]["reference"], "mock": original["docs"]["mock"], "anthropic": new}
+    (out / "execution_records.json").write_text(json.dumps({**execution_records(store, exp_id, approval_id, docs_),
+                                                            "internal_errors": internal, "reuse_log": reuse_log}, indent=1,
+                                                           sort_keys=True, default=str) + "\n")
     spend = store.conn.execute("""SELECT COALESCE(SUM(CASE WHEN status='settled' THEN actual_usd ELSE reserved_usd END), 0),
         COUNT(*) FROM llm_spend_ledger WHERE run_id LIKE ?""", (exp_id + "%",)).fetchone()
     docs = {"reference": original["docs"]["reference"], "mock": original["docs"]["mock"], "anthropic": new}
@@ -344,26 +449,22 @@ def run_revalidation(store, db_path, market_path, original_run_dir, origins, eva
         inc = sum(float(x["actual_usd"] or x["reserved_usd"]) for x in store.conn.execute(
             "SELECT actual_usd, reserved_usd FROM llm_spend_ledger WHERE run_id LIKE ? AND run_id NOT LIKE ?",
             (f"{exp_id}:{new[o]['input_id']}%" if o in new else "__none__", f"{exp_id}:smoke%")))
-        costs[o] = {"historical_generator_usd (r2v-b16fc9281536, recorded reply reused)": hist, "incremental_live_usd": inc,
-                    "total_equivalent_investigation_usd": hist + inc}
+        reused = sum(x["source"]["paid_usd"] for x in plan5["reused_calls"] if x["origin"] == o)
+        costs[o] = {"historical_generator_usd (r2v-b16fc9281536, recorded reply reused)": hist,
+                    "historical_reused_critic_strategist_usd": reused, "incremental_live_usd": inc,
+                    "total_equivalent_investigation_usd": hist + reused + inc}
     report = {**base, "label": LABEL, "version": VERSION, "original_experiment": original["experiment_id"],
               "identity_preflight": ident, "plan_step1": plan5, "criteria_hash": CRITERIA_HASH,
               "criteria_unchanged": True, "criteria_interpretation": CRITERIA_INTERPRETATION,
               "completion": {o: d["failures"]["completion"] for o, d in new.items()},
+              "internal_errors": internal, "reuse_log": reuse_log,
               "critic_detection": critic_detection(new), "strategist_assessment": strategist_assessment(new, original["docs"]["reference"]),
               "costs_step1": {"smoke_usd": smoke_cost, "per_origin": costs, "incremental_live_total_usd": float(spend[0]),
                               "historical_generator_total_usd": sum(v["original"]["generator_cost_usd"] for v in orig_fp.values()),
                               "ledger_attempts": spend[1]}}
-    out = Path(out_dir) / exp_id
-    (out / "investigations").mkdir(parents=True, exist_ok=True)
-    files = []
-    for o, d in new.items():
-        name = f"investigations/mixed_cached_live_claude_{o}.json"
-        (out / name).write_text(json.dumps(d, indent=1, sort_keys=True, default=str) + "\n")
-        files.append({"file": name, "result_class": "mixed_cached_live", "origin": o, "investigation_id": d["investigation_id"],
-                      "content_hash": d["content_hash"], "status": d["status"], "completion": d["failures"]["completion"]["state"]})
-    (out / "execution_records.json").write_text(json.dumps(execution_records(store, exp_id, approval_id, docs), indent=1,
-                                                           sort_keys=True, default=str) + "\n")
+    if internal:
+        report["verdict"] = {**report["verdict"], "pipeline_ready": False,
+                             "internal_error": "an unexpected engine error occurred; see internal_errors"}
     (out / "comparison.json").write_text(json.dumps(report, indent=1, sort_keys=True, default=str) + "\n")
     (out / "comparison.md").write_text(revalidation_markdown(report) + "\n")
     (out / "manifest.json").write_text(json.dumps({
@@ -398,6 +499,13 @@ def revalidation_markdown(r: dict) -> str:
              f"generator total ${c['historical_generator_total_usd']:.6f} (recorded replies reused)")
     for o, v in c["per_origin"].items():
         L.append(f"- {o}: " + "; ".join(f"{k} ${x:.6f}" for k, x in v.items()))
+    if p.get("reused_calls"):
+        L += ["", "Reused (already paid for, byte-identical request; not bought again):"] + [
+            f"- {x['origin']} {x['role']}: {x['source']['experiment']} call {x['source']['agent_call_id']} "
+            f"({x['source']['request_id']}, ${x['source']['paid_usd']:.6f})" for x in p["reused_calls"]]
+    if r.get("internal_errors"):
+        L += ["", "## INTERNAL ERRORS (engine defects; not intelligence failures)", ""] + [
+            f"- **{o}**: {e}" for o, e in r["internal_errors"].items()]
     L += ["", "## Completion (ADR-020)", ""] + [f"- {o}: {v['state']} (rejected arrays: {[a['subject'] for a in v['rejected_arrays']]})"
                                                  for o, v in r["completion"].items()]
     L += ["", "## Critic detection of the postmortem's known issues (critic was not told about them)", ""]
@@ -413,6 +521,7 @@ def revalidation_markdown(r: dict) -> str:
                      f"assumptions {x['assumptions']} | competitor responses {len(x['competitor_responses'])} | measurable outcomes "
                      f"{x['measurable_outcomes']} | template-like {x['originality']['same_levers_as_a_reference_template']}")
         L += [f"  - REJECTED {x['failure_class']}: {x['problems'][:2]}" for x in v["rejected"]]
+        L += [f"  - NOT SIMULATED {x['failure_class']}: {x['problems'][:1]}" for x in v.get("not_simulated", [])]
     L += ["", "## How the validator changes affect the frozen criteria", ""] + [f"- **{k}**: {v}" for k, v in r["criteria_interpretation"].items()]
     L += ["", "---", "", markdown(r)]
     return "\n".join(L)

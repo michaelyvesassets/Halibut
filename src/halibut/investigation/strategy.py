@@ -87,6 +87,18 @@ def compliance_checklist(market, option: dict, metrics: dict) -> dict:
             "note": "Halibut does not provide legal clearance; a qualified reviewer must sign off before any action"}
 
 
+def effect_target_problems(effect: dict, panel) -> list[str]:
+    """Why an intended effect has no measurable target (empty when it has one). A gap is a difference between two
+    entities, but the loop.v1 strategist schema's intended_effect carries only one entity, so a gap effect is
+    under-specified: it is reported, never completed by guessing the second entity (e.g. from the success criteria)."""
+    if effect["template"] == "segment_share_gap":
+        return [f"intended effect on segment_share_gap names only {effect['entity']!r}: a gap needs a second entity, which "
+                "the loop.v1 strategist schema does not carry; the effect has no measurable target and is not simulated"]
+    if not panel.series(effect["template"], effect["entity"], None):
+        return [f"intended effect {effect['template']} {effect['entity']!r} has no observations in this measurement set"]
+    return []
+
+
 def simulate(option: dict, baseline: dict, baseline_status: str) -> list[dict]:
     from ..models.registry import share_shift  # noqa: PLC0415
     e = option["intended_effect"]
@@ -108,6 +120,8 @@ def simulate(option: dict, baseline: dict, baseline_status: str) -> list[dict]:
 
 def min_effect_pp(simulations: list[dict]) -> float:
     """Smallest ASSUMED lever effect after competitor offsets across scenarios (pp; excludes forecast uncertainty)."""
+    if not simulations:
+        raise ValueError("min_effect_pp needs at least one simulation")
     return min(s["effect_pp_assumed"][0] * (1 - s["competitor_offset_assumed"][1]) for s in simulations)
 
 

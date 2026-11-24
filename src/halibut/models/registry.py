@@ -146,14 +146,49 @@ def _point_sd(family: str, y: np.ndarray, assumptions: dict, pooled: tuple | Non
     return point, sd
 
 
+class ModelUnavailable(Exception):
+    """A typed, EXPECTED failure: the registry cannot produce a number for this target. Callers record it as a failure
+    of the item that needed the number (never as an invented value). ``failure_class`` is one of
+    ``model.target_unavailable`` (no observations, e.g. an unsupported target encoding), ``model.insufficient_history``,
+    ``model.unknown_family`` or ``numeric.nonfinite``."""
+
+    def __init__(self, failure_class: str, problems: list[str]):
+        super().__init__(f"{failure_class}: {'; '.join(problems)}")
+        self.failure_class, self.problems = failure_class, list(problems)
+
+
+MIN_EXECUTE_QUARTERS = 8  # the pooled L4 and P4 windows need 8 quarters; registration needs MIN_QUARTERS
+
+
+def _finite(*xs) -> bool:
+    return all(x is not None and np.isfinite(x) for x in xs)
+
+
 def execute(spec: dict, panel) -> dict:
-    """Deterministic forecast for the spec's target over the next 2 quarters after the panel's last quarter."""
-    t = spec["target"]
-    ser = panel.series(t["template"], t["entity"], t.get("entity_b"))
+    """Deterministic forecast for the spec's target over the next 2 quarters after the panel's last quarter.
+
+    Raises ModelUnavailable (never returns an invented value) when the target has no observations, too little history, a
+    non-finite input or a non-finite output."""
+    t = spec.get("target") or {}
+    if spec.get("family") not in FORECAST_FAMILIES:
+        raise ModelUnavailable("model.unknown_family", [f"family {spec.get('family')!r} cannot forecast"])
+    ser = panel.series(t.get("template"), t.get("entity"), t.get("entity_b"))
+    desc = f"{t.get('template')} {t.get('entity')}" + (f"-{t.get('entity_b')}" if t.get("entity_b") else "")
+    if not ser:
+        raise ModelUnavailable("model.target_unavailable", [f"no observations for target {desc} as of {panel.as_of}"])
+    if len(ser) < MIN_EXECUTE_QUARTERS:
+        raise ModelUnavailable("model.insufficient_history", [
+            f"target {desc} has {len(ser)} quarters as of {panel.as_of}; at least {MIN_EXECUTE_QUARTERS} are needed"])
     y = np.array([v for _, v in ser], dtype=float)
+    if not np.all(np.isfinite(y)):
+        raise ModelUnavailable("numeric.nonfinite", [f"target {desc} contains non-finite observations"])
     a = {x["name"]: float(x["value"]) for x in spec.get("assumptions", [])}
+    if not all(np.isfinite(v) for v in a.values()):
+        raise ModelUnavailable("numeric.nonfinite", ["a model assumption is not a finite number"])
     per = [q for q, _ in ser]
     point, sd = _point_sd(spec["family"], y, a, (_pooled(panel, t, per[-4:]), _pooled(panel, t, per[-8:-4])))
+    if not _finite(point, sd):
+        raise ModelUnavailable("numeric.nonfinite", [f"{spec['family']} produced a non-finite output for {desc}"])
     lo, hi = point - Z80 * sd, point + Z80 * sd
     if t["template"] != "segment_share_gap":  # shares live in [0, 1]
         point, lo, hi = (float(min(max(x, 0.0), 1.0)) for x in (point, lo, hi))
@@ -228,11 +263,17 @@ def register(store, spec: dict, panel, *, registered_by: str, run_id: str | None
 def share_shift(baseline: dict, effect_pp: tuple[float, float], offset: tuple[float, float]) -> dict:
     """Scenario model (simulation.share_shift v1): outcome = baseline + effect x (1 - offset), as a range.
     ``effect_pp`` and ``offset`` are ASSUMPTIONS (labelled by the caller); nothing here is calibrated."""
+    if baseline.get("point") is None or not baseline.get("interval80"):
+        raise ModelUnavailable("model.target_unavailable", ["no baseline forecast is available to simulate against"])
+    if not _finite(*effect_pp, *offset, baseline["point"], *baseline["interval80"]):
+        raise ModelUnavailable("numeric.nonfinite", ["a simulation input is not a finite number"])
     lo_e, hi_e = sorted(effect_pp)
     lo_o, hi_o = sorted(offset)
     lo = baseline["interval80"][0] + lo_e / 100 * (1 - hi_o)
     hi = baseline["interval80"][1] + hi_e / 100 * (1 - lo_o)
     mid = baseline["point"] + (lo_e + hi_e) / 200 * (1 - (lo_o + hi_o) / 2)
+    if not _finite(lo, hi, mid):
+        raise ModelUnavailable("numeric.nonfinite", ["simulation.share_shift produced a non-finite outcome"])
     return {"family": "simulation.share_shift", "version": FAMILIES["simulation.share_shift"]["version"],
             "outcome_point": mid, "outcome_range": [lo, hi], "baseline_point": baseline["point"],
             "effect_pp_assumed": [lo_e, hi_e], "competitor_offset_assumed": [lo_o, hi_o]}

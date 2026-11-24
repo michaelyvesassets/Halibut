@@ -1,0 +1,402 @@
+{
+ "provenance": {
+  "experiment": "r2r-57fa83dc8f2f",
+  "investigation_input_id": "inv:d580ddb8686ed831",
+  "model": "claude-haiku-5-5",
+  "note": "Live replies of the R2 Step 1 revalidation (2026-11-24). The run crashed after the strategist reply (IndexError in models/registry.py execute on an empty segment_share_gap series); these replies are preserved verbatim for regression tests and offline reconstruction.",
+  "origin": "2025-11-23",
+  "original_experiment": "r2v-b16fc9281536",
+  "prompt_version": "loop.v1",
+  "recorded_from": "data/halibut.sqlite llm_cache (verbatim replies), agent_calls and llm_spend_ledger"
+ },
+ "replies": [
+  {
+   "actual_cost_usd": 0.0010458,
+   "agent_call_id": 159,
+   "cache_created_at": "2026-11-24T02:59:25Z",
+   "cache_key": "79c24a0258d5a984deb7031fcaa70b04e4b355d5fec9bd48e32fa33c8e8d2106",
+   "data": {
+    "critiques": [
+     {
+      "challenged_assumption": "That BEV mix decline and stable absolute BEV share are jointly testable with the same universe definition",
+      "hypothesis_ref": "H1",
+      "severity": "high",
+      "statement": "The denominator is ambiguous: BYD's BEV share of its own mix is mechanically diluted by any non-BEV growth, so a falling mix ratio says little about BEV performance. The test (segment share vs L4 of 3.60%) uses a different denominator, so the two readings can diverge without contradicting H1."
+     },
+     {
+      "challenged_assumption": "That the non-BEV growth is the only source of mix change within BYD's registrations",
+      "hypothesis_ref": "H1",
+      "severity": "medium",
+      "statement": "Segment-mix dilution is confounded by fuel-category reclassification and hybrid registrations counted outside 'Battery electric', which could lower BEV mix without any change in non-BEV volume."
+     },
+     {
+      "challenged_assumption": "That the observable would distinguish dilution from BEV volume loss",
+      "hypothesis_ref": "H1",
+      "severity": "medium",
+      "statement": "The implication only checks for BEV share not falling below 3.60%; it cannot fail if BEV volume rises with total volume, so a confirming result does not discriminate H1 from a BEV-growth explanation."
+     },
+     {
+      "challenged_assumption": "That product availability, not fleet-deal timing, explains Ford's BEV gain",
+      "hypothesis_ref": "H2",
+      "severity": "high",
+      "statement": "Fleet-deal timing and quarter-end registration spikes in UK data can produce discrete BEV jumps that reverse within one or two quarters, so persistence is not a reliable marker of product-led growth."
+     },
+     {
+      "challenged_assumption": "That segment share above 3.99% isolates a Ford-specific product effect from market-wide BEV growth",
+      "hypothesis_ref": "H2",
+      "severity": "medium",
+      "statement": "The hypothesis is compatible with almost any Ford outcome: a stable or rising BEV share confirms it, while a fall can be attributed to model cycle gaps. The claim that it is 'not a broad market shift' is never tested against total BEV segment growth."
+     },
+     {
+      "challenged_assumption": "That a two-quarter test at this threshold has adequate power",
+      "hypothesis_ref": "H2",
+      "severity": "low",
+      "statement": "Using the L4 value as threshold ignores that a single quarter's segment share is noisy at Ford's volume, so the 3.99% floor may be crossed by chance."
+     },
+     {
+      "challenged_assumption": "That buyer substitution between VW and MG BEVs is material rather than a shared market tailwind",
+      "hypothesis_ref": "H3",
+      "severity": "high",
+      "statement": "A zero-sum VW-MG trade-off assumes a fixed BEV pool, but both brands can grow together with the overall BEV market, making the inverse movement a weak test of substitution."
+     },
+     {
+      "challenged_assumption": "That the stated refutation condition covers all ways the inverse relationship could fail",
+      "hypothesis_ref": "H3",
+      "severity": "medium",
+      "statement": "The refutation condition requires MG to recover above 4.14% while VW holds 7.81%, which is a conjunction; VW falling alone or MG recovering alone would not refute H3 cleanly, leaving the hypothesis under-specified."
+     },
+     {
+      "challenged_assumption": "That observed VW-MG gap movements reflect behavioural substitution rather than product cycles",
+      "hypothesis_ref": "H3",
+      "severity": "medium",
+      "statement": "Model-specific launches (e.g., VW ID range refresh or MG product changes) are an unmeasured confounder that could drive both series independently of any buyer switching."
+     },
+     {
+      "challenged_assumption": "That Tesla's non-BEV registrations are non-trivial enough to sustain total share",
+      "hypothesis_ref": "H4",
+      "severity": "high",
+      "statement": "The assumption that Tesla's non-BEV registrations are non-trivial is unverified and, if false, undermines the claim that total share is held up by non-BEV volume; the mechanism then collapses."
+     },
+     {
+      "challenged_assumption": "That declining Tesla BEV share is attributable to competitive displacement by other BEV entrants",
+      "hypothesis_ref": "H4",
+      "severity": "medium",
+      "statement": "The refutation rule requires Tesla's BEV share to rise while entrants are stable, but a falling Tesla share is equally consistent with Tesla's own model cycle or pricing, so displacement by entrants is not isolated."
+     },
+     {
+      "challenged_assumption": "That the observable implication covers both within-segment decline and total share support",
+      "hypothesis_ref": "H4",
+      "severity": "low",
+      "statement": "The hypothesis mixes within-segment and total-share claims, and the test only addresses the within-segment part, leaving the total-share mechanism untested."
+     }
+    ]
+   },
+   "input_tokens": 2513,
+   "latency_seconds": 10.944734116999825,
+   "output_tokens": 1589,
+   "prompt_hash": "9cab9f15752a4471",
+   "request_id": "req_011ChM1EKtZ43v9Xjk9CUzww",
+   "role": "loop_critic",
+   "stop_reason": "end_turn",
+   "text": "{\"critiques\":[{\"hypothesis_ref\":\"H1\",\"severity\":\"high\",\"statement\":\"The denominator is ambiguous: BYD's BEV share of its own mix is mechanically diluted by any non-BEV growth, so a falling mix ratio says little about BEV performance. The test (segment share vs L4 of 3.60%) uses a different denominator, so the two readings can diverge without contradicting H1.\",\"challenged_assumption\":\"That BEV mix decline and stable absolute BEV share are jointly testable with the same universe definition\"},{\"hypothesis_ref\":\"H1\",\"severity\":\"medium\",\"statement\":\"Segment-mix dilution is confounded by fuel-category reclassification and hybrid registrations counted outside 'Battery electric', which could lower BEV mix without any change in non-BEV volume.\",\"challenged_assumption\":\"That the non-BEV growth is the only source of mix change within BYD's registrations\"},{\"hypothesis_ref\":\"H1\",\"severity\":\"medium\",\"statement\":\"The implication only checks for BEV share not falling below 3.60%; it cannot fail if BEV volume rises with total volume, so a confirming result does not discriminate H1 from a BEV-growth explanation.\",\"challenged_assumption\":\"That the observable would distinguish dilution from BEV volume loss\"},{\"hypothesis_ref\":\"H2\",\"severity\":\"high\",\"statement\":\"Fleet-deal timing and quarter-end registration spikes in UK data can produce discrete BEV jumps that reverse within one or two quarters, so persistence is not a reliable marker of product-led growth.\",\"challenged_assumption\":\"That product availability, not fleet-deal timing, explains Ford's BEV gain\"},{\"hypothesis_ref\":\"H2\",\"severity\":\"medium\",\"statement\":\"The hypothesis is compatible with almost any Ford outcome: a stable or rising BEV share confirms it, while a fall can be attributed to model cycle gaps. The claim that it is 'not a broad market shift' is never tested against total BEV segment growth.\",\"challenged_assumption\":\"That segment share above 3.99% isolates a Ford-specific product effect from market-wide BEV growth\"},{\"hypothesis_ref\":\"H2\",\"severity\":\"low\",\"statement\":\"Using the L4 value as threshold ignores that a single quarter's segment share is noisy at Ford's volume, so the 3.99% floor may be crossed by chance.\",\"challenged_assumption\":\"That a two-quarter test at this threshold has adequate power\"},{\"hypothesis_ref\":\"H3\",\"severity\":\"high\",\"statement\":\"A zero-sum VW-MG trade-off assumes a fixed BEV pool, but both brands can grow together with the overall BEV market, making the inverse movement a weak test of substitution.\",\"challenged_assumption\":\"That buyer substitution between VW and MG BEVs is material rather than a shared market tailwind\"},{\"hypothesis_ref\":\"H3\",\"severity\":\"medium\",\"statement\":\"The refutation condition requires MG to recover above 4.14% while VW holds 7.81%, which is a conjunction; VW falling alone or MG recovering alone would not refute H3 cleanly, leaving the hypothesis under-specified.\",\"challenged_assumption\":\"That the stated refutation condition covers all ways the inverse relationship could fail\"},{\"hypothesis_ref\":\"H3\",\"severity\":\"medium\",\"statement\":\"Model-specific launches (e.g., VW ID range refresh or MG product changes) are an unmeasured confounder that could drive both series independently of any buyer switching.\",\"challenged_assumption\":\"That observed VW-MG gap movements reflect behavioural substitution rather than product cycles\"},{\"hypothesis_ref\":\"H4\",\"severity\":\"high\",\"statement\":\"The assumption that Tesla's non-BEV registrations are non-trivial is unverified and, if false, undermines the claim that total share is held up by non-BEV volume; the mechanism then collapses.\",\"challenged_assumption\":\"That Tesla's non-BEV registrations are non-trivial enough to sustain total share\"},{\"hypothesis_ref\":\"H4\",\"severity\":\"medium\",\"statement\":\"The refutation rule requires Tesla's BEV share to rise while entrants are stable, but a falling Tesla share is equally consistent with Tesla's own model cycle or pricing, so displacement by entrants is not isolated.\",\"challenged_assumption\":\"That declining Tesla BEV share is attributable to competitive displacement by other BEV entrants\"},{\"hypothesis_ref\":\"H4\",\"severity\":\"low\",\"statement\":\"The hypothesis mixes within-segment and total-share claims, and the test only addresses the within-segment part, leaving the total-share mechanism untested.\",\"challenged_assumption\":\"That the observable implication covers both within-segment decline and total share support\"}]}"
+  },
+  {
+   "actual_cost_usd": 0.0022731,
+   "agent_call_id": 160,
+   "cache_created_at": "2026-11-24T02:59:36Z",
+   "cache_key": "e685898e9ba5d100b01dd1834a813dc6cddeb80b7fd35386f6c5dac975eb0649",
+   "data": {
+    "options": [
+     {
+      "assumptions": [
+       {
+        "kind": "behavioural",
+        "statement": "BEV demand responds to price and financing incentives within two quarters"
+       },
+       {
+        "kind": "market_structure",
+        "statement": "Non-BEV growth at BYD is not driven by a single model launch"
+       }
+      ],
+      "competitor_responses": [
+       {
+        "competitor": "tesla",
+        "effect_on_option": "offsets_partly",
+        "likelihood": "medium",
+        "response": "match_price"
+       },
+       {
+        "competitor": "mg",
+        "effect_on_option": "offsets_partly",
+        "likelihood": "medium",
+        "response": "match_price"
+       }
+      ],
+      "cost": {
+       "basis": "No cost data in the evidence bundle; cannot estimate incentive spend",
+       "currency": "unknown",
+       "high": 0,
+       "known": false,
+       "low": 0
+      },
+      "intended_effect": {
+       "basis": "ASSUMED magnitude range; BYD L4 segment share 3.6014% vs P4 1.2041%, baseline point 7.27% over the test window; no lift estimate is in the evidence",
+       "direction": "increase",
+       "entity": "byd",
+       "magnitude_high_pp": 1.5,
+       "magnitude_low_pp": 0.5,
+       "template": "segment_share"
+      },
+      "levers": [
+       "price",
+       "financing_terms",
+       "disclosed_advertising"
+      ],
+      "linked_hypotheses": [
+       "H1"
+      ],
+      "mode": "enforcement",
+      "ref": "O1",
+      "risks": [
+       "Incentive spend may erode margin without durable share gain",
+       "Price-led competition may trigger retaliation from low-cost BEV entrants"
+      ],
+      "success_criteria": [
+       {
+        "comparator": "increase_vs_L4",
+        "entity": "byd",
+        "entity_b": "",
+        "horizon_quarters": 2,
+        "reference_metric": "metric:segment_share:L4:byd",
+        "template": "segment_share"
+       }
+      ],
+      "supporting_evidence": [
+       "metric:segment_share:L4:byd",
+       "metric:segment_mix:L4:byd",
+       "metric:segment_share:P4:byd"
+      ],
+      "title": "Defend BEV mix with a price and financing push on the Battery electric segment",
+      "uncertainty": "high"
+     },
+     {
+      "assumptions": [
+       {
+        "kind": "market_structure",
+        "statement": "Adding BEV variants raises BEV registrations without cannibalising the non-BEV range"
+       },
+       {
+        "kind": "measurement",
+        "statement": "Dealer distribution can absorb added BEV availability within the test window"
+       }
+      ],
+      "competitor_responses": [
+       {
+        "competitor": "volkswagen",
+        "effect_on_option": "offsets_partly",
+        "likelihood": "medium",
+        "response": "expand_range"
+       },
+       {
+        "competitor": "kia",
+        "effect_on_option": "offsets_partly",
+        "likelihood": "low",
+        "response": "increase_distribution"
+       }
+      ],
+      "cost": {
+       "basis": "Range and distribution costs are not in the evidence; not estimated",
+       "currency": "unknown",
+       "high": 0,
+       "known": false,
+       "low": 0
+      },
+      "intended_effect": {
+       "basis": "ASSUMED magnitude range; BYD L4 segment mix 62.63% vs P4 100.0%, a 37.37pp fall; the option targets partial recovery only",
+       "direction": "increase",
+       "entity": "byd",
+       "magnitude_high_pp": 6.0,
+       "magnitude_low_pp": 2.0,
+       "template": "segment_mix"
+      },
+      "levers": [
+       "product_range",
+       "availability",
+       "distribution"
+      ],
+      "linked_hypotheses": [
+       "H1"
+      ],
+      "mode": "continuation",
+      "ref": "O2",
+      "risks": [
+       "Lead times for new BEV variants may exceed the two-quarter test window",
+       "Mix recovery may be slower than the assumed range"
+      ],
+      "success_criteria": [
+       {
+        "comparator": "increase_vs_L4",
+        "entity": "byd",
+        "entity_b": "",
+        "horizon_quarters": 2,
+        "reference_metric": "metric:segment_mix:L4:byd",
+        "template": "segment_mix"
+       }
+      ],
+      "supporting_evidence": [
+       "metric:segment_mix:L4:byd",
+       "metric:segment_mix:P4:byd"
+      ],
+      "title": "Expand BEV product range and availability to restore BYD BEV mix",
+      "uncertainty": "high"
+     },
+     {
+      "assumptions": [
+       {
+        "kind": "behavioural",
+        "statement": "Buyers switching between VW and MG BEVs weigh service and charging support heavily"
+       },
+       {
+        "kind": "competitive",
+        "statement": "VW and MG are close substitutes in the BEV segment"
+       }
+      ],
+      "competitor_responses": [
+       {
+        "competitor": "volkswagen",
+        "effect_on_option": "offsets_partly",
+        "likelihood": "high",
+        "response": "increase_marketing"
+       },
+       {
+        "competitor": "mg",
+        "effect_on_option": "none",
+        "likelihood": "medium",
+        "response": "hold"
+       }
+      ],
+      "cost": {
+       "basis": "Service and infrastructure costs are not in the evidence; not estimated",
+       "currency": "unknown",
+       "high": 0,
+       "known": false,
+       "low": 0
+      },
+      "intended_effect": {
+       "basis": "ASSUMED magnitude range; VW L4 segment share 7.81% vs P4 5.63%, baseline point 7.76%; MG L4 segment share 4.14% vs P4 7.81%; applies to the VW-MG gap, not a stated market-wide effect",
+       "direction": "decrease",
+       "entity": "volkswagen",
+       "magnitude_high_pp": 1.0,
+       "magnitude_low_pp": 0.3,
+       "template": "segment_share_gap"
+      },
+      "levers": [
+       "service",
+       "charging_or_support_infrastructure",
+       "product_quality"
+      ],
+      "linked_hypotheses": [
+       "H3"
+      ],
+      "mode": "continuation",
+      "ref": "O3",
+      "risks": [
+       "H3 is not testable with current evidence, so the mechanism is unverified",
+       "Competitor marketing response may neutralise the effect"
+      ],
+      "success_criteria": [
+       {
+        "comparator": "increase_vs_L4",
+        "entity": "volkswagen",
+        "entity_b": "mg",
+        "horizon_quarters": 2,
+        "reference_metric": "metric:segment_share:L4:mg",
+        "template": "segment_share_gap"
+       }
+      ],
+      "supporting_evidence": [
+       "metric:segment_share:L4:volkswagen",
+       "metric:segment_share:P4:volkswagen",
+       "metric:segment_share:L4:mg",
+       "metric:segment_share:P4:mg"
+      ],
+      "title": "Counter VW BEV gains with service and charging-support bundling against MG",
+      "uncertainty": "high"
+     },
+     {
+      "assumptions": [
+       {
+        "kind": "behavioural",
+        "statement": "Disclosed advertising moves BEV consideration without misleading buyers"
+       },
+       {
+        "kind": "measurement",
+        "statement": "Advertising effect is measurable within the two-quarter window"
+       }
+      ],
+      "competitor_responses": [
+       {
+        "competitor": "tesla",
+        "effect_on_option": "offsets_partly",
+        "likelihood": "medium",
+        "response": "increase_marketing"
+       }
+      ],
+      "cost": {
+       "basis": "Advertising budget is not in the evidence; not estimated",
+       "currency": "unknown",
+       "high": 0,
+       "known": false,
+       "low": 0
+      },
+      "intended_effect": {
+       "basis": "ASSUMED magnitude range; BYD L4 total share 1.24% vs P4 0.20%, baseline point 0.12 share; a small total-share lift is the only target",
+       "direction": "increase",
+       "entity": "byd",
+       "magnitude_high_pp": 0.5,
+       "magnitude_low_pp": 0.1,
+       "template": "share"
+      },
+      "levers": [
+       "disclosed_advertising",
+       "product_quality"
+      ],
+      "linked_hypotheses": [
+       "H1"
+      ],
+      "mode": "enforcement",
+      "ref": "O4",
+      "risks": [
+       "Advertising lift may be too small to detect against quarterly noise",
+       "Claims must remain accurate and disclosed under UK advertising rules"
+      ],
+      "success_criteria": [
+       {
+        "comparator": "increase_vs_L4",
+        "entity": "byd",
+        "entity_b": "",
+        "horizon_quarters": 2,
+        "reference_metric": "metric:share:L4:byd",
+        "template": "share"
+       }
+      ],
+      "supporting_evidence": [
+       "metric:share:L4:byd",
+       "metric:share:P4:byd"
+      ],
+      "title": "Targeted disclosed advertising on BYD BEV mix versus non-BEV growth",
+      "uncertainty": "high"
+     }
+    ]
+   },
+   "input_tokens": 10046,
+   "latency_seconds": 10.840835709999737,
+   "output_tokens": 2537,
+   "prompt_hash": "d42ac1d59f148730",
+   "request_id": "req_011ChM1FALcUmUUeDgpiG1Fn",
+   "role": "strategist",
+   "stop_reason": "end_turn",
+   "text": "{\"options\":[{\"ref\":\"O1\",\"title\":\"Defend BEV mix with a price and financing push on the Battery electric segment\",\"mode\":\"enforcement\",\"levers\":[\"price\",\"financing_terms\",\"disclosed_advertising\"],\"intended_effect\":{\"template\":\"segment_share\",\"entity\":\"byd\",\"direction\":\"increase\",\"magnitude_low_pp\":0.5,\"magnitude_high_pp\":1.5,\"basis\":\"ASSUMED magnitude range; BYD L4 segment share 3.6014% vs P4 1.2041%, baseline point 7.27% over the test window; no lift estimate is in the evidence\"},\"linked_hypotheses\":[\"H1\"],\"supporting_evidence\":[\"metric:segment_share:L4:byd\",\"metric:segment_mix:L4:byd\",\"metric:segment_share:P4:byd\"],\"assumptions\":[{\"statement\":\"BEV demand responds to price and financing incentives within two quarters\",\"kind\":\"behavioural\"},{\"statement\":\"Non-BEV growth at BYD is not driven by a single model launch\",\"kind\":\"market_structure\"}],\"competitor_responses\":[{\"competitor\":\"tesla\",\"response\":\"match_price\",\"likelihood\":\"medium\",\"effect_on_option\":\"offsets_partly\"},{\"competitor\":\"mg\",\"response\":\"match_price\",\"likelihood\":\"medium\",\"effect_on_option\":\"offsets_partly\"}],\"cost\":{\"known\":false,\"low\":0,\"high\":0,\"currency\":\"unknown\",\"basis\":\"No cost data in the evidence bundle; cannot estimate incentive spend\"},\"risks\":[\"Incentive spend may erode margin without durable share gain\",\"Price-led competition may trigger retaliation from low-cost BEV entrants\"],\"uncertainty\":\"high\",\"success_criteria\":[{\"template\":\"segment_share\",\"entity\":\"byd\",\"entity_b\":\"\",\"comparator\":\"increase_vs_L4\",\"reference_metric\":\"metric:segment_share:L4:byd\",\"horizon_quarters\":2}]},{\"ref\":\"O2\",\"title\":\"Expand BEV product range and availability to restore BYD BEV mix\",\"mode\":\"continuation\",\"levers\":[\"product_range\",\"availability\",\"distribution\"],\"intended_effect\":{\"template\":\"segment_mix\",\"entity\":\"byd\",\"direction\":\"increase\",\"magnitude_low_pp\":2.0,\"magnitude_high_pp\":6.0,\"basis\":\"ASSUMED magnitude range; BYD L4 segment mix 62.63% vs P4 100.0%, a 37.37pp fall; the option targets partial recovery only\"},\"linked_hypotheses\":[\"H1\"],\"supporting_evidence\":[\"metric:segment_mix:L4:byd\",\"metric:segment_mix:P4:byd\"],\"assumptions\":[{\"statement\":\"Adding BEV variants raises BEV registrations without cannibalising the non-BEV range\",\"kind\":\"market_structure\"},{\"statement\":\"Dealer distribution can absorb added BEV availability within the test window\",\"kind\":\"measurement\"}],\"competitor_responses\":[{\"competitor\":\"volkswagen\",\"response\":\"expand_range\",\"likelihood\":\"medium\",\"effect_on_option\":\"offsets_partly\"},{\"competitor\":\"kia\",\"response\":\"increase_distribution\",\"likelihood\":\"low\",\"effect_on_option\":\"offsets_partly\"}],\"cost\":{\"known\":false,\"low\":0,\"high\":0,\"currency\":\"unknown\",\"basis\":\"Range and distribution costs are not in the evidence; not estimated\"},\"risks\":[\"Lead times for new BEV variants may exceed the two-quarter test window\",\"Mix recovery may be slower than the assumed range\"],\"uncertainty\":\"high\",\"success_criteria\":[{\"template\":\"segment_mix\",\"entity\":\"byd\",\"entity_b\":\"\",\"comparator\":\"increase_vs_L4\",\"reference_metric\":\"metric:segment_mix:L4:byd\",\"horizon_quarters\":2}]},{\"ref\":\"O3\",\"title\":\"Counter VW BEV gains with service and charging-support bundling against MG\",\"mode\":\"continuation\",\"levers\":[\"service\",\"charging_or_support_infrastructure\",\"product_quality\"],\"intended_effect\":{\"template\":\"segment_share_gap\",\"entity\":\"volkswagen\",\"direction\":\"decrease\",\"magnitude_low_pp\":0.3,\"magnitude_high_pp\":1.0,\"basis\":\"ASSUMED magnitude range; VW L4 segment share 7.81% vs P4 5.63%, baseline point 7.76%; MG L4 segment share 4.14% vs P4 7.81%; applies to the VW-MG gap, not a stated market-wide effect\"},\"linked_hypotheses\":[\"H3\"],\"supporting_evidence\":[\"metric:segment_share:L4:volkswagen\",\"metric:segment_share:P4:volkswagen\",\"metric:segment_share:L4:mg\",\"metric:segment_share:P4:mg\"],\"assumptions\":[{\"statement\":\"Buyers switching between VW and MG BEVs weigh service and charging support heavily\",\"kind\":\"behavioural\"},{\"statement\":\"VW and MG are close substitutes in the BEV segment\",\"kind\":\"competitive\"}],\"competitor_responses\":[{\"competitor\":\"volkswagen\",\"response\":\"increase_marketing\",\"likelihood\":\"high\",\"effect_on_option\":\"offsets_partly\"},{\"competitor\":\"mg\",\"response\":\"hold\",\"likelihood\":\"medium\",\"effect_on_option\":\"none\"}],\"cost\":{\"known\":false,\"low\":0,\"high\":0,\"currency\":\"unknown\",\"basis\":\"Service and infrastructure costs are not in the evidence; not estimated\"},\"risks\":[\"H3 is not testable with current evidence, so the mechanism is unverified\",\"Competitor marketing response may neutralise the effect\"],\"uncertainty\":\"high\",\"success_criteria\":[{\"template\":\"segment_share_gap\",\"entity\":\"volkswagen\",\"entity_b\":\"mg\",\"comparator\":\"increase_vs_L4\",\"reference_metric\":\"metric:segment_share:L4:mg\",\"horizon_quarters\":2}]},{\"ref\":\"O4\",\"title\":\"Targeted disclosed advertising on BYD BEV mix versus non-BEV growth\",\"mode\":\"enforcement\",\"levers\":[\"disclosed_advertising\",\"product_quality\"],\"intended_effect\":{\"template\":\"share\",\"entity\":\"byd\",\"direction\":\"increase\",\"magnitude_low_pp\":0.1,\"magnitude_high_pp\":0.5,\"basis\":\"ASSUMED magnitude range; BYD L4 total share 1.24% vs P4 0.20%, baseline point 0.12 share; a small total-share lift is the only target\"},\"linked_hypotheses\":[\"H1\"],\"supporting_evidence\":[\"metric:share:L4:byd\",\"metric:share:P4:byd\"],\"assumptions\":[{\"statement\":\"Disclosed advertising moves BEV consideration without misleading buyers\",\"kind\":\"behavioural\"},{\"statement\":\"Advertising effect is measurable within the two-quarter window\",\"kind\":\"measurement\"}],\"competitor_responses\":[{\"competitor\":\"tesla\",\"response\":\"increase_marketing\",\"likelihood\":\"medium\",\"effect_on_option\":\"offsets_partly\"}],\"cost\":{\"known\":false,\"low\":0,\"high\":0,\"currency\":\"unknown\",\"basis\":\"Advertising budget is not in the evidence; not estimated\"},\"risks\":[\"Advertising lift may be too small to detect against quarterly noise\",\"Claims must remain accurate and disclosed under UK advertising rules\"],\"uncertainty\":\"high\",\"success_criteria\":[{\"template\":\"share\",\"entity\":\"byd\",\"entity_b\":\"\",\"comparator\":\"increase_vs_L4\",\"reference_metric\":\"metric:share:L4:byd\",\"horizon_quarters\":2}]}]}"
+  }
+ ]
+}
