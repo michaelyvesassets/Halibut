@@ -106,6 +106,11 @@ def run_investigation(store, market_path, *, as_of: str | None = None, evaluate_
         approvals.require(store, approval_id, "paid_run", approval_subject or f"investigation:{market.id}", cost_usd=max_usd)
     pre_id = "inv:" + _h([spec_sha, t0, t_eval, agents, PROMPT_VERSION, faults, tenant, reg.RULE])[:16]
     router = router or Router(agents, store, scope=pre_id, max_usd=max_usd)
+    if agents not in ("mock", "reference"):  # single use: bind the approval to this spend scope (or verify the binding)
+        a = approvals.require(store, approval_id, "paid_run", approval_subject or f"investigation:{market.id}",
+                              cost_usd=max_usd, use_id=router.scope)
+        if a["used_by"] is None:
+            approvals.claim_use(store, approval_id, router.scope, f"investigation {market.id} as of {as_of}")
     input_id = "inv:" + _h([spec_sha, t0, t_eval, router.fingerprint, PROMPT_VERSION, faults, tenant, reg.RULE])[:16]
     n = store.conn.execute("SELECT COUNT(*) FROM investigations WHERE investigation_id LIKE ?", (input_id + ".%",)).fetchone()[0]
     R = _Run(store, input_id, f"{input_id}.{n + 1}", t0, tenant)

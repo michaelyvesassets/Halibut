@@ -38,6 +38,7 @@ def add_investigation_commands(sub) -> None:
     v.add_argument("--approval", help="granted paid_run approval for r2_validation:<market id>")
     v.add_argument("--max-usd", type=float, help="hard cap for all live calls of the experiment (smoke included)")
     v.add_argument("--out", default="results/r2_validation")
+    v.add_argument("--provider-config", help="live: provider config to use (e.g. a temporary approved copy outside the repo)")
     s.add_parser("list", help="list stored investigations")
     sh = s.add_parser("show", help="summary of one investigation (or --json for the full result document)")
     sh.add_argument("investigation_id")
@@ -95,7 +96,8 @@ def _inv(args) -> int:
             from .live_validation import markdown, run_validation  # noqa: PLC0415
             try:
                 rep = run_validation(store, args.market, args.origins, args.evaluate_at, live=args.live,
-                                     approval_id=args.approval, max_usd=args.max_usd, out_dir=args.out)
+                                     approval_id=args.approval, max_usd=args.max_usd, out_dir=args.out,
+                                     provider_config=args.provider_config)
             except AuthorizationError as exc:
                 print(f"refused: {exc}", file=sys.stderr)
                 return 3

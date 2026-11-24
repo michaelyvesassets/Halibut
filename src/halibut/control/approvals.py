@@ -11,6 +11,9 @@ An approval is a REQUEST (``approvals``) plus append-only DECISIONS (``approval_
 - Granting an ``experiment`` or ``external_action`` needs a legal/compliance review reference and
   measurable outcomes in the decision evidence. Granting a ``promotion`` needs an evaluation id.
   Granting a ``paid_run`` needs the request to state ``max_usd``.
+- A ``paid_run`` approval is SINGLE-USE: ``claim_use()`` binds it to one spend scope (one experiment or one
+  investigation) in the append-only ``approval_uses`` table; a second use is refused, and ``require(use_id=...)``
+  refuses any other scope. The spend guard then caps all attempts (smoke, retries) under that one scope.
 - ``require()`` is the authorization check used at the point of action: the latest decision must be
   'granted', unexpired, for the same kind and subject, and the cost must not exceed ``max_usd``.
   Halibut itself has no code path that executes external actions; 'external_action' approvals exist so
@@ -83,7 +86,9 @@ def get(store, approval_id: str) -> dict | None:
     status = d["decision"] if d else "requested"
     if status == "granted" and r["expires_at"] and r["expires_at"] < utc_now():
         status = "expired"
+    u = store.conn.execute("SELECT use_id, purpose, used_at FROM approval_uses WHERE approval_id=?", (approval_id,)).fetchone()
     return {**{k: r[k] for k in r.keys() if k != "payload_json"}, "payload": json.loads(r["payload_json"]), "status": status,
+            "used_by": u["use_id"] if u else None, "used_for": u["purpose"] if u else None, "used_at": u["used_at"] if u else None,
             "decided_by": d["decided_by"] if d else None, "decided_at": d["decided_at"] if d else None,
             "decision_evidence": json.loads(d["evidence_json"]) if d else None}
 
@@ -137,8 +142,26 @@ def decide(store, approval_id: str, decision: str, decided_by: str, *, note: str
     return get(store, approval_id)
 
 
-def require(store, approval_id: str | None, kind: str, subject: str, cost_usd: float | None = None) -> dict:
-    """Authorization check at the point of action. Raises AuthorizationError unless properly granted."""
+def claim_use(store, approval_id: str, use_id: str, purpose: str) -> dict:
+    """Bind a granted paid_run approval to its one use (append-only). Raises if it was already used."""
+    import sqlite3  # noqa: PLC0415
+    a = get(store, approval_id)
+    if a is None or a["status"] != "granted":
+        raise AuthorizationError(f"approval {approval_id} is not granted")
+    try:
+        store.conn.execute("INSERT INTO approval_uses VALUES (?,?,?,?)", (approval_id, use_id, purpose, utc_now()))
+    except sqlite3.IntegrityError:
+        raise AuthorizationError(f"approval {approval_id} was already used by {a['used_by']} ({a['used_for']}); "
+                                 "approvals are single-use") from None
+    EventLog(store).append("approval.used", "L8", {"use_id": use_id, "purpose": purpose}, subject_id=approval_id)
+    store.conn.commit()
+    return get(store, approval_id)
+
+
+def require(store, approval_id: str | None, kind: str, subject: str, cost_usd: float | None = None,
+            use_id: str | None = None) -> dict:
+    """Authorization check at the point of action. Raises AuthorizationError unless properly granted. With ``use_id``,
+    an approval already bound to a different use is refused (single use)."""
     if not approval_id:
         raise AuthorizationError(f"a granted {kind} approval is required (none given)")
     a = get(store, approval_id)
@@ -150,6 +173,8 @@ def require(store, approval_id: str | None, kind: str, subject: str, cost_usd: f
         raise AuthorizationError(f"approval {approval_id} is {a['status']}")
     if cost_usd is not None and (a["max_usd"] is None or cost_usd > a["max_usd"] + 1e-12):
         raise AuthorizationError(f"cost ${cost_usd:.4f} exceeds the approved ${a['max_usd']}")
+    if use_id is not None and a["used_by"] is not None and a["used_by"] != use_id:
+        raise AuthorizationError(f"approval {approval_id} is already bound to {a['used_by']}; approvals are single-use")
     return a
 
 

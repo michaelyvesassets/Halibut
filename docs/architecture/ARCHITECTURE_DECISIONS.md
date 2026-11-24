@@ -324,7 +324,9 @@ Scope authorised: **R1 only**. No paid API calls.
 
 ### ADR-019
 **Sole-operator approval policy: a bounded, attested, auditable exception to "requester ≠ approver".**
-- **Status:** Proposed (2026-11-24), for founder acceptance together with the R2 live validation.
+- **Status:** Accepted by the founder (2026-11-24) as a narrowly scoped policy for paid validation runs of $0.10 or
+  less. It must remain explicitly audited and must not extend to real-world experiments, interventions, lesson
+  promotions, agent authorization or other privileged actions.
 - **Context:** Halibut has one human operator, so the R2 rule that the decider must differ from the
   requester cannot be satisfied for paid runs. Bypassing it (fake names, a second account) would make the
   audit trail untrue.
@@ -336,7 +338,9 @@ Scope authorised: **R1 only**. No paid API calls.
     `approval.granted` event carries the same flag;
   - it never covers experiments, external actions, promotions or new sources, and never agents or the
     engine;
-  - the provider config's `approved` flag stays a second, independent key.
+  - the provider config's `approved` flag stays a second, independent key;
+  - self-approved paid runs are single-use (`approval_uses`, migration 8) and capped cumulatively by the spend
+    guard.
 - **Consequences:** every self-approval is visible as such. Raising the ceiling or adding kinds needs a new
   policy version and ADR. With a second person, the policy should be disabled.
 

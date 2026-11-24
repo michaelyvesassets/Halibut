@@ -120,7 +120,7 @@ def test_live_path_offline_end_to_end(uk, tmp_path):
     store.close()
 
 
-def test_live_needs_approval_and_the_cap_holds_across_the_experiment(uk, tmp_path):
+def test_live_needs_approval_and_refuses_a_plan_above_the_cap(uk, tmp_path):
     from halibut.investigation.live_validation import run_validation
     store = fresh(tmp_path, uk)
     sent = []
@@ -128,10 +128,55 @@ def test_live_needs_approval_and_the_cap_holds_across_the_experiment(uk, tmp_pat
               cfg_overrides={"approved": True}, log=lambda *_: None)
     with pytest.raises(ap.AuthorizationError):
         run_validation(store, uk / "m.toml", ORIGINS, EVAL, live=True, approval_id=None, max_usd=0.06, **kw)
-    aid = approve(store, max_usd=0.004)  # far below the plan: the guard must stop before exceeding it
-    r = run_validation(store, uk / "m.toml", ORIGINS, EVAL, live=True, approval_id=aid, max_usd=0.004, **kw)
-    assert r["cost"]["live_spend_usd"] <= 0.004 + 1e-12
-    assert not r["verdict"]["pipeline_ready"]  # stopped by the budget, reported honestly
-    stopped = [e for e in r["evaluations"]["anthropic"].values() if e["status"] == "stopped"]
-    assert stopped and any("spend" in (e["stop_reason"] or "") or "cap" in (e["stop_reason"] or "") for e in stopped)
+    aid = approve(store, max_usd=0.004)
+    with pytest.raises(ap.AuthorizationError, match="nothing was sent"):
+        run_validation(store, uk / "m.toml", ORIGINS, EVAL, live=True, approval_id=aid, max_usd=0.004, **kw)
+    assert sent == [] and store.conn.execute("SELECT COUNT(*) FROM llm_spend_ledger").fetchone()[0] == 0
     store.close()
+
+
+def test_budget_is_cumulative_across_smoke_and_retries_and_approval_is_single_use(uk, tmp_path):
+    from halibut.agents.loop_agents import SYSTEMS
+    from halibut.investigation.live_validation import run_validation
+    store = fresh(tmp_path, uk)
+    good = fake_claude([], usage=(5000, 4000))
+    sent = []
+
+    def flaky(request):  # every first attempt of an agent call fails with 529 (charged at its reservation), retry succeeds
+        body = json.loads(request.content)
+        sent.append(body)
+        if body["system"] in SYSTEMS.values() and len([b for b in sent if b["system"] == body["system"]]) % 2 == 1:
+            return httpx.Response(529, json={"type": "error", "error": {"type": "overloaded_error", "message": "x"}})
+        return good._transport.handle_request(request)
+    client = httpx.Client(transport=httpx.MockTransport(flaky))
+    aid = approve(store, max_usd=0.031)
+    r = run_validation(store, uk / "m.toml", ORIGINS, EVAL, live=True, approval_id=aid, max_usd=0.031,
+                       out_dir=tmp_path / "out", environ={"ANTHROPIC_API_KEY": "sk-ant-test"}, http_client=client,
+                       cfg_overrides={"approved": True}, log=lambda *_: None)
+    exp = r["experiment_id"]
+    total = store.conn.execute("""SELECT SUM(CASE WHEN status='settled' THEN actual_usd ELSE reserved_usd END) FROM llm_spend_ledger
+        WHERE run_id LIKE ?""", (exp + "%",)).fetchone()[0]
+    assert total <= 0.031 + 1e-12 and r["cost"]["live_spend_usd"] == pytest.approx(total)
+    failed = store.conn.execute("SELECT COUNT(*) FROM llm_spend_ledger WHERE status='failed_charged' AND run_id LIKE ?",
+                                (exp + "%",)).fetchone()[0]
+    assert failed >= 1  # retries were charged and counted against the same cap
+    assert any(e["status"] == "stopped" for e in r["evaluations"]["anthropic"].values())  # the guard stopped the run
+    assert not r["verdict"]["pipeline_ready"]
+    rec = json.loads((Path(r["output_dir"]) / "execution_records.json").read_text())
+    assert rec["approval"]["used_by"] == exp and len(rec["spend_ledger"]) >= 2 and rec["event_chain_verified"]["ok"]
+    with pytest.raises(ap.AuthorizationError, match="single-use|already"):
+        run_validation(store, uk / "m.toml", ORIGINS, EVAL, live=True, approval_id=aid, max_usd=0.031,
+                       out_dir=tmp_path / "out2", environ={"ANTHROPIC_API_KEY": "sk-ant-test"}, http_client=client,
+                       cfg_overrides={"approved": True}, log=lambda *_: None)
+    with pytest.raises(ap.AuthorizationError, match="single-use|already|r2_validation"):  # nor for a plain investigation
+        from halibut.investigation.loop import run_investigation
+        run_investigation(store, uk / "m.toml", as_of=ORIGINS[0], evaluate_as_of=EVAL, agents="anthropic", approval_id=aid,
+                          max_usd=0.031, approval_subject="r2_validation:test_market", log=lambda *_: None)
+    store.close()
+
+
+def test_criteria_are_frozen():
+    from halibut.investigation import live_validation as lv
+    plan = (ROOT / "docs" / "architecture" / "R2_LIVE_VALIDATION_PLAN.md").read_text()
+    assert lv.CRITERIA_HASH in plan  # the hash published before the run must equal the code's criteria and thresholds
+    assert lv.THRESHOLDS == {"B1": 0.80, "B2": 2, "B3": 0.80, "B4": 0.60, "B5": 0.40}

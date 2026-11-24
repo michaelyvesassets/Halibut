@@ -33,6 +33,9 @@ from .loop import run_investigation
 EXPERIMENT_VERSION = "r2_live_validation.v1"
 SMOKE_CAP_USD = 0.01
 KINDS = ("reference", "mock", "anthropic")
+RESULT_CLASS = {"reference": "deterministic_baseline", "mock": "mock_not_intelligence", "anthropic": "live_ai"}
+FILE_PREFIX = {"reference": "deterministic_reference", "mock": "mock", "anthropic": "live_ai_claude"}
+THRESHOLDS = {"B1": 0.80, "B2": 2, "B3": 0.80, "B4": 0.60, "B5": 0.40}  # pre-registered; frozen by CRITERIA_HASH
 CRITERIA = {  # pre-registered (v1). A: pipeline integrity (all must hold). B: quality bar for the Claude workforce.
     "A1_smoke_structured_output_ok": "the structured-output smoke call returns {\"ok\": true}",
     "A2_all_live_investigations_completed": "every Claude investigation has status 'completed'",
@@ -46,6 +49,7 @@ CRITERIA = {  # pre-registered (v1). A: pipeline integrity (all must hold). B: q
     "B4_testability_ge_0.60": ">= 60% of Claude implications compile into registered tests",
     "B5_informativeness_ge_0.40": ">= 40% of Claude registered tests are not predicted by trend extrapolation",
 }
+CRITERIA_HASH = hashlib.sha256(json.dumps([CRITERIA, THRESHOLDS], sort_keys=True).encode()).hexdigest()
 
 
 def _quarter_end(p: str) -> date:
@@ -133,13 +137,14 @@ def _smoke(store, scope, cfg, environ, http_client) -> dict:
 
 def run_validation(store, market_path, origins, evaluate_as_of, *, live: bool = False, approval_id: str | None = None,
                    max_usd: float | None = None, out_dir="results/r2_validation", environ=None, http_client=None,
-                   cfg_overrides: dict | None = None, log=print) -> dict:
-    """``cfg_overrides`` is for offline tests only (e.g. approved=True); the CLI never sets it."""
+                   cfg_overrides: dict | None = None, provider_config=None, log=print) -> dict:
+    """``cfg_overrides`` is for offline tests only (e.g. approved=True); the CLI never sets it. ``provider_config``: the
+    provider config to use for live calls (the operator's temporary approved copy; the tracked file is never edited)."""
     from ..agents.llm import load_llm_config  # noqa: PLC0415
     market = load_market(market_path)
     rt = load_routing()
-    cfg = {**load_llm_config(Path(__file__).resolve().parents[3] / rt["provider_config"], model=rt["default_model"]),
-           **(cfg_overrides or {})}
+    cfg_path = Path(provider_config) if provider_config else Path(__file__).resolve().parents[3] / rt["provider_config"]
+    cfg = {**load_llm_config(cfg_path, model=rt["default_model"]), **(cfg_overrides or {})}
     origins = sorted(origins)
     exp_id = "r2v-" + hashlib.sha256(json.dumps([market.id, origins, evaluate_as_of, utc_now()]).encode()).hexdigest()[:12]
     subject = f"r2_validation:{market.id}"
@@ -148,6 +153,7 @@ def run_validation(store, market_path, origins, evaluate_as_of, *, live: bool = 
         if max_usd is None:
             raise approvals.AuthorizationError("a live validation needs --max-usd")
         approvals.require(store, approval_id, "paid_run", subject, cost_usd=max_usd)
+        approvals.claim_use(store, approval_id, exp_id, f"R2 live validation {market.id} {origins} -> {evaluate_as_of}")
     events.append("validation.started", "L6", {"market": market.id, "origins": origins, "evaluate_as_of": evaluate_as_of,
                                                "live": live, "max_usd": max_usd}, run_id=exp_id, subject_id=approval_id,
                   provenance={"experiment_version": EXPERIMENT_VERSION}, commit=True)
@@ -162,13 +168,16 @@ def run_validation(store, market_path, origins, evaluate_as_of, *, live: bool = 
                                               log=lambda *_: None)
     plan = _plan_live(docs["mock"], max_usd, cfg)
     smoke = None
+    if live and not plan["fits_cap_without_retries"]:
+        raise approvals.AuthorizationError(f"the plan's worst case ${plan['worst_case_usd']:.4f} exceeds the cap ${max_usd}; "
+                                           "nothing was sent")
     if live:
         smoke = _smoke(store, exp_id, cfg, environ, http_client)
         log(f"smoke: {'OK' if smoke.get('ok') else 'FAILED'} {smoke}")
         if smoke.get("ok"):
             for o in origins:
                 router = Router("anthropic", store, scope=exp_id, max_usd=max_usd, environ=environ, http_client=http_client,
-                                cfg_overrides=cfg_overrides)
+                                cfg_overrides=cfg_overrides, provider_config=cfg_path)
                 docs["anthropic"][o] = run_investigation(store, market_path, as_of=o, evaluate_as_of=evaluate_as_of,
                                                          agents="anthropic", router=router, approval_id=approval_id,
                                                          max_usd=max_usd, approval_subject=subject, log=lambda *_: None)
@@ -178,14 +187,24 @@ def run_validation(store, market_path, origins, evaluate_as_of, *, live: bool = 
     report = _report(exp_id, market, origins, evaluate_as_of, pf, plan, smoke, docs, spend, max_usd, live, cfg, approval_id)
     out = Path(out_dir) / exp_id
     (out / "investigations").mkdir(parents=True, exist_ok=True)
+    files = []
     for kind, by_o in docs.items():
         for o, d in by_o.items():
-            (out / "investigations" / f"{kind}_{o}.json").write_text(json.dumps(d, indent=1, sort_keys=True, default=str) + "\n")
+            name = f"investigations/{FILE_PREFIX[kind]}_{o}.json"
+            (out / name).write_text(json.dumps(d, indent=1, sort_keys=True, default=str) + "\n")
+            files.append({"file": name, "workforce": kind, "result_class": RESULT_CLASS[kind], "origin": o,
+                          "investigation_id": d["investigation_id"], "content_hash": d["content_hash"], "status": d["status"]})
+    (out / "execution_records.json").write_text(json.dumps(execution_records(store, exp_id, approval_id, docs), indent=1,
+                                                           sort_keys=True, default=str) + "\n")
     (out / "comparison.json").write_text(json.dumps(report, indent=1, sort_keys=True, default=str) + "\n")
     (out / "comparison.md").write_text(markdown(report) + "\n")
-    (out / "manifest.json").write_text(json.dumps({"experiment_id": exp_id, "version": EXPERIMENT_VERSION,
-                                                   "schema": art.SCHEMA_ID, "files": sorted(str(p.relative_to(out))
-                                                                                            for p in out.rglob("*.json"))},
+    (out / "manifest.json").write_text(json.dumps({"experiment_id": exp_id, "version": EXPERIMENT_VERSION, "live": live,
+                                                   "schema": art.SCHEMA_ID, "criteria_hash": CRITERIA_HASH,
+                                                   "investigations": files,
+                                                   "other_files": ["comparison.json", "comparison.md", "execution_records.json"],
+                                                   "result_classes": {"live_ai": "Claude output (live, paid)",
+                                                                      "mock_not_intelligence": "scripted mock (tests the pipeline only)",
+                                                                      "deterministic_baseline": "fixed rules (reference)"}},
                                                   indent=1) + "\n")
     events.append("validation.completed", "L6", {"live": live, "spend_usd": spend[0], "attempts": spend[1],
                                                  "pipeline_ready": report["verdict"]["pipeline_ready"]},
@@ -220,21 +239,28 @@ def _report(exp_id, market, origins, evaluate_as_of, pf, plan, smoke, docs, spen
         A["A5_identical_evidence"] = all(c["identical_evidence"] for c in comp.values())
         A["A6_spend_within_cap"] = spend[0] <= (max_usd or 0) + 1e-12
         if an:
+            T = THRESHOLDS
             acc = sum(e["hypotheses"]["accepted"] for e in an.values())
             rej = sum(e["hypotheses"]["rejected"] for e in an.values())
             regs = sum(e["tests"]["registered"] for e in an.values())
-            B["B1_evidence_fidelity_ge_0.80"] = (acc + rej) > 0 and acc / (acc + rej) >= 0.80
-            B["B2_two_original_per_origin"] = all(e["hypotheses"]["original"] >= 2 for e in an.values())
-            B["B3_falsifiability_ge_0.80"] = acc > 0 and sum(e["hypotheses"]["falsifiable"] for e in an.values()) / acc >= 0.80
+            B["B1_evidence_fidelity_ge_0.80"] = (acc + rej) > 0 and acc / (acc + rej) >= T["B1"]
+            B["B2_two_original_per_origin"] = len(an) == len(origins) and all(e["hypotheses"]["original"] >= T["B2"]
+                                                                               for e in an.values())
+            B["B3_falsifiability_ge_0.80"] = acc > 0 and sum(e["hypotheses"]["falsifiable"] for e in an.values()) / acc >= T["B3"]
             tot = sum(e["tests"]["total"] for e in an.values())
-            B["B4_testability_ge_0.60"] = tot > 0 and regs / tot >= 0.60
-            B["B5_informativeness_ge_0.40"] = regs > 0 and sum(e["tests"]["informative"] for e in an.values()) / regs >= 0.40
+            B["B4_testability_ge_0.60"] = tot > 0 and regs / tot >= T["B4"]
+            B["B5_informativeness_ge_0.40"] = regs > 0 and sum(e["tests"]["informative"] for e in an.values()) / regs >= T["B5"]
     useful = {k: sum(e["hypotheses"]["useful_validated"] for e in by_o.values()) for k, by_o in ev.items()}
     paid = float(spend[0])
     return {"experiment_id": exp_id, "version": EXPERIMENT_VERSION, "market": market.id, "origins": origins,
             "evaluate_as_of": evaluate_as_of, "live": live, "approval_id": approval_id, "model": cfg["model"],
             "training_cutoff": cfg.get("training_cutoff"), "preflight": pf, "plan": plan, "smoke": smoke,
-            "evaluations": ev, "comparisons": comp, "criteria": CRITERIA, "criteria_results": {**A, **B},
+            "evaluations": ev, "comparisons": comp, "criteria": CRITERIA, "thresholds": THRESHOLDS,
+            "criteria_hash": CRITERIA_HASH, "criteria_results": {**A, **B},
+            "result_classes": {k: RESULT_CLASS[k] for k in KINDS},
+            "informative_refutations": {k: sum(e["hypotheses"]["informative_refutations"] for e in by_o.values())
+                                        for k, by_o in ev.items()},
+            "efficiency": efficiency(ev, docs),
             "useful_validated_results": useful,
             "cost": {"live_spend_usd": paid, "ledger_attempts": spend[1], "cap_usd": max_usd,
                      "cost_per_useful_result_usd": (paid / useful["anthropic"]) if useful.get("anthropic") else None},
@@ -254,25 +280,53 @@ def _report(exp_id, market, origins, evaluate_as_of, pf, plan, smoke, docs, spen
 
 def markdown(r: dict) -> str:
     L = [f"# R2 live validation {r['experiment_id']} ({'LIVE' if r['live'] else 'PLAN / DRY RUN'})", "",
+         "> **Scope.** This experiment establishes feasibility and preliminary intelligence quality. It does NOT establish "
+         "statistical superiority over the baselines or causal validity: two origins give a handful of tests, survival of a "
+         "test is not causal proof, and results on windows published before the model's training cutoff may reflect "
+         "remembered outcomes. Workforce classes: **live_ai** = Claude (paid), **mock_not_intelligence** = scripted pipeline "
+         "test, **deterministic_baseline** = fixed rules.", "",
+         f"Pre-registered criteria hash `{r['criteria_hash'][:16]}` (unchanged since registration).", "",
          f"Market `{r['market']}`; origins {', '.join(r['origins'])}; evaluated at {r['evaluate_as_of']}; model `{r['model']}` "
          f"(training cutoff {r['training_cutoff']}).", "", "## Preflight and leakage", ""]
     for p in r["preflight"]:
         L.append(f"- **{p['origin']}**: evidence to {p['evidence_last_quarter']}; test window {', '.join(p['test_window'])} "
                  f"published {p['window_published_by_evaluation']}; basis {p['window_availability_basis']}; "
                  f"**{p['leakage_label']}**")
+    label = {p["origin"]: p["leakage_label"] for p in r["preflight"]}
     L += ["", "## Results by workforce", "",
-          "| workforce | origin | status | proposed | accepted | original | restatement | falsifiable | testable | tests | "
+          "| workforce (class) | origin | status | proposed | accepted | original | restatement | falsifiable | testable | tests | "
           "informative | passed/failed/pending | survived/refuted/untested | useful | calls | tokens in/out | cost $ |",
           "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for k, by_o in r["evaluations"].items():
         for o, e in by_o.items():
             h, t, s = e["hypotheses"], e["tests"], e["hypotheses"]["status"]
             res = t["results"]
-            L.append(f"| {k} | {o} | {e['status']} | {h['proposed']} | {h['accepted']} | {h['original']} | {h['restatements']} | "
+            flag = f" [{label[o]}]" if k == "anthropic" else ""
+            L.append(f"| {k} ({r['result_classes'][k]}) | {o}{flag} | {e['status']} | {h['proposed']} | {h['accepted']} | {h['original']} | {h['restatements']} | "
                      f"{h['falsifiable']} | {h['testable']} | {t['registered']}/{t['total']} | {t['informative']} | "
                      f"{res.get('passed', 0)}/{res.get('failed', 0)}/{res.get('pending', 0)} | "
                      f"{s.get('survived', 0)}/{s.get('refuted', 0)}/{s.get('untested', 0)} | {h['useful_validated']} | "
                      f"{e['calls']['n']} | {e['calls']['input_tokens']}/{e['calls']['output_tokens']} | {e['cost_usd']:.6f} |")
+    L += ["", "## Informative refutations (useful learning, NOT successful prediction)", ""]
+    for k, by_o in r["evaluations"].items():
+        for o, e in by_o.items():
+            for x in e["informative_refutations"]:
+                L.append(f"- {k} {o} {x['ref']} ({', '.join(x['kinds']) or 'n/a'}): {x['statement']}")
+    L += [f"- totals: {r['informative_refutations']}", "", "## Per agent role", "",
+          "| workforce | origin | role | calls | tokens in/out | cost $ | latency s | cache hits | useful outputs |",
+          "|---|---|---|---|---|---|---|---|---|"]
+    for k, by_o in r["evaluations"].items():
+        for o, e in by_o.items():
+            for role, v in e["roles"].items():
+                L.append(f"| {k} | {o} | {role} | {v.get('calls', 0)} | {v.get('input_tokens', 0)}/{v.get('output_tokens', 0)} | "
+                         f"{v.get('cost_usd', 0):.6f} | {v.get('latency_s', 0)} | {v.get('cache_hits', 0)} | "
+                         f"{json.dumps(v.get('useful_outputs', {}))} |")
+    L += ["", "## Efficiency and intelligence per dollar", ""]
+    for key, v in r["efficiency"].items():
+        share = "n/a" if v["unused_metric_share"] is None else f"{v['unused_metric_share']:.0%}"
+        L.append(f"- **{key}** ({v['result_class']}): useful outputs {v['useful_outputs']}, cost ${v['cost_usd']:.6f}, "
+                 f"unused slice metrics {share}")
+        L += [f"  - {n}" for n in v["notes"]]
     L += ["", "## Criteria (pre-registered)", ""]
     for k, desc in r["criteria"].items():
         v = r["criteria_results"].get(k)
@@ -284,3 +338,58 @@ def markdown(r: dict) -> str:
           f"{r['verdict']['statistical_note']}. {r['verdict']['decision']}.", "", "## Leakage", ""]
     L += [f"- {x}" for x in r["leakage"]["historical"] + r["leakage"]["training_data"]] + ["", r["leakage"]["interpretation"]]
     return "\n".join(L)
+
+
+def execution_records(store, exp_id: str, approval_id: str | None, docs: dict) -> dict:
+    """Everything needed to audit the run: the approval (request, decisions, use), every spend-ledger attempt of the
+    experiment scope, every live agent call, and the experiment's events. No credentials are stored anywhere."""
+    live_ids = [d["input_id"] for d in docs["anthropic"].values()]
+    calls = [dict(r) for i in live_ids for r in store.conn.execute(
+        """SELECT run_id, agent, role, provider, model, input_tokens, output_tokens, actual_cost_usd, latency_seconds, cache_hit,
+           outcome, at, response_excerpt FROM agent_calls WHERE run_id=? ORDER BY rowid""", (i,))]
+    ledger = [dict(r) for r in store.conn.execute("SELECT * FROM llm_spend_ledger WHERE run_id LIKE ? ORDER BY entry_id",
+                                                  (exp_id + "%",))]
+    ev = [dict(r) for r in store.conn.execute(
+        "SELECT seq, event_type, layer, run_id, subject_id, payload_json, at, hash FROM events_log WHERE run_id LIKE ? "
+        "OR subject_id=? ORDER BY seq", (exp_id + "%", approval_id or ""))]
+    decisions = [dict(r) for r in store.conn.execute("SELECT * FROM approval_decisions WHERE approval_id=? ORDER BY rowid",
+                                                     (approval_id or "",))]
+    return {"experiment_id": exp_id, "approval": approvals.get(store, approval_id) if approval_id else None,
+            "approval_decisions": decisions, "spend_ledger": ledger, "live_agent_calls": calls, "events": ev,
+            "event_chain_verified": EventLog(store).verify()}
+
+
+def efficiency(ev: dict, docs: dict) -> dict:
+    """Where the money goes per role, and concrete opportunities to raise intelligence quality per dollar."""
+    from ..agents.loop_agents import GENERATOR_SYSTEM  # noqa: PLC0415
+    out = {}
+    for kind, by_o in docs.items():
+        for o, d in by_o.items():
+            e = ev[kind][o]
+            gen = e["roles"].get("hypothesis_generator", {})
+            strat = e["roles"].get("strategist", {})
+            slice_chars = max((gen.get("prompt_chars") or 0) - len(GENERATOR_SYSTEM) - 20, 0)
+            metric_ids = {m["id"] for m in d["evidence"]["metrics"]}
+            cited = {ln["to"] for st in d["stages"].values() for it in st for ln in it["links"] if ln["to"] in metric_ids}
+            cited |= {x for it in d["stages"]["strategic_options"] for x in it["data"].get("supporting_evidence", [])}
+            unused = 1 - (len(cited & metric_ids) / len(metric_ids)) if metric_ids else None
+            useful = e["hypotheses"]["useful_validated"] + e["hypotheses"]["informative_refutations"]
+            slice_tokens = slice_chars / 3.5  # rough; the provider reports exact tokens only in aggregate
+            notes = []
+            if strat.get("calls"):
+                notes.append(f"duplicated context: the strategist re-reads the full slice (~{slice_chars:,} characters) the "
+                             f"generator already read")
+            if unused is not None and unused > 0.5:
+                notes.append(f"unnecessary context: {unused:.0%} of slice metrics were never cited; a trimmed slice (cited "
+                             "templates and movers only) would cut input tokens")
+            if slice_tokens >= 512 and strat.get("calls"):
+                notes.append("caching opportunity: a shared slice prefix (>= 512 tokens) across generator and strategist calls "
+                             "would be read from the prompt cache at 0.1x input price on the second call (write premium "
+                             "1.25x on the first); prompt caching is currently off")
+            if e["hypotheses"]["restatements"]:
+                notes.append(f"{e['hypotheses']['restatements']} restatement(s) consumed output tokens without adding "
+                             "originality")
+            out[f"{kind}:{o}"] = {"result_class": RESULT_CLASS[kind], "cost_usd": e["cost_usd"],
+                                  "useful_outputs": useful, "useful_per_dollar": (useful / e["cost_usd"]) if e["cost_usd"] else None,
+                                  "slice_chars": slice_chars, "unused_metric_share": unused, "notes": notes}
+    return out

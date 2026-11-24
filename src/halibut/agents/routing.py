@@ -34,8 +34,10 @@ def load_routing(path=ROUTING) -> dict:
 
 class Router:
     def __init__(self, kind: str, store, scope: str, *, routing: dict | None = None, responders=None,
-                 max_usd: float | None = None, environ=None, http_client=None, cfg_overrides: dict | None = None):
-        """``cfg_overrides`` (tests only): merged into the provider config after loading it."""
+                 max_usd: float | None = None, environ=None, http_client=None, cfg_overrides: dict | None = None,
+                 provider_config: str | Path | None = None):
+        """``cfg_overrides`` (tests only): merged into the provider config after loading it. ``provider_config``: a
+        provider config path to use instead of the routing default (e.g. a temporary approved copy outside the repo)."""
         self.kind, self.store, self.scope = kind, store, scope
         self.routing = routing or load_routing()
         self._providers: dict = {}
@@ -47,7 +49,8 @@ class Router:
             self._mock = MockProvider(responders or responder, name=kind, model=f"{kind}-loop-v1")
         elif kind == "anthropic":
             from ..agents.llm import load_llm_config  # noqa: PLC0415
-            self._cfg_path = Path(__file__).resolve().parents[3] / self.routing["provider_config"]
+            self._cfg_path = Path(provider_config) if provider_config else \
+                Path(__file__).resolve().parents[3] / self.routing["provider_config"]
             self._max_usd, self._environ, self._http, self._over = max_usd, environ, http_client, cfg_overrides or {}
             self._load = load_llm_config
         else:

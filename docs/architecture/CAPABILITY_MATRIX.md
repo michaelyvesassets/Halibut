@@ -16,7 +16,7 @@ Audited 2026-11-23 at commit `f6e4904`; **updated after R1 and R2** (see [R1_IMP
 **Baseline facts**
 - About 11,400 lines of Python under `src/halibut/`.
 - 277 tests passing offline (`python -m pytest`): 233 from before R1, 26 added in R1, 18 added in R2.
-- One SQLite store with migrations 1–7 (`src/halibut/data/store.py`).
+- One SQLite store with migrations 1–8 (`src/halibut/data/store.py`).
 - One deployable CLI: `halibut` (`src/halibut/cli.py`).
 - Total live LLM spend to date: $0.02076. That is one Haiku smoke test and one 23-call
   benchmark, recorded in `llm_spend_ledger`.
@@ -172,7 +172,7 @@ Audited 2026-11-23 at commit `f6e4904`; **updated after R1 and R2** (see [R1_IMP
 |---|---|---|---|
 | CLI command surface | Implemented | `cli.py`, `analysis_cli.py`, `data/cli.py`, `intel/cli.py`, `learning/cli.py`, `agents/cli.py` | Commands listed below |
 | Reports for people and agents | Implemented | `intel/report.py` (Markdown and JSON), `empirical/report.py`, `export.py` | |
-| Approvals *(R2)* | Implemented | `control/approvals.py`, `approvals` + `approval_decisions` (migration 7), `halibut approvals` | Named-person decisions; agents can't request paid runs or actions; legal review + outcomes for experiments; enforced for paid investigations; sole-operator self-approval of small paid runs with attestation (`configs/governance/approvals.toml`, ADR-019). Legacy flags still gate the older commands |
+| Approvals *(R2)* | Implemented | `control/approvals.py`, `approvals` + `approval_decisions` (migration 7), `halibut approvals` | Named-person decisions; agents can't request paid runs or actions; legal review + outcomes for experiments; enforced for paid investigations; sole-operator self-approval of small paid runs with attestation (`configs/governance/approvals.toml`, ADR-019); single-use approvals (`approval_uses`, migration 8). Legacy flags still gate the older commands |
 | Budgets | Partial | LLM: `SpendGuard`; HTTP: `PoliteClient`; analyses: `time_limit_minutes` (`specs.py`) | No budget registry |
 | Audit trail *(R1)* | Partial | `epistemic/events.py` (`events_log`, hash-chained, append-only) for LLM calls, claims, validation outcomes, status changes, promotions and replays; older tables unchanged | Ingestion and fetches do not emit events yet |
 | Permissions and roles | Missing | — | |

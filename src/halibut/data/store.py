@@ -505,6 +505,18 @@ CREATE TRIGGER results_no_delete BEFORE DELETE ON test_results BEGIN SELECT RAIS
 CREATE TRIGGER inv_no_update BEFORE UPDATE ON investigations BEGIN SELECT RAISE(ABORT, 'investigations are append-only'); END;
 CREATE TRIGGER inv_no_delete BEFORE DELETE ON investigations BEGIN SELECT RAISE(ABORT, 'investigations are append-only'); END;
 """),
+    # 8: single-use approvals. A paid_run approval is bound to exactly one use (one experiment or one investigation
+    # spend scope); the primary key makes a second use impossible.
+    (8, """
+CREATE TABLE approval_uses (
+    approval_id TEXT PRIMARY KEY REFERENCES approvals(approval_id),
+    use_id TEXT NOT NULL,
+    purpose TEXT NOT NULL,
+    used_at TEXT NOT NULL
+);
+CREATE TRIGGER uses_no_update BEFORE UPDATE ON approval_uses BEGIN SELECT RAISE(ABORT, 'approval uses are append-only'); END;
+CREATE TRIGGER uses_no_delete BEFORE DELETE ON approval_uses BEGIN SELECT RAISE(ABORT, 'approval uses are append-only'); END;
+"""),
 ]
 
 
