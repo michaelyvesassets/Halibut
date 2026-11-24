@@ -22,6 +22,7 @@
 | [R1_IMPLEMENTATION.md](R1_IMPLEMENTATION.md) | What R1 built, how it behaves, acceptance results and known limits |
 | [R2_IMPLEMENTATION.md](R2_IMPLEMENTATION.md) | The first complete intelligence loop: what works, examples, limits |
 | [INVESTIGATION_RESULT_CONTRACT.md](INVESTIGATION_RESULT_CONTRACT.md) | The result document, statuses and read-only API for frontends |
+| [R2_LIVE_VALIDATION_PLAN.md](R2_LIVE_VALIDATION_PLAN.md) | The pre-registered first live R2 experiment: design, cost, criteria, leakage |
 
 ---
 

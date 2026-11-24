@@ -24,12 +24,20 @@ def add_investigation_commands(sub) -> None:
     r.add_argument("market")
     r.add_argument("--as-of")
     r.add_argument("--evaluate-at", help="later date at which pre-registered tests and forecasts are resolved")
-    r.add_argument("--agents", choices=("mock", "anthropic"), default="mock")
+    r.add_argument("--agents", choices=("mock", "reference", "anthropic"), default="mock")
     r.add_argument("--faults", action="store_true", help="mock agents: inject a fabricated evidence id")
     r.add_argument("--approval", help="granted paid_run approval id (required for --agents anthropic)")
     r.add_argument("--max-usd", type=float, help="hard spend cap for this investigation (paid agents)")
     r.add_argument("--dry-run", action="store_true", help="paid agents: print the worst-case cost and exit (no request)")
     r.add_argument("--out", default="results/investigations")
+    v = s.add_parser("validate", help="R2 live validation: reference vs mock vs Claude on identical evidence")
+    v.add_argument("market")
+    v.add_argument("--origins", nargs="+", required=True)
+    v.add_argument("--evaluate-at", required=True)
+    v.add_argument("--live", action="store_true", help="PAID: smoke test + one Claude investigation per origin")
+    v.add_argument("--approval", help="granted paid_run approval for r2_validation:<market id>")
+    v.add_argument("--max-usd", type=float, help="hard cap for all live calls of the experiment (smoke included)")
+    v.add_argument("--out", default="results/r2_validation")
     s.add_parser("list", help="list stored investigations")
     sh = s.add_parser("show", help="summary of one investigation (or --json for the full result document)")
     sh.add_argument("investigation_id")
@@ -56,6 +64,7 @@ def add_investigation_commands(sub) -> None:
     dc.add_argument("--legal-review")
     dc.add_argument("--outcomes")
     dc.add_argument("--evaluation")
+    dc.add_argument("--attestation", help="sole-operator self-approval: written statement of what is authorised and why")
     dc.add_argument("--note", default="")
     a.set_defaults(handler=_ap)
 
@@ -82,6 +91,22 @@ def _inv(args) -> int:
                 return 2
             print(json.dumps(doc, indent=1, default=str) if args.json else summary(doc))
             return 0
+        if args.inv_command == "validate":
+            from .live_validation import markdown, run_validation  # noqa: PLC0415
+            try:
+                rep = run_validation(store, args.market, args.origins, args.evaluate_at, live=args.live,
+                                     approval_id=args.approval, max_usd=args.max_usd, out_dir=args.out)
+            except AuthorizationError as exc:
+                print(f"refused: {exc}", file=sys.stderr)
+                return 3
+            print(markdown(rep))
+            print(f"\nresults: {rep['output_dir']}")
+            if not args.live:
+                pl = rep["plan"]
+                print(f"\nLIVE PLAN: {pl['calls']} calls (max {pl['max_attempts']} attempts); worst case ${pl['worst_case_usd']:.4f}, "
+                      f"with retries ${pl['worst_case_with_retries_usd']:.4f}; cap {pl['cap_usd']}; "
+                      f"fits without retries: {pl['fits_cap_without_retries']}, with retries: {pl['fits_cap_with_retries']}")
+            return 0 if (not args.live or rep["verdict"]["pipeline_ready"]) else 4
         if args.agents == "anthropic" and args.dry_run:
             print(plan_cost(args.max_usd))
             return 0
@@ -173,9 +198,11 @@ def _ap(args) -> int:
             print(ap.request(store, args.kind, args.subject, args.by, max_usd=args.max_usd, payload={"note": args.note}))
             return 0
         ev = {k: v for k, v in (("legal_review_ref", args.legal_review), ("measurable_outcomes", args.outcomes),
-                                ("evaluation_id", args.evaluation)) if v}
+                                ("evaluation_id", args.evaluation), ("attestation", args.attestation)) if v}
         a = ap.decide(store, args.approval_id, args.decision, args.by, note=args.note, evidence=ev)
-        print(f"{a['approval_id']}: {a['status']} by {a['decided_by']}")
+        print(f"{a['approval_id']}: {a['status']} by {a['decided_by']}"
+              + (" (self-approved under sole-operator policy "
+                 f"{a['decision_evidence']['policy_version']})" if (a["decision_evidence"] or {}).get("self_approved_under_policy") else ""))
         return 0
     except (ap.AuthorizationError, KeyError, ValueError) as exc:
         print(f"refused: {exc}", file=sys.stderr)

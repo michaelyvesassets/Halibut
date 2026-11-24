@@ -93,7 +93,8 @@ flowchart LR
 
 > **Status: implemented offline 2026-11-23.** All eight layers have a lightweight working increment.
 > UK cars runs end to end on real data with mock agents, and a fictional non-vehicle market runs on the
-> industry-neutral panel. 277 tests pass. Not yet done: acceptance item 3 (one approved Haiku run).
+> industry-neutral panel. 277 tests pass. Not yet done: acceptance item 3 (one approved Haiku run); its
+> experiment is prepared in [R2_LIVE_VALIDATION_PLAN.md](R2_LIVE_VALIDATION_PLAN.md) and awaits execution approval.
 > See [R2_IMPLEMENTATION.md](R2_IMPLEMENTATION.md) for results and limits.
 - **Scope**, one lightweight increment per layer:
 

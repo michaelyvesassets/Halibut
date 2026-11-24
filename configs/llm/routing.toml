@@ -7,10 +7,13 @@ provider_config = "configs/llm/anthropic.toml"
 default_model = "claude-haiku-5-5"
 
 [roles.hypothesis_generator]
-max_output_tokens = 5000
+# 6 hypotheses at their schema length limits need ~12k output tokens; a lower cap risks truncation (benchmark F4)
+max_output_tokens = 12000
 
 [roles.loop_critic]
-max_output_tokens = 1800
+# up to 3 critiques x 6 hypotheses (~2.2k tokens at the schema limits)
+max_output_tokens = 3000
 
 [roles.strategist]
-max_output_tokens = 4000
+# up to 4 options (~3.5k tokens at the schema limits)
+max_output_tokens = 5000

@@ -140,6 +140,7 @@ Audited 2026-11-23 at commit `f6e4904`; **updated after R1 and R2** (see [R1_IMP
 | Versioned evaluation rule | Implemented | `learning/evaluate.py` (`paired-dev-holdout-v1`) | |
 | Promotion with named approver; rollback | Implemented | `memory.promote/rollback`; `halibut learn promote --approved-by` | No promotions recorded yet |
 | Experiment lineage | Implemented | `learning/lineage.py`, `experiments` | |
+| R2 live validation runner (reference vs mock vs Claude) | Implemented (offline-tested; not run live) | `investigation/live_validation.py`, `investigation/evaluation.py`; `halibut investigation validate` | Pre-registered criteria; see [R2_LIVE_VALIDATION_PLAN.md](R2_LIVE_VALIDATION_PLAN.md) |
 | LLM benchmark against reference | Implemented | `intel/benchmark.py` (plan on a throwaway copy, snapshot-hash check) | *(R1)* R1 failure taxonomy; `overlap_with_reference`; conditional-critic rule reported |
 | Offline reconstruction of a past run *(R1)* | Implemented | `intel/benchmark.py:reconstruct`, `halibut intel benchmark --reconstruct` | Cached replies + recorded outcomes; no requests; reproduced the Haiku benchmark exactly |
 | Cost per useful validated result | Partial | `intel/replay.py:summarize`, `intel/benchmark.py` | *(R1)* Counts unique predictions; the overlap with the reference is reported, but the ratio itself does not yet discount it |
@@ -171,7 +172,7 @@ Audited 2026-11-23 at commit `f6e4904`; **updated after R1 and R2** (see [R1_IMP
 |---|---|---|---|
 | CLI command surface | Implemented | `cli.py`, `analysis_cli.py`, `data/cli.py`, `intel/cli.py`, `learning/cli.py`, `agents/cli.py` | Commands listed below |
 | Reports for people and agents | Implemented | `intel/report.py` (Markdown and JSON), `empirical/report.py`, `export.py` | |
-| Approvals *(R2)* | Implemented | `control/approvals.py`, `approvals` + `approval_decisions` (migration 7), `halibut approvals` | Named-person decisions; agents can't request paid runs or actions; legal review + outcomes for experiments; enforced for paid investigations. Legacy flags still gate the older commands |
+| Approvals *(R2)* | Implemented | `control/approvals.py`, `approvals` + `approval_decisions` (migration 7), `halibut approvals` | Named-person decisions; agents can't request paid runs or actions; legal review + outcomes for experiments; enforced for paid investigations; sole-operator self-approval of small paid runs with attestation (`configs/governance/approvals.toml`, ADR-019). Legacy flags still gate the older commands |
 | Budgets | Partial | LLM: `SpendGuard`; HTTP: `PoliteClient`; analyses: `time_limit_minutes` (`specs.py`) | No budget registry |
 | Audit trail *(R1)* | Partial | `epistemic/events.py` (`events_log`, hash-chained, append-only) for LLM calls, claims, validation outcomes, status changes, promotions and replays; older tables unchanged | Ingestion and fetches do not emit events yet |
 | Permissions and roles | Missing | — | |

@@ -1,0 +1,16 @@
+# Approval governance policy (L8 control plane). Versioned; changes need an ADR (ADR-019).
+#
+# Default rule: the person who decides an approval must differ from the person who requested it.
+# SOLE-OPERATOR MODE exists because Halibut currently has one human operator (the founder). It permits
+# self-approval ONLY when every condition below holds; each such decision records the policy version and
+# the operator's written attestation, and emits an auditable 'approval.granted' event flagged
+# self_approved_under_policy. Agents and the engine can never use it.
+schema_version = "1.0"
+policy_version = "approvals-policy-v1"
+
+[sole_operator]
+enabled = true
+operator = "founder"
+allowed_kinds = ["paid_run"]          # never experiments, external actions, promotions or new sources
+max_usd_per_approval = 0.10           # a self-approved paid run may not exceed this ceiling
+attestation_min_chars = 40            # the attestation must state what is authorised and why

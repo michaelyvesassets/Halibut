@@ -63,8 +63,11 @@ def call_role(router, store, role: str, payload: dict, schema: dict, run_id: str
         record_call(store, run_id, agent, role, None, ph, outcome=f"error: {exc}"[:200], provider=provider.name,
                     model=provider.model)
         return {"data": None, "response": None, "outcome": f"error: {exc}"[:200], "failure_class": "call.error",
-                "prompt_hash": ph, "error": str(exc)[:300]}
+                "prompt_hash": ph, "error": str(exc)[:300], "prompt_chars": len(system) + len(user),
+                "schema_chars": len(json.dumps(schema)), "max_output_tokens": max_out, "stop_reason": None}
     record_call(store, run_id, agent, role, r, ph)
     outcome = "ok" if r.data is not None else store.conn.execute(
         "SELECT outcome FROM agent_calls WHERE run_id=? AND prompt_hash=? ORDER BY rowid DESC LIMIT 1", (run_id, ph)).fetchone()[0]
-    return {"data": r.data, "response": r, "outcome": outcome, "failure_class": classify_outcome(outcome), "prompt_hash": ph}
+    return {"data": r.data, "response": r, "outcome": outcome, "failure_class": classify_outcome(outcome), "prompt_hash": ph,
+            "prompt_chars": len(system) + len(user), "schema_chars": len(json.dumps(schema)), "max_output_tokens": max_out,
+            "stop_reason": getattr(r, "stop_reason", None)}

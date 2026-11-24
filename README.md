@@ -72,6 +72,7 @@ halibut learn score [--as-of DATE]        # score predictions whose outcomes are
 halibut investigation run configs/intel/markets/uk_cars_bev_v1.toml --as-of 2025-05-23 --evaluate-at 2026-11-23
 halibut investigation run tests/fixtures/market_plant_milk_panel.toml --as-of 2024-06-30 --evaluate-at 2025-06-30
 halibut investigation list | show ID [--json] | schema
+halibut investigation validate configs/intel/markets/uk_cars_bev_v1.toml --origins 2025-11-23 2026-05-23 --evaluate-at 2026-11-23 --max-usd 0.06   # plan; add --live --approval ID to run
 halibut approvals list | request paid_run investigation:MARKET --by NAME --max-usd X | decide ID granted --by NAME
 
 # Learning memory and evaluation (Phase 4)

@@ -252,7 +252,8 @@ def conservative_tokens(text: str) -> int:
 
 PRICE_KEYS = ("input_per_mtok_usd", "output_per_mtok_usd", "cache_write_5m_per_mtok_usd", "cache_write_1h_per_mtok_usd",
               "cache_read_per_mtok_usd")
-MODEL_KEYS = PRICE_KEYS + ("thinking", "effort", "pricing_source", "long_context_threshold_tokens", "long_context")
+MODEL_KEYS = PRICE_KEYS + ("thinking", "effort", "pricing_source", "long_context_threshold_tokens", "long_context",
+                           "training_cutoff", "training_cutoff_source")
 
 
 def load_llm_config(path, model: str | None = None) -> dict:

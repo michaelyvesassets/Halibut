@@ -88,7 +88,9 @@ class _Run:
 def run_investigation(store, market_path, *, as_of: str | None = None, evaluate_as_of: str | None = None,
                       agents: str = "mock", router: Router | None = None, approval_id: str | None = None,
                       max_usd: float | None = None, tenant: str = "public", faults: bool = False, decision: str | None = None,
-                      log=print) -> dict:
+                      approval_subject: str | None = None, log=print) -> dict:
+    """``approval_subject`` (default ``investigation:<market id>``): the subject of the granted paid_run approval
+    that authorizes paid agents (a validation experiment authorizes several investigations with one approval)."""
     market_path = Path(market_path)
     market = load_market(market_path)
     spec_sha = hashlib.sha256(market_path.read_bytes()).hexdigest()
@@ -98,10 +100,10 @@ def run_investigation(store, market_path, *, as_of: str | None = None, evaluate_
     t_eval = to_timestamp(evaluate_as_of) if evaluate_as_of else None
     if t_eval and t_eval <= t0:
         raise ValueError("evaluate_as_of must be after as_of")
-    if agents != "mock":
+    if agents not in ("mock", "reference"):  # paid agents
         if max_usd is None:
             raise approvals.AuthorizationError("paid agents need --max-usd")
-        approvals.require(store, approval_id, "paid_run", f"investigation:{market.id}", cost_usd=max_usd)
+        approvals.require(store, approval_id, "paid_run", approval_subject or f"investigation:{market.id}", cost_usd=max_usd)
     pre_id = "inv:" + _h([spec_sha, t0, t_eval, agents, PROMPT_VERSION, faults, tenant, reg.RULE])[:16]
     router = router or Router(agents, store, scope=pre_id, max_usd=max_usd)
     input_id = "inv:" + _h([spec_sha, t0, t_eval, router.fingerprint, PROMPT_VERSION, faults, tenant, reg.RULE])[:16]
@@ -115,7 +117,7 @@ def run_investigation(store, market_path, *, as_of: str | None = None, evaluate_
                                          f"({market.mode})",
                  "as_of": t0, "evaluate_as_of": t_eval, "horizon_quarters": 2, "jurisdiction": market.geography,
                  "success_metric": "segment_share" if (market.transactions or {}).get("segment") else "share",
-                 "budget_usd": max_usd if agents != "mock" else 0.0}
+                 "budget_usd": max_usd if agents not in ("mock", "reference") else 0.0}
     ctx = {"market": market, "objective": objective, "router": router, "spec_sha": spec_sha, "agents": agents,
            "faults": faults, "t_eval": t_eval}
     status, reason, evidence, world = "completed", None, {"coverage": {}, "panel": {}, "metrics": []}, \
@@ -160,7 +162,9 @@ def _loop(R: _Run, ctx: dict, panel, evidence: dict):
         slice_["mock_faults"] = True
     exists = (lambda e: e in metrics or panel.exists(e))  # noqa: E731
     allowed = allowed_numbers(metrics)
+    fingerprint = _h(sorted((f"{k[0]}|{k[1]}", sorted((p, v[0]) for p, v in c.items())) for k, c in panel.cells.items()))
     evidence = {"coverage": cov, "panel": {"source": panel.source, "universe": panel.universe, "segment": panel.segment,
+                                           "fingerprint": fingerprint,
                                            "first_period": panel.periods[0], "last_period": panel.periods[-1],
                                            "n_periods": len(panel.periods), "snapshot": panel.snapshot},
                 "metrics": [art.item(m["id"], "derived_metric", "recorded", f"{m['template']} {m['entity']} {m['window']}",
@@ -563,7 +567,9 @@ def _call_summary(role, res) -> dict:
             "provider": getattr(r, "provider", None), "model": getattr(r, "model", None),
             "input_tokens": getattr(r, "input_tokens", 0), "output_tokens": getattr(r, "output_tokens", 0),
             "cached": bool(getattr(r, "cached", False)), "actual_cost_usd": getattr(r, "actual_cost_usd", None),
-            "latency_seconds": getattr(r, "latency_seconds", 0.0)}
+            "latency_seconds": getattr(r, "latency_seconds", 0.0), "prompt_chars": res.get("prompt_chars"),
+            "schema_chars": res.get("schema_chars"), "max_output_tokens": res.get("max_output_tokens"),
+            "stop_reason": res.get("stop_reason")}
 
 
 def _document(R: _Run, ctx, status, reason, evidence, world, panel) -> dict:

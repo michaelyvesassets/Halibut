@@ -3,7 +3,9 @@
 An approval is a REQUEST (``approvals``) plus append-only DECISIONS (``approval_decisions``). Rules:
 
 - Only a named person decides: ``decided_by`` must not be empty, ``agent:...`` or ``engine:...``, and must
-  differ from the requester.
+  differ from the requester, EXCEPT under the sole-operator policy (``configs/governance/approvals.toml``,
+  ADR-019): the configured operator may self-approve a ``paid_run`` up to the policy ceiling, with a written
+  attestation; the decision records the policy version and is flagged ``self_approved_under_policy``.
 - Agents may not even REQUEST a paid run or an external action. A generated strategy therefore can never
   lead to a paid request or an external action without a person asking for it and a person granting it.
 - Granting an ``experiment`` or ``external_action`` needs a legal/compliance review reference and
@@ -20,11 +22,25 @@ from __future__ import annotations
 import hashlib
 import json
 import uuid
+from pathlib import Path
 
 from ..data.store import to_timestamp, utc_now
 from ..epistemic.events import EventLog
 
 KINDS = ("paid_run", "experiment", "external_action", "promotion", "new_source")
+POLICY = Path(__file__).resolve().parents[3] / "configs" / "governance" / "approvals.toml"
+
+
+def load_policy(path=POLICY) -> dict:
+    from ..config import load_raw  # noqa: PLC0415
+    raw = load_raw(path)
+    if raw.get("schema_version") != "1.0" or not raw.get("policy_version"):
+        raise ValueError("approvals policy: schema_version '1.0' and policy_version are required")
+    so = raw.get("sole_operator", {})
+    return {"policy_version": raw["policy_version"], "sole_operator": {
+        "enabled": bool(so.get("enabled", False)), "operator": so.get("operator", ""),
+        "allowed_kinds": tuple(so.get("allowed_kinds", ())), "max_usd_per_approval": float(so.get("max_usd_per_approval", 0)),
+        "attestation_min_chars": int(so.get("attestation_min_chars", 40))}}
 AGENT_FORBIDDEN_REQUESTS = ("paid_run", "external_action")
 
 
@@ -72,7 +88,8 @@ def get(store, approval_id: str) -> dict | None:
             "decision_evidence": json.loads(d["evidence_json"]) if d else None}
 
 
-def decide(store, approval_id: str, decision: str, decided_by: str, *, note: str = "", evidence: dict | None = None) -> dict:
+def decide(store, approval_id: str, decision: str, decided_by: str, *, note: str = "", evidence: dict | None = None,
+           policy: dict | None = None) -> dict:
     a = get(store, approval_id)
     if a is None:
         raise KeyError(approval_id)
@@ -80,9 +97,26 @@ def decide(store, approval_id: str, decision: str, decided_by: str, *, note: str
         raise ValueError("decision must be granted, denied or revoked")
     if not _is_person(decided_by):
         raise AuthorizationError("approval decisions require a named person (not an agent or the engine)")
-    if decided_by == a["requested_by"]:
-        raise AuthorizationError("the requester cannot approve their own request")
-    ev = evidence or {}
+    ev = dict(evidence or {})
+    if decided_by == a["requested_by"] and decision == "granted":
+        pol = policy or load_policy()
+        so = pol["sole_operator"]
+        why = None
+        if not so["enabled"]:
+            why = "sole-operator mode is disabled"
+        elif decided_by != so["operator"]:
+            why = f"only the configured sole operator ({so['operator']!r}) may self-approve"
+        elif a["kind"] not in so["allowed_kinds"]:
+            why = f"self-approval is not allowed for {a['kind']}"
+        elif a["max_usd"] is None or a["max_usd"] > so["max_usd_per_approval"]:
+            why = f"self-approval is limited to ${so['max_usd_per_approval']} (requested ${a['max_usd']})"
+        elif len((ev.get("attestation") or "").strip()) < so["attestation_min_chars"]:
+            why = f"self-approval needs a written attestation of at least {so['attestation_min_chars']} characters"
+        if why:
+            raise AuthorizationError(f"the requester cannot approve their own request: {why}")
+        ev.update({"self_approved_under_policy": True, "policy_version": pol["policy_version"]})
+    elif decided_by == a["requested_by"] and decision != "revoked":
+        raise AuthorizationError("the requester cannot decide their own request")
     if decision == "granted":
         if a["kind"] in ("experiment", "external_action"):
             if not ev.get("legal_review_ref"):
@@ -95,7 +129,9 @@ def decide(store, approval_id: str, decision: str, decided_by: str, *, note: str
             raise AuthorizationError("already granted")
     store.conn.execute("INSERT INTO approval_decisions VALUES (?,?,?,?,?,?)",
                        (approval_id, decision, decided_by, utc_now(), note, json.dumps(ev, sort_keys=True, default=str)))
-    EventLog(store).append(f"approval.{decision}", "L8", {"kind": a["kind"], "subject": a["subject"], "note": note},
+    EventLog(store).append(f"approval.{decision}", "L8", {"kind": a["kind"], "subject": a["subject"], "note": note,
+                                                         "self_approved_under_policy": bool(ev.get("self_approved_under_policy")),
+                                                         "policy_version": ev.get("policy_version")},
                            subject_id=approval_id, provenance={"decided_by": decided_by}, tenant=a["tenant"])
     store.conn.commit()
     return get(store, approval_id)

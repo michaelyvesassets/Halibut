@@ -22,7 +22,14 @@ def _m(slice_, template, window, entity):
 
 
 def _movers(s, template):
-    ch = [a for a in s["anomalies"] if a.get("kind") == "change" and a.get("template") == template]
+    """L4-vs-P4 changes for every competitor with both windows (from the slice metrics, largest gain first)."""
+    by = {}
+    for r in s["metrics"]:
+        if r["template"] == template and r["entity"] != "market":
+            by.setdefault(r["entity"], {})[r["window"]] = r
+    ch = [{"kind": "change", "template": template, "entity": e, "L4_pct": round(w["L4"]["value_pct"], 2),
+           "P4_pct": round(w["P4"]["value_pct"], 2), "change_pp": round(w["L4"]["value_pct"] - w["P4"]["value_pct"], 2),
+           "evidence": [w["L4"]["id"], w["P4"]["id"]]} for e, w in by.items() if "L4" in w and "P4" in w]
     return sorted(ch, key=lambda a: -a["change_pp"])
 
 

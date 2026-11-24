@@ -34,20 +34,24 @@ def load_routing(path=ROUTING) -> dict:
 
 class Router:
     def __init__(self, kind: str, store, scope: str, *, routing: dict | None = None, responders=None,
-                 max_usd: float | None = None, environ=None, http_client=None):
+                 max_usd: float | None = None, environ=None, http_client=None, cfg_overrides: dict | None = None):
+        """``cfg_overrides`` (tests only): merged into the provider config after loading it."""
         self.kind, self.store, self.scope = kind, store, scope
         self.routing = routing or load_routing()
         self._providers: dict = {}
-        if kind == "mock":
-            from .mock_loop import responder  # noqa: PLC0415
-            self._mock = MockProvider(responders or responder, name="mock", model="mock-loop-v1")
+        if kind in ("mock", "reference"):
+            if kind == "mock":
+                from .mock_loop import responder  # noqa: PLC0415
+            else:
+                from .reference_loop import responder  # noqa: PLC0415
+            self._mock = MockProvider(responders or responder, name=kind, model=f"{kind}-loop-v1")
         elif kind == "anthropic":
             from ..agents.llm import load_llm_config  # noqa: PLC0415
             self._cfg_path = Path(__file__).resolve().parents[3] / self.routing["provider_config"]
-            self._max_usd, self._environ, self._http = max_usd, environ, http_client
+            self._max_usd, self._environ, self._http, self._over = max_usd, environ, http_client, cfg_overrides or {}
             self._load = load_llm_config
         else:
-            raise ValueError(f"unknown agent kind {kind!r} (mock or anthropic)")
+            raise ValueError(f"unknown agent kind {kind!r} (mock, reference or anthropic)")
 
     @property
     def fingerprint(self) -> str:
@@ -55,20 +59,20 @@ class Router:
 
     def describe(self) -> dict:
         return {"kind": self.kind, "fingerprint": self.fingerprint,
-                "roles": {r: {**v, "model": v["model"] if self.kind != "mock" else "mock-loop-v1"}
+                "roles": {r: {**v, "model": v["model"] if self.kind == "anthropic" else f"{self.kind}-loop-v1"}
                           for r, v in self.routing["roles"].items()}}
 
     def provider(self, role: str) -> tuple[CachedProvider, int]:
         spec = self.routing["roles"][role]
-        if self.kind == "mock":
-            key = "mock"
+        if self.kind in ("mock", "reference"):
+            key = self.kind
             if key not in self._providers:
                 self._providers[key] = CachedProvider(self._mock, self.store)
             return self._providers[key], spec["max_output_tokens"]
         model = spec["model"]
         if model not in self._providers:
             from .anthropic_provider import AnthropicProvider  # noqa: PLC0415
-            cfg = self._load(self._cfg_path, model=model)
+            cfg = {**self._load(self._cfg_path, model=model), **self._over}
             if self._max_usd is not None:
                 cfg["max_spend_usd_per_run"] = min(float(cfg["max_spend_usd_per_run"]), float(self._max_usd))
             self._providers[model] = CachedProvider(AnthropicProvider(cfg, self.store, self.scope, environ=self._environ,

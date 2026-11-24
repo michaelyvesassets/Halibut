@@ -51,10 +51,11 @@ def reference_library(ledger, market, panel, metrics: dict, exclude_run: str | N
     """Implication signatures that do not count as original (see module docstring). ``exclude_run``: the
     current investigation's input id, so an identical rerun does not judge itself against its own earlier claims."""
     lib = set()
-    for e in panel.entities:
-        a, b = metrics.get(panel.metric_id("share", "L4", e)), metrics.get(panel.metric_id("share", "P4", e))
-        if a and b:
-            lib.add(("share", e, "", "increase_vs_L4" if a["value"] > b["value"] else "decrease_vs_L4"))
+    for e in panel.entities:  # trend continuation of each competitor's share, segment share and segment mix
+        for t in ("share", "segment_share", "segment_mix"):
+            a, b = metrics.get(panel.metric_id(t, "L4", e)), metrics.get(panel.metric_id(t, "P4", e))
+            if a and b:
+                lib.add((t, e, "", "increase_vs_L4" if a["value"] > b["value"] else "decrease_vs_L4"))
     if market.focal and market.target:
         for c in ("increase_vs_L4", "decrease_vs_L4"):
             lib.add(("segment_share_gap", market.focal, market.target, c))

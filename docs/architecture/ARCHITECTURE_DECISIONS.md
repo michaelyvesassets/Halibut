@@ -322,3 +322,21 @@ Scope authorised: **R1 only**. No paid API calls.
   - new industries need an adapter or a CSV, not changes to the loop.
 - **Consequences:** quarterly panels only in R2; other periodicities and measures need new templates.
 
+### ADR-019
+**Sole-operator approval policy: a bounded, attested, auditable exception to "requester ≠ approver".**
+- **Status:** Proposed (2026-11-24), for founder acceptance together with the R2 live validation.
+- **Context:** Halibut has one human operator, so the R2 rule that the decider must differ from the
+  requester cannot be satisfied for paid runs. Bypassing it (fake names, a second account) would make the
+  audit trail untrue.
+- **Decision:**
+  - `configs/governance/approvals.toml` (policy `approvals-policy-v1`) names the sole operator;
+  - that operator may self-approve a `paid_run` only up to $0.10 per approval, with a written attestation of
+    at least 40 characters;
+  - the decision records `self_approved_under_policy: true` and the policy version, and the
+    `approval.granted` event carries the same flag;
+  - it never covers experiments, external actions, promotions or new sources, and never agents or the
+    engine;
+  - the provider config's `approved` flag stays a second, independent key.
+- **Consequences:** every self-approval is visible as such. Raising the ceiling or adding kinds needs a new
+  policy version and ADR. With a second person, the policy should be disabled.
+
