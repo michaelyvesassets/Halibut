@@ -1,0 +1,562 @@
+{
+ "provenance": {
+  "experiment": "r2v-b16fc9281536",
+  "model": "claude-haiku-5-5",
+  "note": "model output only; recorded verbatim for offline regression tests and the postmortem",
+  "prompt_version": "loop.v1",
+  "request_ids": {
+   "2025-11-23": "req_011ChLwmSvd7AmDDiw1bcY5m",
+   "2026-05-23": "req_011ChLwo32W5FacEvPgAsxG7"
+  },
+  "schema_version": "hypothesis_original.v1",
+  "source": "llm_cache (complete parsed replies, stop_reason end_turn)"
+ },
+ "replies": [
+  {
+   "cached_at": "2026-11-24T02:14:06Z",
+   "data": {
+    "explanations": [
+     {
+      "evidence": [
+       "metric:segment_mix:L4:byd",
+       "metric:segment_mix:P4:byd"
+      ],
+      "statement": "BYD's within-segment mix in battery electric fell from 100.00% (P4) to 62.63% (L4), a drop of 37.37 percentage points, indicating BYD's BEV registrations are no longer its sole volume source as the brand's share of its own segment changed."
+     },
+     {
+      "evidence": [
+       "metric:segment_mix:L4:ford",
+       "metric:segment_mix:P4:ford"
+      ],
+      "statement": "Ford's battery electric mix rose from 3.05% (P4) to 15.28% (L4), a gain of 12.23 percentage points, the largest upward mix shift among the anomalies."
+     },
+     {
+      "evidence": [
+       "metric:segment_mix:L4:volkswagen",
+       "metric:segment_mix:P4:volkswagen",
+       "metric:segment_share:L4:volkswagen",
+       "metric:segment_share:P4:volkswagen"
+      ],
+      "statement": "Volkswagen's battery electric mix increased from 10.69% (P4) to 18.65% (L4), a gain of 7.96 percentage points, while its within-segment share also rose from 5.63% to 7.81%."
+     },
+     {
+      "evidence": [
+       "metric:segment_mix:L4:mg",
+       "metric:segment_mix:P4:mg",
+       "metric:segment_share:L4:mg",
+       "metric:segment_share:P4:mg"
+      ],
+      "statement": "MG's battery electric mix fell from 30.05% (P4) to 22.85% (L4), a decline of 7.20 percentage points, and its within-segment share fell from 7.81% to 4.14%, a decline of 3.67 percentage points."
+     },
+     {
+      "evidence": [
+       "metric:share:L4:tesla",
+       "metric:share:P4:tesla",
+       "metric:segment_share:L4:tesla",
+       "metric:segment_share:P4:tesla"
+      ],
+      "statement": "Tesla's total share edged up while its battery electric segment share fell, with a total-share change of 0.15 percentage points against a segment-share change of -2.76 percentage points, a divergence between total and within-segment performance."
+     }
+    ],
+    "hypotheses": [
+     {
+      "alternative_explanations": [
+       {
+        "discriminating_implication": "I1",
+        "statement": "BYD's BEV volume actually declined, reducing its segment share, independent of non-BEV growth"
+       }
+      ],
+      "assumptions": [
+       {
+        "kind": "measurement",
+        "statement": "Registration counts for BYD's non-BEV models are captured within the same DfT Cars universe"
+       },
+       {
+        "kind": "market_structure",
+        "statement": "No single BYD BEV model launch or withdrawal dominates the period"
+       }
+      ],
+      "conditions": [
+       "BYD's non-BEV volume grew over the L4 window relative to P4",
+       "Market-level BEV share was not materially different between windows"
+      ],
+      "mechanism": {
+       "cause": "Expansion of BYD's non-battery-electric registrations",
+       "direction": "decrease",
+       "effect_template": "segment_mix",
+       "pathway": "Rising total registrations outside the BEV segment reduce BEV share of BYD's own volume"
+      },
+      "model_request": {
+       "family": "none",
+       "numerical_assumptions": [],
+       "rationale": "Testable from segment shares without a fitted model."
+      },
+      "novelty_claim": "Attributes BYD's BEV mix collapse to denominator growth rather than BEV demand loss.",
+      "observable_implications": [
+       {
+        "comparator": "above_reference",
+        "description": "BYD's BEV segment share in the next two quarters stays at or above its L4 level, implying BEV volume is not the driver",
+        "entity": "byd",
+        "entity_b": "",
+        "id": "I1",
+        "reference_metric": "metric:segment_share:L4:byd",
+        "template": "segment_share",
+        "would_refute_if": "BYD's BEV segment share falls below its L4 value of 3.60%"
+       }
+      ],
+      "ref": "H1",
+      "refutation_criteria": "If BYD's BEV segment share declines materially in the test window, the dilution explanation is refuted.",
+      "statement": "BYD's battery electric share is being diluted by growth in its non-BEV registrations rather than by losses in BEV volume, so its BEV mix falls while its absolute BEV share is roughly stable.",
+      "supporting_evidence": [
+       "metric:segment_mix:L4:byd",
+       "metric:segment_mix:P4:byd",
+       "metric:segment_share:L4:byd",
+       "metric:segment_share:P4:byd"
+      ],
+      "uncertainty": {
+       "level": "medium",
+       "sources": [
+        "Non-BEV volume is not broken out in the slice",
+        "Only four quarters per window"
+       ]
+      }
+     },
+     {
+      "alternative_explanations": [
+       {
+        "discriminating_implication": "I2",
+        "statement": "Ford's BEV gain is a one-off fleet registration batch that will not recur"
+       }
+      ],
+      "assumptions": [
+       {
+        "kind": "competitive",
+        "statement": "Ford's BEV gain is driven by product availability rather than fleet-deal timing"
+       }
+      ],
+      "conditions": [
+       "Ford's BEV registrations are concentrated in a small number of models",
+       "Ford's total share is stable across the windows"
+      ],
+      "mechanism": {
+       "cause": "New or refreshed Ford battery electric models entering registrations",
+       "direction": "increase",
+       "effect_template": "segment_share",
+       "pathway": "Higher BEV volume raises Ford's BEV share of its own mix and its segment share"
+      },
+      "model_request": {
+       "family": "stat.holt",
+       "numerical_assumptions": [],
+       "rationale": "Smooth the quarterly Ford BEV segment share to test whether the level is sustained."
+      },
+      "novelty_claim": "Distinguishes a sustained product-led BEV step-up from a transient fleet batch.",
+      "observable_implications": [
+       {
+        "comparator": "above_reference",
+        "description": "Ford's BEV segment share stays at or above its L4 value of 3.99% in the next two quarters",
+        "entity": "ford",
+        "entity_b": "",
+        "id": "I2",
+        "reference_metric": "metric:segment_share:L4:ford",
+        "template": "segment_share",
+        "would_refute_if": "Ford's BEV segment share drops below 3.99%"
+       }
+      ],
+      "ref": "H2",
+      "refutation_criteria": "A decline in Ford's BEV segment share below its L4 level refutes persistence of the product-led gain.",
+      "statement": "Ford's gain in BEV mix reflects a discrete product-led step-up in battery electric registrations, not a broad market shift, and should persist through the test window.",
+      "supporting_evidence": [
+       "metric:segment_mix:L4:ford",
+       "metric:segment_mix:P4:ford",
+       "metric:segment_share:L4:ford",
+       "metric:segment_share:P4:ford"
+      ],
+      "uncertainty": {
+       "level": "medium",
+       "sources": [
+        "No model-level breakdown in the slice",
+        "Fleet timing not observable"
+       ]
+      }
+     },
+     {
+      "alternative_explanations": [
+       {
+        "discriminating_implication": "I3",
+        "statement": "VW and MG move independently, each responding to its own product cycle"
+       }
+      ],
+      "assumptions": [
+       {
+        "kind": "behavioural",
+        "statement": "Buyer substitution between VW and MG BEVs is material"
+       }
+      ],
+      "conditions": [
+       "Both brands compete in the same BEV price band",
+       "Total segment volume is roughly stable"
+      ],
+      "mechanism": {
+       "cause": "Competitive reallocation of battery electric demand between VW and MG",
+       "direction": "increase",
+       "effect_template": "segment_share_gap",
+       "pathway": "Shifts in buyer preference move BEV volume between the two brands"
+      },
+      "model_request": {
+       "family": "causal.did",
+       "numerical_assumptions": [],
+       "rationale": "Compare VW and MG BEV shares before and after the L4 window against the rest of the market."
+      },
+      "novelty_claim": "Proposes an inverse coupling between two specific brands' BEV shares rather than a market-wide trend.",
+      "observable_implications": [
+       {
+        "comparator": "above_reference",
+        "description": "Volkswagen's BEV segment share exceeds MG's in the next two quarters",
+        "entity": "volkswagen",
+        "entity_b": "mg",
+        "id": "I3",
+        "reference_metric": "metric:segment_share:L4:mg",
+        "template": "segment_share_gap",
+        "would_refute_if": "MG's BEV segment share recovers above its L4 level of 4.14% while VW's segment share stays at its L4 level of 7.81%"
+       }
+      ],
+      "ref": "H3",
+      "refutation_criteria": "MG recovering to or above its L4 BEV share while VW holds its gain refutes the inverse-trading mechanism.",
+      "statement": "Volkswagen and MG are trading BEV mix: VW's gain partly reflects share taken from MG's BEV segment, so the two move inversely over the test window.",
+      "supporting_evidence": [
+       "metric:segment_share:L4:volkswagen",
+       "metric:segment_share:P4:volkswagen",
+       "metric:segment_share:L4:mg",
+       "metric:segment_share:P4:mg"
+      ],
+      "uncertainty": {
+       "level": "high",
+       "sources": [
+        "Two-brand comparison on four quarters",
+        "Segment totals not in slice"
+       ]
+      }
+     },
+     {
+      "alternative_explanations": [
+       {
+        "discriminating_implication": "I4",
+        "statement": "Tesla's BEV decline reflects a pricing or model-cycle effect unrelated to competitors"
+       }
+      ],
+      "assumptions": [
+       {
+        "kind": "market_structure",
+        "statement": "Tesla's non-BEV registrations are non-trivial"
+       }
+      ],
+      "conditions": [
+       "Tesla's total share change remains near flat",
+       "Other BEV brands gained segment share over the window"
+      ],
+      "mechanism": {
+       "cause": "Competitive entry of other BEV brands into the segment",
+       "direction": "decrease",
+       "effect_template": "segment_share",
+       "pathway": "Higher BEV competition lowers Tesla's share of BEV volume while total volume is supported elsewhere"
+      },
+      "model_request": {
+       "family": "baseline.momentum",
+       "numerical_assumptions": [],
+       "rationale": "Compare continued segment decline against a momentum baseline to test whether the drop accelerates."
+      },
+      "novelty_claim": "Links the total-versus-segment divergence to competitor displacement inside the BEV segment specifically.",
+      "observable_implications": [
+       {
+        "comparator": "below_reference",
+        "description": "Tesla's BEV segment share remains below its L4 value of 11.39% in the next two quarters",
+        "entity": "tesla",
+        "entity_b": "",
+        "id": "I4",
+        "reference_metric": "metric:segment_share:L4:tesla",
+        "template": "segment_share",
+        "would_refute_if": "Tesla's BEV segment share rises above 11.39% while the BEV entrants' shares are stable"
+       }
+      ],
+      "ref": "H4",
+      "refutation_criteria": "A recovery of Tesla's BEV segment share above its L4 level, without a fall in competitor shares, refutes displacement.",
+      "statement": "Tesla's within-segment share is declining because its BEV registrations are being displaced by other BEV entrants, while its total share is held up by non-BEV volume.",
+      "supporting_evidence": [
+       "metric:share:L4:tesla",
+       "metric:share:P4:tesla",
+       "metric:segment_share:L4:tesla",
+       "metric:segment_share:P4:tesla"
+      ],
+      "uncertainty": {
+       "level": "medium",
+       "sources": [
+        "Competitor BEV share changes are not fully broken out in the slice"
+       ]
+      }
+     }
+    ]
+   },
+   "input_tokens": 10026,
+   "origin": "2025-11-23",
+   "output_tokens": 3596,
+   "text": "{\"explanations\":[{\"statement\":\"BYD's within-segment mix in battery electric fell from 100.00% (P4) to 62.63% (L4), a drop of 37.37 percentage points, indicating BYD's BEV registrations are no longer its sole volume source as the brand's share of its own segment changed.\",\"evidence\":[\"metric:segment_mix:L4:byd\",\"metric:segment_mix:P4:byd\"]},{\"statement\":\"Ford's battery electric mix rose from 3.05% (P4) to 15.28% (L4), a gain of 12.23 percentage points, the largest upward mix shift among the anomalies.\",\"evidence\":[\"metric:segment_mix:L4:ford\",\"metric:segment_mix:P4:ford\"]},{\"statement\":\"Volkswagen's battery electric mix increased from 10.69% (P4) to 18.65% (L4), a gain of 7.96 percentage points, while its within-segment share also rose from 5.63% to 7.81%.\",\"evidence\":[\"metric:segment_mix:L4:volkswagen\",\"metric:segment_mix:P4:volkswagen\",\"metric:segment_share:L4:volkswagen\",\"metric:segment_share:P4:volkswagen\"]},{\"statement\":\"MG's battery electric mix fell from 30.05% (P4) to 22.85% (L4), a decline of 7.20 percentage points, and its within-segment share fell from 7.81% to 4.14%, a decline of 3.67 percentage points.\",\"evidence\":[\"metric:segment_mix:L4:mg\",\"metric:segment_mix:P4:mg\",\"metric:segment_share:L4:mg\",\"metric:segment_share:P4:mg\"]},{\"statement\":\"Tesla's total share edged up while its battery electric segment share fell, with a total-share change of 0.15 percentage points against a segment-share change of -2.76 percentage points, a divergence between total and within-segment performance.\",\"evidence\":[\"metric:share:L4:tesla\",\"metric:share:P4:tesla\",\"metric:segment_share:L4:tesla\",\"metric:segment_share:P4:tesla\"]}],\"hypotheses\":[{\"ref\":\"H1\",\"statement\":\"BYD's battery electric share is being diluted by growth in its non-BEV registrations rather than by losses in BEV volume, so its BEV mix falls while its absolute BEV share is roughly stable.\",\"mechanism\":{\"cause\":\"Expansion of BYD's non-battery-electric registrations\",\"pathway\":\"Rising total registrations outside the BEV segment reduce BEV share of BYD's own volume\",\"effect_template\":\"segment_mix\",\"direction\":\"decrease\"},\"conditions\":[\"BYD's non-BEV volume grew over the L4 window relative to P4\",\"Market-level BEV share was not materially different between windows\"],\"assumptions\":[{\"statement\":\"Registration counts for BYD's non-BEV models are captured within the same DfT Cars universe\",\"kind\":\"measurement\"},{\"statement\":\"No single BYD BEV model launch or withdrawal dominates the period\",\"kind\":\"market_structure\"}],\"supporting_evidence\":[\"metric:segment_mix:L4:byd\",\"metric:segment_mix:P4:byd\",\"metric:segment_share:L4:byd\",\"metric:segment_share:P4:byd\"],\"alternative_explanations\":[{\"statement\":\"BYD's BEV volume actually declined, reducing its segment share, independent of non-BEV growth\",\"discriminating_implication\":\"I1\"}],\"observable_implications\":[{\"id\":\"I1\",\"template\":\"segment_share\",\"entity\":\"byd\",\"entity_b\":\"\",\"comparator\":\"above_reference\",\"reference_metric\":\"metric:segment_share:L4:byd\",\"description\":\"BYD's BEV segment share in the next two quarters stays at or above its L4 level, implying BEV volume is not the driver\",\"would_refute_if\":\"BYD's BEV segment share falls below its L4 value of 3.60%\"}],\"uncertainty\":{\"level\":\"medium\",\"sources\":[\"Non-BEV volume is not broken out in the slice\",\"Only four quarters per window\"]},\"refutation_criteria\":\"If BYD's BEV segment share declines materially in the test window, the dilution explanation is refuted.\",\"novelty_claim\":\"Attributes BYD's BEV mix collapse to denominator growth rather than BEV demand loss.\",\"model_request\":{\"family\":\"none\",\"rationale\":\"Testable from segment shares without a fitted model.\",\"numerical_assumptions\":[]}},{\"ref\":\"H2\",\"statement\":\"Ford's gain in BEV mix reflects a discrete product-led step-up in battery electric registrations, not a broad market shift, and should persist through the test window.\",\"mechanism\":{\"cause\":\"New or refreshed Ford battery electric models entering registrations\",\"pathway\":\"Higher BEV volume raises Ford's BEV share of its own mix and its segment share\",\"effect_template\":\"segment_share\",\"direction\":\"increase\"},\"conditions\":[\"Ford's BEV registrations are concentrated in a small number of models\",\"Ford's total share is stable across the windows\"],\"assumptions\":[{\"statement\":\"Ford's BEV gain is driven by product availability rather than fleet-deal timing\",\"kind\":\"competitive\"}],\"supporting_evidence\":[\"metric:segment_mix:L4:ford\",\"metric:segment_mix:P4:ford\",\"metric:segment_share:L4:ford\",\"metric:segment_share:P4:ford\"],\"alternative_explanations\":[{\"statement\":\"Ford's BEV gain is a one-off fleet registration batch that will not recur\",\"discriminating_implication\":\"I2\"}],\"observable_implications\":[{\"id\":\"I2\",\"template\":\"segment_share\",\"entity\":\"ford\",\"entity_b\":\"\",\"comparator\":\"above_reference\",\"reference_metric\":\"metric:segment_share:L4:ford\",\"description\":\"Ford's BEV segment share stays at or above its L4 value of 3.99% in the next two quarters\",\"would_refute_if\":\"Ford's BEV segment share drops below 3.99%\"}],\"uncertainty\":{\"level\":\"medium\",\"sources\":[\"No model-level breakdown in the slice\",\"Fleet timing not observable\"]},\"refutation_criteria\":\"A decline in Ford's BEV segment share below its L4 level refutes persistence of the product-led gain.\",\"novelty_claim\":\"Distinguishes a sustained product-led BEV step-up from a transient fleet batch.\",\"model_request\":{\"family\":\"stat.holt\",\"rationale\":\"Smooth the quarterly Ford BEV segment share to test whether the level is sustained.\",\"numerical_assumptions\":[]}},{\"ref\":\"H3\",\"statement\":\"Volkswagen and MG are trading BEV mix: VW's gain partly reflects share taken from MG's BEV segment, so the two move inversely over the test window.\",\"mechanism\":{\"cause\":\"Competitive reallocation of battery electric demand between VW and MG\",\"pathway\":\"Shifts in buyer preference move BEV volume between the two brands\",\"effect_template\":\"segment_share_gap\",\"direction\":\"increase\"},\"conditions\":[\"Both brands compete in the same BEV price band\",\"Total segment volume is roughly stable\"],\"assumptions\":[{\"statement\":\"Buyer substitution between VW and MG BEVs is material\",\"kind\":\"behavioural\"}],\"supporting_evidence\":[\"metric:segment_share:L4:volkswagen\",\"metric:segment_share:P4:volkswagen\",\"metric:segment_share:L4:mg\",\"metric:segment_share:P4:mg\"],\"alternative_explanations\":[{\"statement\":\"VW and MG move independently, each responding to its own product cycle\",\"discriminating_implication\":\"I3\"}],\"observable_implications\":[{\"id\":\"I3\",\"template\":\"segment_share_gap\",\"entity\":\"volkswagen\",\"entity_b\":\"mg\",\"comparator\":\"above_reference\",\"reference_metric\":\"metric:segment_share:L4:mg\",\"description\":\"Volkswagen's BEV segment share exceeds MG's in the next two quarters\",\"would_refute_if\":\"MG's BEV segment share recovers above its L4 level of 4.14% while VW's segment share stays at its L4 level of 7.81%\"}],\"uncertainty\":{\"level\":\"high\",\"sources\":[\"Two-brand comparison on four quarters\",\"Segment totals not in slice\"]},\"refutation_criteria\":\"MG recovering to or above its L4 BEV share while VW holds its gain refutes the inverse-trading mechanism.\",\"novelty_claim\":\"Proposes an inverse coupling between two specific brands' BEV shares rather than a market-wide trend.\",\"model_request\":{\"family\":\"causal.did\",\"rationale\":\"Compare VW and MG BEV shares before and after the L4 window against the rest of the market.\",\"numerical_assumptions\":[]}},{\"ref\":\"H4\",\"statement\":\"Tesla's within-segment share is declining because its BEV registrations are being displaced by other BEV entrants, while its total share is held up by non-BEV volume.\",\"mechanism\":{\"cause\":\"Competitive entry of other BEV brands into the segment\",\"pathway\":\"Higher BEV competition lowers Tesla's share of BEV volume while total volume is supported elsewhere\",\"effect_template\":\"segment_share\",\"direction\":\"decrease\"},\"conditions\":[\"Tesla's total share change remains near flat\",\"Other BEV brands gained segment share over the window\"],\"assumptions\":[{\"statement\":\"Tesla's non-BEV registrations are non-trivial\",\"kind\":\"market_structure\"}],\"supporting_evidence\":[\"metric:share:L4:tesla\",\"metric:share:P4:tesla\",\"metric:segment_share:L4:tesla\",\"metric:segment_share:P4:tesla\"],\"alternative_explanations\":[{\"statement\":\"Tesla's BEV decline reflects a pricing or model-cycle effect unrelated to competitors\",\"discriminating_implication\":\"I4\"}],\"observable_implications\":[{\"id\":\"I4\",\"template\":\"segment_share\",\"entity\":\"tesla\",\"entity_b\":\"\",\"comparator\":\"below_reference\",\"reference_metric\":\"metric:segment_share:L4:tesla\",\"description\":\"Tesla's BEV segment share remains below its L4 value of 11.39% in the next two quarters\",\"would_refute_if\":\"Tesla's BEV segment share rises above 11.39% while the BEV entrants' shares are stable\"}],\"uncertainty\":{\"level\":\"medium\",\"sources\":[\"Competitor BEV share changes are not fully broken out in the slice\"]},\"refutation_criteria\":\"A recovery of Tesla's BEV segment share above its L4 level, without a fall in competitor shares, refutes displacement.\",\"novelty_claim\":\"Links the total-versus-segment divergence to competitor displacement inside the BEV segment specifically.\",\"model_request\":{\"family\":\"baseline.momentum\",\"rationale\":\"Compare continued segment decline against a momentum baseline to test whether the drop accelerates.\",\"numerical_assumptions\":[]}}]}"
+  },
+  {
+   "cached_at": "2026-11-24T02:14:25Z",
+   "data": {
+    "explanations": [
+     {
+      "evidence": [
+       "metric:segment_mix:L4:byd",
+       "metric:segment_mix:P4:byd"
+      ],
+      "statement": "BYD's battery-electric share of its own registrations fell sharply from 91.46% in the prior four quarters to 58.35% in the last four quarters, indicating a large shift toward non-BEV fuel types within BYD's mix."
+     },
+     {
+      "evidence": [
+       "metric:segment_share:L4:byd",
+       "metric:segment_share:P4:byd",
+       "metric:share:L4:byd",
+       "metric:share:P4:byd"
+      ],
+      "statement": "BYD's BEV segment share rose from 2.11% to 6.30% while its total share fell from 0.44% to 2.47%, so its total share gain reflects BEV segment growth as a share of the BEV market rather than overall brand growth."
+     },
+     {
+      "evidence": [
+       "metric:segment_mix:L4:ford",
+       "metric:segment_mix:P4:ford",
+       "metric:share:L4:ford",
+       "metric:share:P4:ford"
+      ],
+      "statement": "Ford's battery-electric mix rose from 8.45% to 24.33%, a 15.88 percentage point increase, even though Ford's total share was roughly flat (5.56% to 5.79%)."
+     },
+     {
+      "evidence": [
+       "metric:share:L4:kia",
+       "metric:share:P4:kia",
+       "metric:segment_share:L4:kia",
+       "metric:segment_share:P4:kia"
+      ],
+      "statement": "Kia's total share fell slightly while its BEV segment share rose, a divergence between total and within-segment performance."
+     },
+     {
+      "evidence": [
+       "metric:share:L4:mg",
+       "metric:share:P4:mg",
+       "metric:segment_share:L4:mg",
+       "metric:segment_share:P4:mg"
+      ],
+      "statement": "MG's total share was essentially flat while its BEV segment share fell by 2.04 percentage points, a divergence between total and within-segment performance."
+     }
+    ],
+    "hypotheses": [
+     {
+      "alternative_explanations": [
+       {
+        "discriminating_implication": "I1",
+        "statement": "BYD's BEV registrations fell in absolute terms while non-BEV held steady, giving the same mix change"
+       },
+       {
+        "discriminating_implication": "I2",
+        "statement": "A single large fleet or rental order shifted the mix temporarily"
+       }
+      ],
+      "assumptions": [
+       {
+        "kind": "measurement",
+        "statement": "BYD's non-BEV registrations grew in the L4 window relative to P4"
+       },
+       {
+        "kind": "market_structure",
+        "statement": "Channel mix did not shift dramatically between fuel types"
+       }
+      ],
+      "conditions": [
+       "BYD continues to register both BEV and non-BEV vehicles in GB",
+       "No change in BYD's BEV model availability"
+      ],
+      "mechanism": {
+       "cause": "Expansion of non-BEV powertrain offerings by BYD in GB",
+       "direction": "decrease",
+       "effect_template": "segment_mix",
+       "pathway": "Non-BEV registrations grow faster than BEV registrations within BYD's mix"
+      },
+      "model_request": {
+       "family": "baseline.level",
+       "numerical_assumptions": [],
+       "rationale": "Level baseline for BYD mix over the test window with no structural assumptions."
+      },
+      "novelty_claim": "Attributes the BEV mix decline specifically to BYD's non-BEV range expansion rather than to overall demand weakness.",
+      "observable_implications": [
+       {
+        "comparator": "below_reference",
+        "description": "BYD's BEV mix in the next two quarters stays below its L4 value of 58.35%",
+        "entity": "byd",
+        "entity_b": "",
+        "id": "I1",
+        "reference_metric": "metric:segment_mix:L4:byd",
+        "template": "segment_mix",
+        "would_refute_if": "BYD's BEV mix rises back above 58.35% in both test quarters"
+       },
+       {
+        "comparator": "increase_vs_L4",
+        "description": "BYD's BEV segment share in the next two quarters exceeds its L4 value of 6.30%",
+        "entity": "byd",
+        "entity_b": "",
+        "id": "I2",
+        "reference_metric": "metric:segment_share:L4:byd",
+        "template": "segment_share",
+        "would_refute_if": "BYD's BEV segment share falls below 6.30% in the test window"
+       }
+      ],
+      "ref": "H1",
+      "refutation_criteria": "BYD's BEV mix recovers toward 91.46% in the test window, or BYD's BEV segment share falls back toward its P4 level of 2.11%.",
+      "statement": "BYD's falling BEV mix reflects a deliberate expansion of its hybrid and petrol range into the UK fleet and retail channels, which dilutes BEV share without reducing its BEV registrations as a share of the BEV market.",
+      "supporting_evidence": [
+       "metric:segment_mix:L4:byd",
+       "metric:segment_mix:P4:byd",
+       "metric:segment_share:L4:byd",
+       "metric:segment_share:P4:byd"
+      ],
+      "uncertainty": {
+       "level": "medium",
+       "sources": [
+        "Short four-quarter window",
+        "Mix is sensitive to registration timing"
+       ]
+      }
+     },
+     {
+      "alternative_explanations": [
+       {
+        "discriminating_implication": "I3",
+        "statement": "Ford's gain is driven by lower non-BEV volumes, not higher BEV volumes"
+       }
+      ],
+      "assumptions": [
+       {
+        "kind": "market_structure",
+        "statement": "The BEV gain is driven by product or fleet supply rather than a demand shift"
+       }
+      ],
+      "conditions": [
+       "Ford's total registrations remain near L4 levels"
+      ],
+      "mechanism": {
+       "cause": "New BEV model or fleet contract for Ford in GB",
+       "direction": "increase",
+       "effect_template": "segment_mix",
+       "pathway": "BEV registrations rise within Ford's flat total volume"
+      },
+      "model_request": {
+       "family": "none",
+       "numerical_assumptions": [],
+       "rationale": "Insufficient product data to justify a fitted model."
+      },
+      "novelty_claim": "Links Ford's mix shift to a supply-side BEV programme rather than a general EV demand trend.",
+      "observable_implications": [
+       {
+        "comparator": "increase_vs_L4",
+        "description": "Ford's BEV segment share in the next two quarters exceeds its L4 value of 6.17%",
+        "entity": "ford",
+        "entity_b": "",
+        "id": "I3",
+        "reference_metric": "metric:segment_share:L4:ford",
+        "template": "segment_share",
+        "would_refute_if": "Ford's BEV segment share falls below 6.17% in the test window"
+       }
+      ],
+      "ref": "H2",
+      "refutation_criteria": "Ford's BEV mix returns to near 8.45% in the test window.",
+      "statement": "Ford's BEV mix gain reflects a concentrated BEV launch or fleet programme that lifted Ford's BEV registrations while its total share held steady.",
+      "supporting_evidence": [
+       "metric:segment_mix:L4:ford",
+       "metric:segment_mix:P4:ford",
+       "metric:share:L4:ford",
+       "metric:share:P4:ford"
+      ],
+      "uncertainty": {
+       "level": "high",
+       "sources": [
+        "No product launch data in the slice",
+        "Small BEV base for Ford"
+       ]
+      }
+     },
+     {
+      "alternative_explanations": [
+       {
+        "discriminating_implication": "I4",
+        "statement": "MG's segment share decline is a timing artefact of registration peaks"
+       }
+      ],
+      "assumptions": [
+       {
+        "kind": "measurement",
+        "statement": "MG's BEV offering did not change materially between P4 and L4"
+       },
+       {
+        "kind": "competitive",
+        "statement": "Competitors gained BEV volume from existing BEV sellers"
+       }
+      ],
+      "conditions": [
+       "Competitor BEV launches occur in the test window"
+      ],
+      "mechanism": {
+       "cause": "Competitive BEV launches by higher-volume brands",
+       "direction": "decrease",
+       "effect_template": "segment_share",
+       "pathway": "Segment share is reallocated away from brands with static BEV ranges"
+      },
+      "model_request": {
+       "family": "stat.holt",
+       "numerical_assumptions": [
+        {
+         "basis": "Conventional default for short quarterly series",
+         "name": "smoothing_level",
+         "unit": "ratio",
+         "value": 0.3
+        }
+       ],
+       "rationale": "Holt smoothing could track MG's BEV segment share trend against the L4 level."
+      },
+      "novelty_claim": "Predicts that segment share, not total share, is the first indicator of competitive pressure on MG.",
+      "observable_implications": [
+       {
+        "comparator": "below_reference",
+        "description": "MG's BEV segment share stays below Kia's L4 BEV segment share of 4.62%",
+        "entity": "mg",
+        "entity_b": "kia",
+        "id": "I4",
+        "reference_metric": "metric:segment_share:L4:kia",
+        "template": "segment_share_gap",
+        "would_refute_if": "MG's BEV segment share rises above Kia's in either test quarter"
+       }
+      ],
+      "ref": "H3",
+      "refutation_criteria": "MG's BEV segment share recovers to at least 5.67% (its P4 level) in the test window.",
+      "statement": "Within the BEV segment, share is being redistributed toward volume brands with recent BEV launches, so brands with unchanged BEV offerings (such as MG) lose segment share even when total share holds.",
+      "supporting_evidence": [
+       "metric:segment_share:L4:mg",
+       "metric:segment_share:P4:mg",
+       "metric:share:L4:mg",
+       "metric:share:P4:mg"
+      ],
+      "uncertainty": {
+       "level": "medium",
+       "sources": [
+        "Competitor launch timing unknown from slice",
+        "Only one segment-share divergence observed"
+       ]
+      }
+     }
+    ]
+   },
+   "input_tokens": 10019,
+   "origin": "2026-05-23",
+   "output_tokens": 2985,
+   "text": "{\"explanations\":[{\"statement\":\"BYD's battery-electric share of its own registrations fell sharply from 91.46% in the prior four quarters to 58.35% in the last four quarters, indicating a large shift toward non-BEV fuel types within BYD's mix.\",\"evidence\":[\"metric:segment_mix:L4:byd\",\"metric:segment_mix:P4:byd\"]},{\"statement\":\"BYD's BEV segment share rose from 2.11% to 6.30% while its total share fell from 0.44% to 2.47%, so its total share gain reflects BEV segment growth as a share of the BEV market rather than overall brand growth.\",\"evidence\":[\"metric:segment_share:L4:byd\",\"metric:segment_share:P4:byd\",\"metric:share:L4:byd\",\"metric:share:P4:byd\"]},{\"statement\":\"Ford's battery-electric mix rose from 8.45% to 24.33%, a 15.88 percentage point increase, even though Ford's total share was roughly flat (5.56% to 5.79%).\",\"evidence\":[\"metric:segment_mix:L4:ford\",\"metric:segment_mix:P4:ford\",\"metric:share:L4:ford\",\"metric:share:P4:ford\"]},{\"statement\":\"Kia's total share fell slightly while its BEV segment share rose, a divergence between total and within-segment performance.\",\"evidence\":[\"metric:share:L4:kia\",\"metric:share:P4:kia\",\"metric:segment_share:L4:kia\",\"metric:segment_share:P4:kia\"]},{\"statement\":\"MG's total share was essentially flat while its BEV segment share fell by 2.04 percentage points, a divergence between total and within-segment performance.\",\"evidence\":[\"metric:share:L4:mg\",\"metric:share:P4:mg\",\"metric:segment_share:L4:mg\",\"metric:segment_share:P4:mg\"]}],\"hypotheses\":[{\"ref\":\"H1\",\"statement\":\"BYD's falling BEV mix reflects a deliberate expansion of its hybrid and petrol range into the UK fleet and retail channels, which dilutes BEV share without reducing its BEV registrations as a share of the BEV market.\",\"mechanism\":{\"cause\":\"Expansion of non-BEV powertrain offerings by BYD in GB\",\"pathway\":\"Non-BEV registrations grow faster than BEV registrations within BYD's mix\",\"effect_template\":\"segment_mix\",\"direction\":\"decrease\"},\"conditions\":[\"BYD continues to register both BEV and non-BEV vehicles in GB\",\"No change in BYD's BEV model availability\"],\"assumptions\":[{\"statement\":\"BYD's non-BEV registrations grew in the L4 window relative to P4\",\"kind\":\"measurement\"},{\"statement\":\"Channel mix did not shift dramatically between fuel types\",\"kind\":\"market_structure\"}],\"supporting_evidence\":[\"metric:segment_mix:L4:byd\",\"metric:segment_mix:P4:byd\",\"metric:segment_share:L4:byd\",\"metric:segment_share:P4:byd\"],\"alternative_explanations\":[{\"statement\":\"BYD's BEV registrations fell in absolute terms while non-BEV held steady, giving the same mix change\",\"discriminating_implication\":\"I1\"},{\"statement\":\"A single large fleet or rental order shifted the mix temporarily\",\"discriminating_implication\":\"I2\"}],\"observable_implications\":[{\"id\":\"I1\",\"template\":\"segment_mix\",\"entity\":\"byd\",\"entity_b\":\"\",\"comparator\":\"below_reference\",\"reference_metric\":\"metric:segment_mix:L4:byd\",\"description\":\"BYD's BEV mix in the next two quarters stays below its L4 value of 58.35%\",\"would_refute_if\":\"BYD's BEV mix rises back above 58.35% in both test quarters\"},{\"id\":\"I2\",\"template\":\"segment_share\",\"entity\":\"byd\",\"entity_b\":\"\",\"comparator\":\"increase_vs_L4\",\"reference_metric\":\"metric:segment_share:L4:byd\",\"description\":\"BYD's BEV segment share in the next two quarters exceeds its L4 value of 6.30%\",\"would_refute_if\":\"BYD's BEV segment share falls below 6.30% in the test window\"}],\"uncertainty\":{\"level\":\"medium\",\"sources\":[\"Short four-quarter window\",\"Mix is sensitive to registration timing\"]},\"refutation_criteria\":\"BYD's BEV mix recovers toward 91.46% in the test window, or BYD's BEV segment share falls back toward its P4 level of 2.11%.\",\"novelty_claim\":\"Attributes the BEV mix decline specifically to BYD's non-BEV range expansion rather than to overall demand weakness.\",\"model_request\":{\"family\":\"baseline.level\",\"rationale\":\"Level baseline for BYD mix over the test window with no structural assumptions.\",\"numerical_assumptions\":[]}},{\"ref\":\"H2\",\"statement\":\"Ford's BEV mix gain reflects a concentrated BEV launch or fleet programme that lifted Ford's BEV registrations while its total share held steady.\",\"mechanism\":{\"cause\":\"New BEV model or fleet contract for Ford in GB\",\"pathway\":\"BEV registrations rise within Ford's flat total volume\",\"effect_template\":\"segment_mix\",\"direction\":\"increase\"},\"conditions\":[\"Ford's total registrations remain near L4 levels\"],\"assumptions\":[{\"statement\":\"The BEV gain is driven by product or fleet supply rather than a demand shift\",\"kind\":\"market_structure\"}],\"supporting_evidence\":[\"metric:segment_mix:L4:ford\",\"metric:segment_mix:P4:ford\",\"metric:share:L4:ford\",\"metric:share:P4:ford\"],\"alternative_explanations\":[{\"statement\":\"Ford's gain is driven by lower non-BEV volumes, not higher BEV volumes\",\"discriminating_implication\":\"I3\"}],\"observable_implications\":[{\"id\":\"I3\",\"template\":\"segment_share\",\"entity\":\"ford\",\"entity_b\":\"\",\"comparator\":\"increase_vs_L4\",\"reference_metric\":\"metric:segment_share:L4:ford\",\"description\":\"Ford's BEV segment share in the next two quarters exceeds its L4 value of 6.17%\",\"would_refute_if\":\"Ford's BEV segment share falls below 6.17% in the test window\"}],\"uncertainty\":{\"level\":\"high\",\"sources\":[\"No product launch data in the slice\",\"Small BEV base for Ford\"]},\"refutation_criteria\":\"Ford's BEV mix returns to near 8.45% in the test window.\",\"novelty_claim\":\"Links Ford's mix shift to a supply-side BEV programme rather than a general EV demand trend.\",\"model_request\":{\"family\":\"none\",\"rationale\":\"Insufficient product data to justify a fitted model.\",\"numerical_assumptions\":[]}},{\"ref\":\"H3\",\"statement\":\"Within the BEV segment, share is being redistributed toward volume brands with recent BEV launches, so brands with unchanged BEV offerings (such as MG) lose segment share even when total share holds.\",\"mechanism\":{\"cause\":\"Competitive BEV launches by higher-volume brands\",\"pathway\":\"Segment share is reallocated away from brands with static BEV ranges\",\"effect_template\":\"segment_share\",\"direction\":\"decrease\"},\"conditions\":[\"Competitor BEV launches occur in the test window\"],\"assumptions\":[{\"statement\":\"MG's BEV offering did not change materially between P4 and L4\",\"kind\":\"measurement\"},{\"statement\":\"Competitors gained BEV volume from existing BEV sellers\",\"kind\":\"competitive\"}],\"supporting_evidence\":[\"metric:segment_share:L4:mg\",\"metric:segment_share:P4:mg\",\"metric:share:L4:mg\",\"metric:share:P4:mg\"],\"alternative_explanations\":[{\"statement\":\"MG's segment share decline is a timing artefact of registration peaks\",\"discriminating_implication\":\"I4\"}],\"observable_implications\":[{\"id\":\"I4\",\"template\":\"segment_share_gap\",\"entity\":\"mg\",\"entity_b\":\"kia\",\"comparator\":\"below_reference\",\"reference_metric\":\"metric:segment_share:L4:kia\",\"description\":\"MG's BEV segment share stays below Kia's L4 BEV segment share of 4.62%\",\"would_refute_if\":\"MG's BEV segment share rises above Kia's in either test quarter\"}],\"uncertainty\":{\"level\":\"medium\",\"sources\":[\"Competitor launch timing unknown from slice\",\"Only one segment-share divergence observed\"]},\"refutation_criteria\":\"MG's BEV segment share recovers to at least 5.67% (its P4 level) in the test window.\",\"novelty_claim\":\"Predicts that segment share, not total share, is the first indicator of competitive pressure on MG.\",\"model_request\":{\"family\":\"stat.holt\",\"rationale\":\"Holt smoothing could track MG's BEV segment share trend against the L4 level.\",\"numerical_assumptions\":[{\"name\":\"smoothing_level\",\"value\":0.3,\"unit\":\"ratio\",\"basis\":\"Conventional default for short quarterly series\"}]}}]}"
+  }
+ ]
+}

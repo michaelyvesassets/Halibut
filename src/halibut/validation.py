@@ -52,6 +52,23 @@ def allowed_numbers(metrics: dict[str, dict]) -> set[float]:
     return vals
 
 
+DIRECTION = re.compile(r"\b(rose|risen|increased|gained|grew|climbed|jumped|fell|fallen|declined|dropped|decreased|slipped|eased)"
+                       r"\b[^.;%]{0,60}?\bfrom\s+([+-]?\d+(?:\.\d+)?)\s*%\s*(?:\([^)]{0,12}\)\s*)?to\s+([+-]?\d+(?:\.\d+)?)\s*%",
+                       re.I)
+UP = ("rose", "risen", "increased", "gained", "grew", "climbed", "jumped")
+
+
+def check_directions(text: str) -> list[str]:
+    """A stated direction must agree with the numbers it describes ('fell from 0.44% to 2.47%' is rejected)."""
+    out = []
+    for verb, a, b in DIRECTION.findall(text):
+        x, y = float(a), float(b)
+        up = verb.lower() in UP
+        if (up and y < x) or (not up and y > x):
+            out.append(f"'{verb} from {a}% to {b}%' contradicts the numbers")
+    return out
+
+
 def check_numbers(text: str, allowed: set[float], extra: set[float] = frozenset(), tol: float = 0.06) -> list[str]:
     problems = []
     for num, unit in NUMBER.findall(text):

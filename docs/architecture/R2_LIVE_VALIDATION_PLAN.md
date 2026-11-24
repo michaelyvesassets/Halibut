@@ -173,3 +173,9 @@ and the tracked config was unchanged.
 After the run, the results are reviewed together before any decision on R3. No lesson is promoted, and no
 real-world intervention is executed.
 
+## 10. Run r2v-b16fc9281536 (2026-11-24)
+
+The run completed with A1, A4, A5 and A6 passing, A2 and A3 failing, and B1–B5 failing, for $0.005322 of spend.
+The recorded result stands unchanged. See [R2_POSTMORTEM_r2v-b16fc9281536.md](R2_POSTMORTEM_r2v-b16fc9281536.md)
+for the root cause (per-array validation; engineering) and the intelligence assessment.
+

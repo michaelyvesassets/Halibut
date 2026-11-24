@@ -72,6 +72,12 @@ def compile_implication(imp: dict, panel, metrics: dict) -> tuple[dict | None, s
         rm = imp.get("reference_metric") or ""
         if rm not in metrics:
             return None, f"comparator {comp} needs a reference metric id from the evidence (got {rm!r})"
+        if t == "segment_share_gap":
+            return None, ("a share gap has no reference metric in the evidence: compare it with its own latest window "
+                          "(increase_vs_L4 / decrease_vs_L4)")
+        if metrics[rm]["template"] != t:
+            return None, (f"reference metric {rm} measures {metrics[rm]['template']}, not {t}: a test must compare like with "
+                          "like")
         ref, src = metrics[rm]["value"], rm
     if ref is None:
         return None, "the reference value is not computable from the evidence"

@@ -110,6 +110,8 @@ def classify_problems(problems: list[str], item=None, *, subjects=()) -> str:
         return "fabricated.evidence_id"
     if "does not match any evidence value" in text:
         return "validation.unsupported_number"
+    if "contradicts the numbers" in text:
+        return "validation.direction_contradiction"
     if "lever" in text or "prohibited" in text:
         return "policy.lever_or_prohibited"
     if "not available at" in text or "hindsight" in text or "resolve after" in text:

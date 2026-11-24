@@ -44,7 +44,13 @@ def anomalies(panel, metrics: dict) -> list[dict]:
 
 
 def signature(imp: dict) -> tuple:
-    return (imp.get("template"), imp.get("entity"), imp.get("entity_b") or "", imp.get("comparator"))
+    """Canonical implication signature: comparing a metric with its OWN latest-window value via above/below_reference is
+    the same claim as increase/decrease_vs_L4."""
+    t, e, c = imp.get("template"), imp.get("entity"), imp.get("comparator")
+    own = f"metric:{t}:L4" + ("" if t == "market_segment_share" else f":{e}")
+    if c in ("above_reference", "below_reference") and imp.get("reference_metric") == own:
+        c = "increase_vs_L4" if c == "above_reference" else "decrease_vs_L4"
+    return (t, e, imp.get("entity_b") or "", c)
 
 
 def reference_library(ledger, market, panel, metrics: dict, exclude_run: str | None = None) -> set:
@@ -62,7 +68,9 @@ def reference_library(ledger, market, panel, metrics: dict, exclude_run: str | N
             lib.add(("segment_share_gap", market.target, market.focal, c))
     lib.add(("market_segment_share", "market", "", "increase_vs_L4"))
     for c in ledger.as_of(panel.as_of, claim_type="hypothesis"):
-        if (c["provenance"].get("market_id") or "") == market.id and c["run_id"] != exclude_run:
+        # prior KNOWLEDGE only: earlier dates, not sibling runs at the same date, and never mock/reference output
+        if ((c["provenance"].get("market_id") or "") == market.id and c["run_id"] != exclude_run
+                and c["as_of"] < panel.as_of and not str(c["provenance"].get("model", "")).endswith("-loop-v1")):
             for imp in c["payload"].get("observable_implications", []):
                 lib.add(signature(imp))
     return lib

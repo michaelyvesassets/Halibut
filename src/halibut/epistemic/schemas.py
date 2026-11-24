@@ -225,24 +225,31 @@ def strategist_schema(refs, entities, metric_ids, levers, modes) -> dict:
     return _obj({"options": _arr(opt, 4)})
 
 
-def split_multi(data, schema: dict, keys) -> tuple[dict, dict, list]:
-    """Like ``split_items`` for replies with several item arrays: ({key: valid}, {key: rejected}, top_problems)."""
+def split_multi(data, schema: dict, keys) -> tuple[dict, dict, dict, list]:
+    """Validate a reply with several item arrays, keeping each array's fate separate.
+
+    Returns ({key: valid items}, {key: rejected items [(i, item, problems)]}, {key: problems} for arrays rejected AS A
+    WHOLE, top_problems). An array that is not a list or exceeds its maxItems is rejected entirely (all of its items, never
+    trimmed or repaired) without discarding the other arrays. Only a reply that is not an object, or has unexpected or
+    missing fields, is rejected at the top level. (R2 postmortem r2v-b16fc9281536: 5 explanations against maxItems 4 had
+    discarded every valid hypothesis; maxItems is not enforced by the provider at generation.)"""
     if not isinstance(data, dict):
-        return {}, {}, [f"$: expected object, got {_tname(data)}"]
+        return {}, {}, {}, [f"$: expected object, got {_tname(data)}"]
     top = [f"$: unexpected field {k!r}" for k in data if k not in schema["properties"]]
     top += [f"$: missing required field {k!r}" for k in keys if k not in data]
-    for k in keys:
-        if k in data:
-            if not isinstance(data[k], list):
-                top.append(f"$.{k}: expected array, got {_tname(data[k])}")
-            elif len(data[k]) > schema["properties"][k].get("maxItems", 10 ** 9):
-                top.append(f"$.{k}: more than {schema['properties'][k]['maxItems']} items ({len(data[k])})")
     if top:
-        return {}, {}, top
-    valid, rejected = {}, {}
+        return {}, {}, {}, top
+    valid, rejected, arrays = {}, {}, {}
     for k in keys:
         valid[k], rejected[k] = [], []
+        if not isinstance(data[k], list):
+            arrays[k] = [f"$.{k}: expected array, got {_tname(data[k])}"]
+            continue
+        mx = schema["properties"][k].get("maxItems", 10 ** 9)
+        if len(data[k]) > mx:
+            arrays[k] = [f"$.{k}: more than {mx} items ({len(data[k])}); the whole array is rejected, not trimmed"]
+            continue
         for i, it in enumerate(data[k]):
             prob = validate(it, schema["properties"][k]["items"], f"$.{k}[{i}]")
             (rejected[k].append((i, it, prob)) if prob else valid[k].append(it))
-    return valid, rejected, []
+    return valid, rejected, arrays, []

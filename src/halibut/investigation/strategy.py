@@ -22,7 +22,7 @@ import json
 
 import numpy as np
 
-from ..validation import ALLOWED_LEVERS, PROHIBITED, check_numbers
+from ..validation import ALLOWED_LEVERS, PROHIBITED, check_directions, check_numbers
 
 OFFSET = {"none": (0.0, 0.0), "offsets_partly": (0.25, 0.75), "offsets_fully": (0.75, 1.0), "unknown": (0.0, 1.0)}
 DOMINANCE_SHARE = 0.40
@@ -54,7 +54,7 @@ def validate_option(o: dict, hyp_refs: set, allowed: set, compile_criterion) -> 
     text = " ".join([o["title"], e["basis"]] + [a["statement"] for a in o["assumptions"]] + o["risks"])
     if PROHIBITED.search(text):
         p.append("prohibited tactic mentioned")
-    p += check_numbers(text, allowed, {e["magnitude_low_pp"], e["magnitude_high_pp"]})
+    p += check_numbers(text, allowed, {e["magnitude_low_pp"], e["magnitude_high_pp"]}) + check_directions(text)
     for i, sc in enumerate(o["success_criteria"]):
         spec, why = compile_criterion(sc)
         if spec is None:

@@ -344,3 +344,17 @@ Scope authorised: **R1 only**. No paid API calls.
 - **Consequences:** every self-approval is visible as such. Raising the ceiling or adding kinds needs a new
   policy version and ADR. With a second person, the policy should be disabled.
 
+### ADR-020
+**Malformed output is rejected at the level of the structure that violates the contract (per array), never repaired.**
+- **Status:** Proposed (2026-11-24, from the postmortem of r2v-b16fc9281536); refines ADR-009.
+- **Context:** Claude structured outputs do not enforce `maxItems` and similar keywords. A reply with one over-long
+  array (5 explanations against 4) was rejected whole, discarding 7 valid hypotheses and stopping both investigations.
+- **Decision:**
+  - an array that violates its own limits or type is rejected in full and recorded with its items;
+  - sibling arrays are judged on their own;
+  - top-level rejection is reserved for non-objects and unexpected or missing fields;
+  - an investigation stops only if its core array (hypotheses) is unusable;
+  - no item is trimmed, re-ordered or repaired.
+- **Consequences:** a single count violation no longer erases unrelated valid work, and every rejection stays visible
+  in the validation records.
+

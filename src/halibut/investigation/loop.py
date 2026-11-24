@@ -34,7 +34,7 @@ from ..epistemic.failures import classify_problems, record
 from ..intel.market import MODES, load_market
 from ..learning.memory import LearningMemory
 from ..models import registry as reg
-from ..validation import ALLOWED_LEVERS, allowed_numbers, check_numbers
+from ..validation import ALLOWED_LEVERS, allowed_numbers, check_directions, check_numbers
 from ..version import ENGINE_VERSION
 from ..world.context import build_slice, reference_library, signature
 from ..world.coverage import check_contract
@@ -189,18 +189,23 @@ def _loop(R: _Run, ctx: dict, panel, evidence: dict):
     if res["data"] is None:
         R.fail("hypothesis_generator", "call", "failed", res["failure_class"] or "call.error", [res["outcome"]], {}, gen_by)
         return "stopped", f"hypothesis generator reply unusable ({res['outcome']})", evidence, world
-    valid, rejected, top = sch.split_multi(res["data"], gschema, ["explanations", "hypotheses"])
+    valid, rejected, arrays, top = sch.split_multi(res["data"], gschema, ["explanations", "hypotheses"])
     if top:
         R.fail("hypothesis_generator", "schema", "rejected", "call.schema_top_level", top, res["data"], gen_by)
         return "stopped", f"hypothesis generator reply violates its schema: {top[0]}", evidence, world
+    for key, probs in arrays.items():  # an array rejected as a whole: recorded with its items, never trimmed
+        R.fail({"hypotheses": "hypothesis", "explanations": "explanation"}[key], "schema", "rejected", "schema.array_limit",
+               probs, {"array": key, "items": res["data"][key]}, gen_by)
+    if "hypotheses" in arrays:
+        return "stopped", f"hypothesis generator reply: {arrays['hypotheses'][0]}", evidence, world
     for key, rows in rejected.items():
         for _, it, pr in rows:
             R.fail({"hypotheses": "hypothesis", "explanations": "explanation"}[key], "schema", "rejected",
                    classify_problems(pr, None), pr, it, gen_by)
     for e in valid["explanations"]:
-        pr = check_numbers(e["statement"], allowed)
+        pr = check_numbers(e["statement"], allowed) + check_directions(e["statement"])
         if pr:
-            R.fail("explanation", "validation", "rejected", "validation.unsupported_number", pr, e, gen_by)
+            R.fail("explanation", "validation", "rejected", classify_problems(pr, None), pr, e, gen_by)
             continue
         cid = R.claim("explanation", e["statement"], gen_by, {"anomaly_based": True}, evidence=e["evidence"], exists=exists,
                       provenance=prov)
@@ -363,7 +368,7 @@ def _semantic_checks(h: dict, allowed: set, earlier_refs: list) -> list[str]:
         p.append("a hypothesis needs a mechanism pathway and refutation criteria")
     text = " ".join([h["statement"], h["mechanism"]["pathway"], h["refutation_criteria"]] +
                     [a["statement"] for a in h["alternative_explanations"]] + [a["statement"] for a in h["assumptions"]])
-    p += check_numbers(text, allowed)
+    p += check_numbers(text, allowed) + check_directions(text)
     return p
 
 

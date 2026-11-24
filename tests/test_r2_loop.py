@@ -74,7 +74,10 @@ def test_uk_loop_end_to_end(uk_store, tmp_path):
         assert d["refutation_criteria"] and d["assumptions"] and d["uncertainty"]["level"]
         assert [ln for ln in h["links"] if ln["relation"] == "cites"]
     assert by_ref["H4"]["data"]["novelty"] == "restatement"
-    assert sum(1 for h in hy if h["data"]["novelty"] == "original") == 3
+    # H1's implications compare the leading brand with its OWN latest window (= trend continuation) and the focal/target
+    # gap: canonical signatures (postmortem fix) correctly classify it as a restatement; H2 and H3 stay original
+    assert sum(1 for h in hy if h["data"]["novelty"] == "original") == 2
+    assert by_ref["H1"]["data"]["novelty"] == "restatement"
     assert any(f["failure_class"] == "duplicate.hypothesis" for f in doc["failures"]["items"])
     assert by_ref["H3"]["status"] == "untested"
     assert [t for t in items(doc, "tests") if t["status"] == "not_testable"]
