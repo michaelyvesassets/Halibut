@@ -328,3 +328,59 @@ def test_validated_options_with_any_intended_effect_never_crash(uk_store, tmp_pa
         if e["template"] == "segment_share_gap" or e["entity"] == "market" and e["template"] != "market_segment_share":
             assert sim["status"] == "not_simulated"
     store.close()
+
+
+# ------------------------------------------------------------------- a draft protocol is never evidence of validity
+def _sim(status="validated", rng=(0.10, 0.12), eff=(1.0, 2.0), off=(0.0, 0.0)):
+    return [{"baseline_status": status, "outcome_range": list(rng), "effect_pp_assumed": list(eff),
+             "competitor_offset_assumed": list(off)}]
+
+
+def _opt(template="segment_share", direction="increase", entity="byd"):
+    return {"intended_effect": {"template": template, "entity": entity, "direction": direction}}
+
+
+def _crit(template="segment_share", comparator="increase_vs_L4", entity="byd"):
+    return {"template": template, "entity": entity, "comparator": comparator}
+
+
+def test_only_a_fully_supported_draft_is_eligible():
+    ok = strategy.execution_eligibility(_opt(), _crit(), _sim(), "segment_share", True)
+    assert ok["eligible_for_execution"] and ok["reasons"] == []
+
+
+@pytest.mark.parametrize("args,why", [
+    ((_opt(), _crit(), _sim(status="unvalidated"), "segment_share", True), "not a validated model"),
+    ((_opt(), _crit(), _sim(rng=(0.0, 0.6)), "segment_share", True), "cannot distinguish"),          # the recorded O2
+    ((_opt(), _crit(), _sim(), "segment_share", False), "adequately powered"),
+    ((_opt(), _crit(), _sim(), "segment_share", None), "adequately powered"),
+    ((_opt("segment_mix"), _crit("segment_mix"), _sim(), "segment_share", True), "objective metric"),  # the recorded O2
+    ((_opt(direction="decrease"), _crit(), _sim(), "segment_share", True), "contradicts"),           # the recorded O3
+    ((_opt(), _crit(entity="tesla"), _sim(), "segment_share", True), "different quantity"),
+    ((_opt(), _crit(), [], "segment_share", True), "no simulation"),
+])
+def test_unsupported_drafts_are_exploratory_and_not_eligible(args, why):
+    e = strategy.execution_eligibility(*args)
+    assert e["status"] == "exploratory_not_eligible" and not e["eligible_for_execution"]
+    assert any(why in r for r in e["reasons"])
+
+
+def test_pipeline_drafts_are_exploratory_and_their_approval_cannot_be_granted(uk_store, tmp_path):
+    from halibut.control import approvals as ap
+    store = fresh(tmp_path, uk_store)
+    doc = run(store, uk_store / "m.toml", _transplant)
+    proto = doc["experiment_protocol"]
+    assert proto["data"]["eligibility"]["status"] == "exploratory_not_eligible"
+    assert proto["label"].startswith("EXPLORATORY, not eligible for execution")
+    aid = doc["approvals"][0]["approval_id"]
+    assert ap.get(store, aid)["payload"]["eligible_for_execution"] is False
+    with pytest.raises(ap.AuthorizationError, match="not eligible"):
+        ap.decide(store, aid, "granted", "reviewer", evidence={"legal_review_ref": "LR-1", "measurable_outcomes": "x"})
+    store.close()
+
+
+def test_recorded_agents_need_an_offline_router(uk_store, tmp_path):
+    store = fresh(tmp_path, uk_store)
+    with pytest.raises(ValueError, match="offline router"):
+        run_investigation(store, uk_store / "m.toml", agents="recorded", log=lambda *_: None, **UK)
+    store.close()

@@ -24,8 +24,8 @@ from halibut.data.store import Store, utc_now
 from halibut.investigation import artifact as art
 from halibut.investigation.evaluation import evaluate_document
 from halibut.investigation.loop import InvestigationInternalError, run_investigation
-from halibut.investigation.revalidation import (RevalidationRouter, critic_detection, load_original, reusable_calls,
-                                                strategist_assessment)
+from halibut.investigation.revalidation import (KEYWORD_SCREEN_RELIABILITY, MANUAL_CRITIC_REVIEW, RevalidationRouter,
+                                                critic_detection, load_original, reusable_calls, strategist_assessment)
 
 ROOT = Path(__file__).resolve().parents[1]
 MARKET = ROOT / "configs/intel/markets/uk_cars_bev_v1.toml"
@@ -36,7 +36,7 @@ ORIGINS, EVAL, REUSE = ["2025-11-23", "2026-05-23"], "2026-11-23", ["r2r-57fa83d
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--db", default=str(ROOT / "data/halibut.sqlite"))
-    ap.add_argument("--out", default=str(ROOT / "results/r2_validation/step1-20261124T025850Z/offline_reconstruction"))
+    ap.add_argument("--out", default=str(ROOT / "results/r2_validation/step1-20261124T025850Z/offline_reconstruction_v2"))
     a = ap.parse_args()
     out = Path(a.out)
     (out / "investigations").mkdir(parents=True, exist_ok=True)
@@ -54,15 +54,26 @@ def main() -> int:
         for o in ORIGINS:
             r = RevalidationRouter(st, "offline-reconstruction", cfg, mode="preflight", reuse=reuse)
             try:
-                docs[o] = run_investigation(st, MARKET, as_of=o, evaluate_as_of=EVAL, agents="mock", router=r,
+                docs[o] = run_investigation(st, MARKET, as_of=o, evaluate_as_of=EVAL, agents="recorded", router=r,
                                             log=lambda *_: None)
             except InvestigationInternalError as exc:
                 docs[o], internal[o] = exc.doc, exc.doc["stop_reason"]
-            calls[o] = {"generator_cache_hit": bool(getattr(r._gen, "last", {}).get("cache_hit")), "reuse_log": r.reuse_log}
+            gen_hit = bool(getattr(r._gen, "last", {}).get("cache_hit"))
+            prov = [{"role": "hypothesis_generator", "source": "GENUINE saved Claude reply (r2v-b16fc9281536, from cache)"
+                     if gen_hit else "MISSING (cache miss: refused, nothing invented)"}]
+            for x in r.reuse_log:
+                prov.append({"role": x["role"], "source": (f"GENUINE saved Claude reply ({x['source']['experiment']}, "
+                                                           f"{x['source']['request_id']})") if x["reused"]
+                             else "NOT AVAILABLE: never paid for; the call was refused offline and nothing was invented"})
+            providers = {c.get("provider") for c in docs[o]["agents"]["calls"]}
+            calls[o] = {"generator_cache_hit": gen_hit, "reuse_log": r.reuse_log, "response_provenance": prov,
+                        "scripted_mock_responses_used": bool(providers & {"mock", "reference"}),
+                        "agents_label": docs[o]["provenance"]["agents"]}
             (out / "investigations" / f"offline_reconstruction_{o}.json").write_text(
                 json.dumps(docs[o], indent=1, sort_keys=True, default=str) + "\n")
         summary = {
-            "label": "OFFLINE RECONSTRUCTION from saved replies (no network, no paid calls, throwaway store copy)",
+            "label": "OFFLINE RECONSTRUCTION from GENUINE SAVED Claude replies (agents='recorded'; no scripted mock "
+                     "responses; no network, no paid calls, throwaway store copy). Not new intelligence.",
             "created_at": utc_now(), "replies_used": {"generator": "r2v-b16fc9281536 (both dates)",
                                                       "critic_strategist": "r2r-57fa83dc8f2f (2025-11-23 only)"},
             "internal_errors": internal, "calls": calls,
@@ -74,9 +85,11 @@ def main() -> int:
                                             "intended_effect": x["data"]["intended_effect"],
                                             "simulation": x["data"]["simulation"]}
                                            for x in d["stages"]["strategic_options"]],
-                               "protocol_option": (d["experiment_protocol"] or {}).get("data", {}).get("option_ref")}
+                               "protocol_option": (d["experiment_protocol"] or {}).get("data", {}).get("option_ref"),
+                               "protocol_eligibility": (d["experiment_protocol"] or {}).get("data", {}).get("eligibility")}
                            for o, d in docs.items()},
-            "critic_detection": critic_detection(docs),
+            "critic_detection": critic_detection(docs), "critic_detection_reliability": KEYWORD_SCREEN_RELIABILITY,
+            "critic_review_manual": MANUAL_CRITIC_REVIEW,
             "strategist_assessment": strategist_assessment(docs, original["docs"]["reference"])}
         (out / "summary.json").write_text(json.dumps(summary, indent=1, sort_keys=True, default=str) + "\n")
         for o, v in summary["per_origin"].items():

@@ -63,7 +63,7 @@ Every item in `stages.*`, `evidence.metrics` and `experiment_protocol` has the s
 | `estimates` | `estimate` (**not official**) | proposed | value, interval, label, model_version, score | `from_model`, `informs` |
 | `simulations` | `simulated_outcome` | recorded | scenario, outcome_range, baseline, assumed effect and offsets, assumptions, baseline_status | `simulates` → option |
 | `strategic_options` | `strategic_proposal` | proposed | mode, levers, intended_effect, linked_hypotheses, supporting_evidence, assumptions, competitor_responses, cost (`known: false` when unknown), risks, uncertainty, success_criteria, compliance, `executable: false`, **simulation** (`status`: `simulated` or `not_simulated`, with `failure_class` and `reason` when not simulated; ADR-021) | `relies_on` → hypotheses, `simulated_by` → simulations |
-| `experiment_protocol` | `experiment_protocol` | draft_not_executable | design, primary_metric, power, guardrails, stop_rules, measurement, operator, pre_registration_hash | `tests` → option, hypotheses |
+| `experiment_protocol` | `experiment_protocol` | draft_not_executable | design, primary_metric, power, guardrails, stop_rules, measurement, operator, pre_registration_hash, **eligibility** (`status`: `exploratory_not_eligible` or `eligible_pending_human_review`, `eligible_for_execution`, `reasons`; ADR-021) | `tests` → option, hypotheses |
 | `lessons` | `lesson` / `question` | proposed | knowledge_id, status_detail / needs | `derived_from` or `about` → hypothesis, `evaluated_by` → results |
 
 **Display rules the frontend must respect:**
@@ -71,7 +71,9 @@ Every item in `stages.*`, `evidence.metrics` and `experiment_protocol` has the s
 - a `simulated_outcome` must be shown as conditional on its scenario and assumptions;
 - a `strategic_proposal` must be shown as a proposal awaiting human, legal and compliance review;
 - `survived` must be shown with its `status_detail.strength` and the label "not causal proof";
-- a `strategic_proposal` with `simulation.status = not_simulated` has no simulated outcome: show its reason, never a number.
+- a `strategic_proposal` with `simulation.status = not_simulated` has no simulated outcome: show its reason, never a number;
+- an `experiment_protocol` whose eligibility is `exploratory_not_eligible` must be shown as exploratory, with its reasons; a draft is never evidence that a strategy is valid;
+- `provenance.agents = recorded` means saved replies of a real model replayed offline (genuine AI output, not new); `mock` and `reference` are scripted.
 
 ## 3. Investigation statuses
 

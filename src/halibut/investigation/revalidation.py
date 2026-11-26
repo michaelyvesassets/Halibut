@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import uuid
 import shutil
 import sqlite3
 import tempfile
@@ -37,7 +38,10 @@ from .loop import InvestigationInternalError, run_investigation
 
 VERSION = "r2_engineering_revalidation.v1"
 LABEL = ("MIXED CACHED/LIVE ENGINEERING REVALIDATION: generator replies are the RECORDED replies of r2v-b16fc9281536 "
-         "(cache); only the smoke test, critic and strategist are live. Not a fresh independent intelligence experiment.")
+         "(cache); critic and strategist replies already paid for are REUSED when the request is byte-identical; only the "
+         "smoke test and the remaining critic and strategist calls are live. Recorded replies are genuine model output, "
+         "not scripted mocks. Not a fresh independent intelligence experiment and not an independent validation of "
+         "intelligence.")
 LIVE_ROLES = ("loop_critic", "strategist")
 KNOWN_ISSUES = [  # post-hoc evaluation only (postmortem of r2v-b16fc9281536); NEVER sent to any agent
     {"id": "tesla_non_bev_contradiction", "origin": "2025-11-23", "ref": "H4", "kind": "contradicted_assumption",
@@ -64,6 +68,23 @@ KNOWN_ISSUES = [  # post-hoc evaluation only (postmortem of r2v-b16fc9281536); N
      "summary": "an MG-Kia gap compared with Kia's share level",
      "keywords": ["gap", "reference", "level", "mismatch", "apples", "different quantit", "difference between", "compares"]},
 ]
+KEYWORD_SCREEN_RELIABILITY = ("UNRELIABLE: in r2r-57fa83dc8f2f the keyword screen scored the Tesla contradiction as not "
+                              "detected (a high-severity critique did challenge it) and the VW-MG mis-encoding as detected "
+                              "(it matched the word 'gap'; no critique addressed the mis-encoding). Use the manual review.")
+MANUAL_CRITIC_REVIEW = {  # human review of the recorded r2r-57fa83dc8f2f critic reply (2025-11-23); kept separate from scores
+    "source": "r2r-57fa83dc8f2f critic reply req_011ChM1EKtZ43v9Xjk9CUzww (2025-11-23), reviewed 2026-11-24",
+    "known_issues": {
+        "tesla_non_bev_contradiction": {"verdict": "partial", "basis": "H4 [high] calls the non-BEV assumption unverified and "
+                                        "load-bearing, but does not use the 100% Tesla segment mix that refutes it"},
+        "ford_product_led_outside_evidence": {"verdict": "partial", "basis": "H2 [high] offers fleet-deal timing as a rival; "
+                                              "does not state that model-level data are absent"},
+        "vw_mg_gap_misencoded": {"verdict": "not_detected", "basis": "H3 critiques address substitution and the conjunctive "
+                                 "refutation, not the gap-versus-level reference mismatch"}},
+    "promising_observations": [{
+        "observation": "the critic independently identified that H1's test cannot discriminate dilution from BEV growth "
+                       "(a trend-consistent, uninformative test), the postmortem's central finding, without being told",
+        "status": "promising observation from ONE reply (n=1); NOT a validated general capability",
+        "needed_to_validate": "the Step 2 planted-defect evaluation on held-out investigations"}]}
 CRITERIA_INTERPRETATION = {  # frozen criteria unchanged; how the validator changes affect their reading (all listed)
     "A1_smoke_structured_output_ok": "unaffected by the validator changes",
     "A4_documents_validate": "unaffected (documents gain an optional failures.completion field; the schema is unchanged)",
@@ -168,14 +189,18 @@ def reusable_calls(store, experiment_ids) -> dict:
     return out
 
 
+class LiveCallNotPermitted(RuntimeError):
+    pass
+
+
 class _ReuseOrLive(_AlwaysLive):
     """Critic/strategist: reuse a reply already PAID FOR (see reusable_calls) when the request is byte-identical (same prompt
     fingerprint and same cache key); otherwise behave as _AlwaysLive (live, never a stale cache read). Every decision is
     logged in ``self.log``."""
 
-    def __init__(self, inner, store, reusable: dict):
+    def __init__(self, inner, store, reusable: dict, allow_live: bool = True):
         super().__init__(inner, store)
-        self.reusable, self.log = reusable or {}, []
+        self.reusable, self.log, self.allow_live = reusable or {}, [], allow_live
 
     def complete(self, system, user, *, role, max_output_tokens=None, run_id="unscoped", schema=None):
         ph = hashlib.sha256((system + user).encode()).hexdigest()[:16]
@@ -188,6 +213,8 @@ class _ReuseOrLive(_AlwaysLive):
         if hit:
             return CachedProvider.complete(self, system, user, role=role, max_output_tokens=max_output_tokens,
                                            run_id=run_id, schema=schema)
+        if not self.allow_live:
+            raise LiveCallNotPermitted(f"{role}: no reusable paid reply and live calls are not permitted for this origin")
         return super().complete(system, user, role=role, max_output_tokens=max_output_tokens, run_id=run_id, schema=schema)
 
 
@@ -196,13 +223,13 @@ class RevalidationRouter(Router):
     ``reuse`` (from reusable_calls), a byte-identical request already paid for is answered by its recorded reply."""
 
     def __init__(self, store, scope, cfg, *, mode: str, max_usd=None, environ=None, http_client=None, cfg_overrides=None,
-                 provider_config=None, reuse: dict | None = None):
+                 provider_config=None, reuse: dict | None = None, allow_live: bool = True):
         super().__init__("anthropic", store, scope, max_usd=max_usd, environ=environ, http_client=http_client,
                          cfg_overrides=cfg_overrides, provider_config=provider_config)
         from ..agents.anthropic_provider import cache_salt  # noqa: PLC0415
         self.mode, self._salt = mode, cache_salt(cfg)
         self._gen = _RecordingCache(_CacheOnly("anthropic", self.routing["roles"]["hypothesis_generator"]["model"], self._salt), store)
-        self.reuse = reuse or {}
+        self.reuse, self.allow_live = reuse or {}, allow_live
         self._stub = _ReuseOrLive(_NotInPreflight("anthropic", cfg["model"], self._salt), store, self.reuse)
         self._live = {}
 
@@ -223,7 +250,7 @@ class RevalidationRouter(Router):
         cached, max_out = super().provider(role)
         key = ("live", cached.model)
         if key not in self._live:
-            self._live[key] = _ReuseOrLive(cached.inner, self.store, self.reuse)
+            self._live[key] = _ReuseOrLive(cached.inner, self.store, self.reuse, self.allow_live)
         return self._live[key], max_out
 
 
@@ -271,7 +298,7 @@ def identity_preflight(db_path, market_path, original, origins, evaluate_as_of, 
             r = RevalidationRouter(st, "preflight", cfg, mode="preflight", reuse=reuse)
             internal = None
             try:
-                d = run_investigation(st, market_path, as_of=o, evaluate_as_of=evaluate_as_of, agents="mock", router=r,
+                d = run_investigation(st, market_path, as_of=o, evaluate_as_of=evaluate_as_of, agents="recorded", router=r,
                                       log=lambda *_: None)
             except InvestigationInternalError as exc:  # an engine defect reached offline: reported, nothing is sent
                 d, internal = exc.doc, exc.doc["stop_reason"]
@@ -314,8 +341,8 @@ def critic_detection(docs: dict) -> list[dict]:
         crits = [c for c in d["stages"]["critiques"] if any(ln["to"] == h["id"] for ln in c["links"])]
         hits = sorted({kw for c in crits for kw in k["keywords"] if kw in c["label"].lower()
                        or kw in str(c["data"].get("challenged_assumption", "")).lower()})
-        out.append({**row, "detected": bool(hits), "matched_keywords": hits,
-                    "note": "keyword screen only: a human must confirm whether the critique identifies the issue",
+        out.append({**row, "detected": bool(hits), "matched_keywords": hits, "automated_score": "keyword_screen_unreliable",
+                    "note": "keyword screen only (unreliable, see KEYWORD_SCREEN_RELIABILITY): a human must confirm",
                     "critiques": [{"severity": c["data"]["severity"], "statement": c["label"],
                                    "challenged_assumption": c["data"].get("challenged_assumption")} for c in crits]})
     return out
@@ -357,9 +384,11 @@ def strategist_assessment(docs: dict, reference_docs: dict) -> dict:
 
 def run_revalidation(store, db_path, market_path, original_run_dir, origins, evaluate_as_of, *, live=False, approval_id=None,
                      max_usd=None, out_dir="results/r2_validation", environ=None, http_client=None, cfg_overrides=None,
-                     provider_config=None, reuse_from=(), log=print) -> dict:
+                     provider_config=None, reuse_from=(), live_origins=None, log=print) -> dict:
     """``reuse_from``: earlier revalidation experiment ids whose PAID critic/strategist replies may be reused when the
-    request is byte-identical (verified by the preflight and again at call time). Every other call is live."""
+    request is byte-identical (verified by the preflight and again at call time). Every other call is live.
+    ``live_origins``: if given, ONLY these origins may make live critic/strategist calls; every other origin must be fully
+    covered by reused replies (refused before any paid call otherwise, and refused again at call time)."""
     from ..agents.llm import load_llm_config  # noqa: PLC0415
     market = load_market(market_path)
     rt = load_routing()
@@ -369,7 +398,7 @@ def run_revalidation(store, db_path, market_path, original_run_dir, origins, eva
     origins = sorted(origins)
     if sorted(original["docs"]["anthropic"]) != origins:
         raise ValueError(f"origins {origins} differ from the original experiment's {sorted(original['docs']['anthropic'])}")
-    exp_id = "r2r-" + hashlib.sha256(json.dumps([original["experiment_id"], origins, utc_now()]).encode()).hexdigest()[:12]
+    exp_id = "r2r-" + hashlib.sha256(json.dumps([original["experiment_id"], origins, utc_now(), uuid.uuid4().hex]).encode()).hexdigest()[:12]
     subject = f"r2_revalidation:{market.id}"
     ident = identity_preflight(db_path, market_path, original, origins, evaluate_as_of, cfg, reuse_from)
     log(f"identity preflight: {'IDENTICAL' if ident['identical'] else 'MISMATCH'}")
@@ -386,7 +415,13 @@ def run_revalidation(store, db_path, market_path, original_run_dir, origins, eva
              "worst_case_with_retries_usd": sum(r["worst_case_usd"] for r in live_rows) * retries + plan["smoke_worst_case_usd"],
              "cap_usd": max_usd, "rows": live_rows, "generator_calls": 0,
              "reused_calls": [{"origin": r["origin"], "role": r["role"], "source": r["reused_from"]} for r in reused_rows]}
+    covered = {o: all(ident["per_origin"][o]["reuse"].get(r) for r in LIVE_ROLES) for o in origins}
+    not_covered = [o for o in origins if live_origins is not None and o not in live_origins and not covered[o]]
+    plan5["live_origins"] = list(live_origins) if live_origins is not None else origins
     if live:
+        if not_covered:
+            raise approvals.AuthorizationError(f"origins {not_covered} are not live origins but their critic/strategist "
+                                               "requests are not covered by reusable paid replies; nothing was sent")
         if not ident["identical"]:
             raise approvals.AuthorizationError("identity preflight failed: the generator requests are not the recorded ones; "
                                                "nothing was sent")
@@ -405,7 +440,8 @@ def run_revalidation(store, db_path, market_path, original_run_dir, origins, eva
             reuse = reusable_calls(store, reuse_from)
             for o in origins:
                 r = RevalidationRouter(store, exp_id, cfg, mode="live", max_usd=max_usd, environ=environ, http_client=http_client,
-                                       cfg_overrides=cfg_overrides, provider_config=cfg_path, reuse=reuse)
+                                       cfg_overrides=cfg_overrides, provider_config=cfg_path, reuse=reuse,
+                                       allow_live=live_origins is None or o in live_origins)
                 try:
                     new[o] = run_investigation(store, market_path, as_of=o, evaluate_as_of=evaluate_as_of, agents="anthropic",
                                                router=r, approval_id=approval_id, max_usd=max_usd, approval_subject=subject,
@@ -458,7 +494,8 @@ def run_revalidation(store, db_path, market_path, original_run_dir, origins, eva
               "criteria_unchanged": True, "criteria_interpretation": CRITERIA_INTERPRETATION,
               "completion": {o: d["failures"]["completion"] for o, d in new.items()},
               "internal_errors": internal, "reuse_log": reuse_log,
-              "critic_detection": critic_detection(new), "strategist_assessment": strategist_assessment(new, original["docs"]["reference"]),
+              "critic_detection": critic_detection(new), "critic_detection_reliability": KEYWORD_SCREEN_RELIABILITY,
+              "critic_review_manual": MANUAL_CRITIC_REVIEW, "strategist_assessment": strategist_assessment(new, original["docs"]["reference"]),
               "costs_step1": {"smoke_usd": smoke_cost, "per_origin": costs, "incremental_live_total_usd": float(spend[0]),
                               "historical_generator_total_usd": sum(v["original"]["generator_cost_usd"] for v in orig_fp.values()),
                               "ledger_attempts": spend[1]}}
@@ -508,7 +545,12 @@ def revalidation_markdown(r: dict) -> str:
             f"- **{o}**: {e}" for o, e in r["internal_errors"].items()]
     L += ["", "## Completion (ADR-020)", ""] + [f"- {o}: {v['state']} (rejected arrays: {[a['subject'] for a in v['rejected_arrays']]})"
                                                  for o, v in r["completion"].items()]
-    L += ["", "## Critic detection of the postmortem's known issues (critic was not told about them)", ""]
+    L += ["", "## Critic detection of the postmortem's known issues (critic was not told about them)", "",
+          f"> Automated keyword scores: {r.get('critic_detection_reliability', '')}", "", "Manual review (separate record):"]
+    m = r.get("critic_review_manual", {})
+    L += [f"- {k}: **{v['verdict']}**, {v['basis']}" for k, v in m.get("known_issues", {}).items()]
+    L += [f"- promising observation ({x['status']}): {x['observation']}" for x in m.get("promising_observations", [])]
+    L += ["", "Automated keyword screen (unreliable):"]
     for x in r["critic_detection"]:
         L.append(f"- {x['issue']} ({x['origin']} {x['target']}, {x['kind']}): "
                  f"{'n/a' if x['detected'] is None else 'CANDIDATE DETECTED' if x['detected'] else 'not detected'} {x.get('matched_keywords', '')} - {x['note']}")

@@ -52,6 +52,8 @@ def add_investigation_commands(sub) -> None:
     rv.add_argument("--reuse-from", nargs="*", default=[],
                     help="earlier revalidation experiment ids whose PAID critic/strategist replies may be reused when the "
                          "request is byte-identical (verified offline first and again at call time)")
+    rv.add_argument("--live-origins", nargs="*", default=None,
+                    help="only these origins may make live critic/strategist calls; others must be fully reused")
     s.add_parser("list", help="list stored investigations")
     sh = s.add_parser("show", help="summary of one investigation (or --json for the full result document)")
     sh.add_argument("investigation_id")
@@ -110,7 +112,8 @@ def _inv(args) -> int:
             try:
                 rep = run_revalidation(store, args.db, args.market, args.original_run, args.origins, args.evaluate_at,
                                        live=args.live, approval_id=args.approval, max_usd=args.max_usd, out_dir=args.out,
-                                       provider_config=args.provider_config, reuse_from=args.reuse_from)
+                                       provider_config=args.provider_config, reuse_from=args.reuse_from,
+                                       live_origins=args.live_origins)
             except AuthorizationError as exc:
                 print(f"refused: {exc}", file=sys.stderr)
                 return 3

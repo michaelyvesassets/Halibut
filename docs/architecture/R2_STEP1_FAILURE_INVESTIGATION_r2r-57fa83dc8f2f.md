@@ -1,7 +1,7 @@
 # R2 Step 1 failure investigation (experiment `r2r-57fa83dc8f2f`)
 
-Status: **offline investigation complete (2026-11-24); fixes implemented and tested locally; not pushed; awaiting
-founder review.**
+Status: **offline investigation complete (2026-11-24). Founder review on 2026-11-26: ADR-021 approved in principle,
+with follow-up checks (§9) completed.**
 - No paid calls were made.
 - No Step 2, R3, Sonnet or Qwen work.
 - No lesson promotions and no real-world interventions.
@@ -124,7 +124,7 @@ measurable success criteria and plausible competitor responses.
 | O1 price/financing push, segment_share BYD +0.5–1.5 pp | **Rejected (correctly)** by number validation: "baseline point 7.27%" matches no evidence or baseline value (BYD's segment share is 3.60%; the VW baseline is 7.76%). A fabricated number |
 | O2 range/availability, segment_mix BYD +2–6 pp | Coherent with H1 (BYD's BEV mix fell from 100% to 62.63%). Objective alignment is doubtful, because raising BEV *mix* is not the same as gaining share. The baseline is unvalidated persistence (11 quarters), with an 80% range of 38.8–94.5%, so the effect is undetectable. **Selected for the draft protocol** in the reconstruction |
 | O3 service/charging bundle on the VW–MG gap | **Internally contradictory:** the intended effect is to *decrease* the VW–MG gap, but its success criterion is the gap *increasing* versus L4. The actor is unclear (focal is BYD). It admits "H3 is not testable". Kept, not simulated (`option.effect_target_unsupported`) |
-| O4 disclosed advertising, share BYD +0.1–0.5 pp | Its numbers 1.24% and 0.20% are correct (BYD total share L4 and P4). "Baseline point 0.12 share" has no source. It passed only because the absolute number tolerance (0.06 pp) loosely matches 0.197%. Simulated: 3.01–4.37% |
+| O4 disclosed advertising, share BYD +0.1–0.5 pp | Its numbers 1.24% and 0.20% are correct (BYD total share L4 and P4). "Baseline point 0.12 share" has no source. It passed because loop.v1's number check only examines numbers followed by `%` or `pp`: **unit-less numbers are never checked** (corrected 2026-11-26; an earlier draft blamed the tolerance). Simulated: 3.01–4.37% |
 
 **Overall:** the strategist is structurally sound and lawful, but it is not yet quantitatively careful:
 - 1 fabricated number was caught;
@@ -162,7 +162,8 @@ accepted:
 1. Add `entity_b` to the strategist's intended effect. This changes the strategist schema, so it belongs in a new
    prompt and schema version; doing it now would break identity with the recorded replies and the frozen criteria.
 2. Reject options whose intended-effect direction contradicts their own success criterion (O3).
-3. Use a relative, unit-aware number tolerance in `check_numbers` (the O4 "0.12").
+3. Validate every number, not only those followed by `%` or `pp` (the O4 "0.12"), and require exact reproduction
+   with units, denominators, precision and provenance: closeness alone is not enough.
 4. Replace the keyword-based critic detection with a structured critic output that cites the contradicting metric.
 
 ## 6. Tests
@@ -258,3 +259,82 @@ verifies this, and the call-time check repeats it.
 **Needs:**
 - a new founder approval (ADR-019, under $0.10), because the previous approval was consumed and revoked;
 - the run is performed by the founder in their own terminal.
+
+## 9. Follow-up after founder review (2026-11-26)
+
+### 9.1 Engineering resilience
+
+- **Unavailable baselines** never produce a number:
+  - the point and interval are `None`;
+  - the option is not simulated, and no simulation item links to it;
+  - it is never chosen for a protocol.
+
+  Covered by the recorded-reply, adversarial and property tests.
+- **Unsupported options** stay visible: they are kept, with `simulation.status = not_simulated`, a failure class and a
+  reason, plus a document failure item and an `option.not_simulated` event. Rejected options stay in `failures.items`
+  and `validation_records`.
+- **Internal errors** are stored, with records written before the runner stops (tested).
+- **No experiment is actionable unless it passes the eligibility checks** (`strategy.execution_eligibility`). Every
+  drafted protocol carries `data.eligibility`. It is `exploratory_not_eligible` unless all of these hold:
+  - the baseline is validated;
+  - the assumed effect after competitor offsets lies outside the forecast's 80% uncertainty;
+  - the effect is adequately powered nationally;
+  - the intended effect measures the objective metric;
+  - the primary success criterion measures the same quantity, in the same direction.
+
+  The experiment approval request carries `eligible_for_execution`. `approvals.decide` **refuses to grant** an
+  experiment or external action unless it is `true`; an absent value counts as not eligible.
+
+### 9.2 Strategic integrity: the O2 draft
+
+The historical O2 draft is preserved unchanged in `offline_reconstruction/` (first reconstruction). The regenerated
+`offline_reconstruction_v2/` marks it **`exploratory_not_eligible`** for four reasons:
+1. the baseline is unvalidated persistence;
+2. the assumed effect (+0.50 pp after offsets) lies inside the forecast uncertainty (±27.85 pp);
+3. it is not adequately powered nationally;
+4. it targets `segment_mix`, not the objective `segment_share`.
+
+The draft's label starts "EXPLORATORY, not eligible for execution". Generating a draft is never evidence that a
+strategy is valid.
+
+### 9.3 Next prompt and schema version: prepared, not active
+
+`src/halibut/investigation/loop_v2_draft.py` (`ACTIVE = False`) is imported by nothing in the loop. Tests pin the
+loop.v1 prompts and the strategist schema, so the Step 1 requests are unchanged. It adds:
+- `intended_effect.entity_b`, required for pairwise templates;
+- checks that the objective and the success measures agree (this catches the recorded O3);
+- `numeric_claims` with unit, decimals, kind (`observed`, `calculated` or `assumed`), operation and metric ids. Every
+  narrative number must be declared, and observed and calculated values must reproduce **exactly at their stated
+  precision**. Assumptions cite no metric and must equal an assumed magnitude.
+
+On the recorded reply these checks reject O1's 7.27%, O4's 0.12 and O3's direction contradiction. They accept O4's
+correct 1.24% and 0.20%, and they reject 1.25% (0.01 from the truth).
+
+### 9.4 Critic evaluation
+
+- **Automated keyword scores are flagged unreliable** (`automated_score: keyword_screen_unreliable`, plus
+  `KEYWORD_SCREEN_RELIABILITY`).
+- **The manual review is kept as a separate record** (`MANUAL_CRITIC_REVIEW`, in reports as `critic_review_manual`).
+- **The H1 finding is a promising observation, not a capability.** The critic's independent discovery of H1's
+  non-discriminating test is recorded as a promising observation from one reply (n = 1), not a validated general
+  capability.
+- **Proposed Step 2 evaluation:** see [R2_STEP2_PROPOSAL.md §2.8](R2_STEP2_PROPOSAL.md).
+
+### 9.5 Revalidation (prepared; needs the founder's approval to run)
+
+- `--reuse-from r2r-57fa83dc8f2f --live-origins 2026-05-23`:
+  - before any paid call, the run is refused unless 2025-11-23 is fully covered by reused paid replies;
+  - at call time, a 2025-11-23 call that would go live raises `LiveCallNotPermitted`.
+- Cap $0.02. Three live calls: smoke, plus the 2026-05-23 critic and strategist.
+- Costs are reported per origin, as separate fields:
+  - historical generator cost;
+  - historical reused critic and strategist cost;
+  - incremental live cost;
+  - equivalent total.
+- Reconstructions and preflights now use the offline agent kind **`recorded`**, so genuine saved Claude replies are
+  never labelled as `mock`. The reconstruction lists the source of every response and asserts that no scripted mock
+  response was used.
+- **A defect found while testing:** experiment ids were `hash(…, utc_now())` at one-second resolution, so two runs
+  started in the same second shared a spend scope and mixed their costs. A random nonce is now part of the id (with a
+  regression test under a frozen clock).
+- The run label states that it is not an independent validation of intelligence.

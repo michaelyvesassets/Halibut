@@ -81,6 +81,19 @@ Each needs an ADR, compiler and registry support, and tests. All are computable 
 - Pre-registered criteria v2 (new hash) are frozen before the held-out runs. Comparisons across models (Haiku,
   Sonnet, Qwen) use only held-out investigations with fresh generator calls.
 
+### 2.8 Critic evaluation that does not depend on keywords (added 2026-11-26)
+The keyword screen misjudged both directions in r2r-57fa83dc8f2f. Proposed instead:
+- **Structured critiques:** each critique states an issue type (from a fixed taxonomy: contradicted by evidence,
+  unsupported detail, non-discriminating test, mis-encoded comparison, confounder, power) and, where it claims a
+  contradiction, the metric id that shows it. Halibut checks the cited metric deterministically.
+- **A planted-defect benchmark:** held-out hypothesis sets with defects of known type and location, planted by the
+  engine (never by an agent), plus clean controls. Critic recall and precision are measured per defect type, with
+  false alarms on clean controls counted.
+- **Pre-registered, blinded manual adjudication** for free-text findings: two-rater rubric (identifies the defect /
+  partially / not), raters blind to the model and to the planted list, and disagreements recorded.
+- A capability claim needs recall and precision above pre-registered thresholds on held-out sets. A single reply
+  (such as the r2r-57fa83dc8f2f H1 finding) is a promising observation only.
+
 ## 3. Proposed cost (to be approved separately)
 
 | Part | Calls | Worst case |

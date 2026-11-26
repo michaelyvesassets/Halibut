@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import uuid
 from datetime import date, timedelta
 from pathlib import Path
 
@@ -146,7 +147,7 @@ def run_validation(store, market_path, origins, evaluate_as_of, *, live: bool = 
     cfg_path = Path(provider_config) if provider_config else Path(__file__).resolve().parents[3] / rt["provider_config"]
     cfg = {**load_llm_config(cfg_path, model=rt["default_model"]), **(cfg_overrides or {})}
     origins = sorted(origins)
-    exp_id = "r2v-" + hashlib.sha256(json.dumps([market.id, origins, evaluate_as_of, utc_now()]).encode()).hexdigest()[:12]
+    exp_id = "r2v-" + hashlib.sha256(json.dumps([market.id, origins, evaluate_as_of, utc_now(), uuid.uuid4().hex]).encode()).hexdigest()[:12]
     subject = f"r2_validation:{market.id}"
     events = EventLog(store)
     if live:

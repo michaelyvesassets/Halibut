@@ -125,7 +125,48 @@ def min_effect_pp(simulations: list[dict]) -> float:
     return min(s["effect_pp_assumed"][0] * (1 - s["competitor_offset_assumed"][1]) for s in simulations)
 
 
-def experiment_protocol(market, option: dict, criterion: dict, panel, simulations: list[dict]) -> dict:
+INCREASE, DECREASE = ("increase_vs_L4", "above_reference"), ("decrease_vs_L4", "below_reference")
+
+
+def execution_eligibility(option: dict, criterion: dict, simulations: list[dict], objective_template: str | None,
+                          adequately_powered) -> dict:
+    """Whether a drafted experiment could ever be put forward for execution approval. Drafting a protocol is NOT evidence
+    that the strategy is valid: a draft is 'exploratory_not_eligible' unless every check passes. Checks:
+    the baseline is a validated model; the assumed effect (after competitor offsets) is distinguishable from the
+    baseline forecast's own 80% interval; the effect is detectable nationally (MDE); the intended effect measures the
+    investigation's objective metric; the primary success criterion measures the same quantity as the intended effect
+    and moves in the same direction."""
+    e, reasons = option["intended_effect"], []
+    if not simulations:
+        reasons.append("no simulation: the option has no measurable baseline")
+    else:
+        if any(s.get("baseline_status") != "validated" for s in simulations):
+            reasons.append("the baseline is not a validated model (persistence labelled unvalidated)")
+        s0 = simulations[0]
+        half = (s0["outcome_range"][1] - s0["outcome_range"][0]) / 2 * 100  # pp, includes forecast uncertainty
+        low = min_effect_pp(simulations)
+        if abs(low) < half:
+            reasons.append(f"the assumed effect ({low:+.2f} pp after competitor offsets) lies inside the forecast "
+                           f"uncertainty (+/-{half:.2f} pp): the simulation cannot distinguish it")
+    if adequately_powered is not True:
+        reasons.append("not adequately powered nationally (or the minimum detectable effect is unknown)")
+    if objective_template and e["template"] != objective_template:
+        reasons.append(f"the intended effect measures {e['template']}, not the investigation's objective metric "
+                       f"{objective_template}")
+    same = (criterion.get("template") == e["template"] and criterion.get("entity") == e["entity"])
+    want = INCREASE if e["direction"] == "increase" else DECREASE
+    if not same:
+        reasons.append("the primary success criterion measures a different quantity from the intended effect")
+    elif criterion.get("comparator") not in want:
+        reasons.append(f"the primary success criterion ({criterion.get('comparator')}) contradicts the intended "
+                       f"direction ({e['direction']})")
+    return {"eligible_for_execution": not reasons,
+            "status": "eligible_pending_human_review" if not reasons else "exploratory_not_eligible",
+            "reasons": reasons, "note": "a drafted protocol is not evidence that the strategy is valid"}
+
+
+def experiment_protocol(market, option: dict, criterion: dict, panel, simulations: list[dict],
+                        objective_template: str | None = None) -> dict:
     ser = panel.series(criterion["template"], criterion["entity"], criterion.get("entity_b"))
     diffs = np.diff([v for _, v in ser][-13:])
     sigma = float(np.std(diffs, ddof=1)) if len(diffs) > 2 else None
@@ -154,6 +195,8 @@ def experiment_protocol(market, option: dict, criterion: dict, panel, simulation
         "operator": "client or partner team; Halibut designs and evaluates, never executes",
         "compliance": "legal/compliance review reference required before approval",
         "approval": {"kind": "experiment", "granted_by": "a named person only, with legal review and measurable outcomes"}}
+    body["eligibility"] = execution_eligibility(option, criterion, simulations, objective_template,
+                                                body["power"]["adequately_powered_nationally"])
     body["pre_registration_hash"] = _h(body)
     body["protocol_id"] = "xp:" + body["pre_registration_hash"][:16]
     return body

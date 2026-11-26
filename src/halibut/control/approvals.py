@@ -124,6 +124,9 @@ def decide(store, approval_id: str, decision: str, decided_by: str, *, note: str
         raise AuthorizationError("the requester cannot decide their own request")
     if decision == "granted":
         if a["kind"] in ("experiment", "external_action"):
+            if (a["payload"] or {}).get("eligible_for_execution") is not True:  # absent counts as not eligible
+                raise AuthorizationError(f"this {a['kind']} is not eligible for execution: "
+                                         f"{(a['payload'] or {}).get('eligibility_reasons') or 'no eligibility assessment'}")
             if not ev.get("legal_review_ref"):
                 raise AuthorizationError(f"granting a {a['kind']} requires a legal/compliance review reference")
             if not ev.get("measurable_outcomes"):

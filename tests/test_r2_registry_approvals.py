@@ -87,7 +87,12 @@ def test_approval_rules(store):
         ap.request(store, "external_action", "campaign", "agent:loop_strategist:v1")
     with pytest.raises(ap.AuthorizationError, match="max_usd"):
         ap.request(store, "paid_run", "investigation:x", "founder")
-    xp = ap.request(store, "experiment", "xp:1", "engine:investigation", payload={"legal_review_required": True})
+    for payload in ({"legal_review_required": True}, {"eligible_for_execution": False, "eligibility_reasons": ["underpowered"]}):
+        bad = ap.request(store, "experiment", f"xp:inel{len(payload)}", "engine:investigation", payload=payload)
+        with pytest.raises(ap.AuthorizationError, match="not eligible"):  # a draft is never executable by default
+            ap.decide(store, bad, "granted", "founder", evidence={"legal_review_ref": "LR-1", "measurable_outcomes": "x"})
+    xp = ap.request(store, "experiment", "xp:1", "engine:investigation",
+                    payload={"legal_review_required": True, "eligible_for_execution": True})
     for who in ("agent:x", "engine:x", ""):
         with pytest.raises(ap.AuthorizationError, match="named person"):
             ap.decide(store, xp, "granted", who)

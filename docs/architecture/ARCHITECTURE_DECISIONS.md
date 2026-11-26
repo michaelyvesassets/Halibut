@@ -372,8 +372,12 @@ Scope authorised: **R1 only**. No paid API calls.
 ### ADR-021
 **Typed failure states at the boundary between AI output and deterministic execution; internal errors are never
 hidden; already-paid replies are reused only when byte-identical.**
-- **Status:** Proposed (2026-11-24) after the crash of R2 Step 1 (`r2r-57fa83dc8f2f`). Implemented and tested offline;
-  awaiting founder review. Details: [R2_STEP1_FAILURE_INVESTIGATION_r2r-57fa83dc8f2f.md](R2_STEP1_FAILURE_INVESTIGATION_r2r-57fa83dc8f2f.md).
+- **Status:** Approved in principle by the founder (2026-11-26) after the crash of R2 Step 1 (`r2r-57fa83dc8f2f`);
+  the follow-up checks are complete (investigation report §9). Additions after the review:
+  - experiment drafts carry an eligibility assessment, and an ineligible experiment cannot be granted;
+  - an offline `recorded` agent kind for saved replies;
+  - `--live-origins`;
+  - experiment ids that cannot collide. Details: [R2_STEP1_FAILURE_INVESTIGATION_r2r-57fa83dc8f2f.md](R2_STEP1_FAILURE_INVESTIGATION_r2r-57fa83dc8f2f.md).
 - **Context:** a schema-valid strategist option named an intended effect on `segment_share_gap` with one entity. The
   loop.v1 schema carries no second entity. The registry rejected every model for the empty target, then an unguarded
   fallback called `execute`, which raised an IndexError. That aborted the whole run before any record was written.

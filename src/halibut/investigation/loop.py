@@ -87,6 +87,11 @@ class _Run:
         return it
 
 
+# offline workforces: 'mock' and 'reference' are SCRIPTED (not intelligence); 'recorded' replays SAVED replies of a real
+# model (genuine AI output, served from the cache; no network, no spend)
+OFFLINE_AGENTS = ("mock", "reference", "recorded")
+
+
 def run_investigation(store, market_path, *, as_of: str | None = None, evaluate_as_of: str | None = None,
                       agents: str = "mock", router: Router | None = None, approval_id: str | None = None,
                       max_usd: float | None = None, tenant: str = "public", faults: bool = False, decision: str | None = None,
@@ -102,13 +107,15 @@ def run_investigation(store, market_path, *, as_of: str | None = None, evaluate_
     t_eval = to_timestamp(evaluate_as_of) if evaluate_as_of else None
     if t_eval and t_eval <= t0:
         raise ValueError("evaluate_as_of must be after as_of")
-    if agents not in ("mock", "reference"):  # paid agents
+    if agents == "recorded" and router is None:
+        raise ValueError("agents='recorded' replays saved replies and needs an offline router (e.g. RevalidationRouter)")
+    if agents not in OFFLINE_AGENTS:  # paid agents
         if max_usd is None:
             raise approvals.AuthorizationError("paid agents need --max-usd")
         approvals.require(store, approval_id, "paid_run", approval_subject or f"investigation:{market.id}", cost_usd=max_usd)
     pre_id = "inv:" + _h([spec_sha, t0, t_eval, agents, PROMPT_VERSION, faults, tenant, reg.RULE])[:16]
     router = router or Router(agents, store, scope=pre_id, max_usd=max_usd)
-    if agents not in ("mock", "reference"):  # single use: bind the approval to this spend scope (or verify the binding)
+    if agents not in OFFLINE_AGENTS:  # single use: bind the approval to this spend scope (or verify the binding)
         a = approvals.require(store, approval_id, "paid_run", approval_subject or f"investigation:{market.id}",
                               cost_usd=max_usd, use_id=router.scope)
         if a["used_by"] is None:
@@ -124,7 +131,7 @@ def run_investigation(store, market_path, *, as_of: str | None = None, evaluate_
                                          f"({market.mode})",
                  "as_of": t0, "evaluate_as_of": t_eval, "horizon_quarters": 2, "jurisdiction": market.geography,
                  "success_metric": "segment_share" if (market.transactions or {}).get("segment") else "share",
-                 "budget_usd": max_usd if agents not in ("mock", "reference") else 0.0}
+                 "budget_usd": max_usd if agents not in OFFLINE_AGENTS else 0.0}
     ctx = {"market": market, "objective": objective, "router": router, "spec_sha": spec_sha, "agents": agents,
            "faults": faults, "t_eval": t_eval}
     status, reason, evidence, world = "completed", None, {"coverage": {}, "panel": {}, "metrics": []}, \
@@ -357,13 +364,17 @@ def _loop(R: _Run, ctx: dict, panel, evidence: dict):
     simulated = [o for o in options if o["sims"]]  # an option without a simulation cannot be sized for an experiment
     if simulated:
         best = max(simulated, key=lambda o: strategy.min_effect_pp(o["sims"]))  # first of equals (stable order)
-        proto = strategy.experiment_protocol(market, best["option"], best["criteria"][0], panel, best["sims"])
+        proto = strategy.experiment_protocol(market, best["option"], best["criteria"][0], panel, best["sims"],
+                                             objective_template(panel))
         aid = approvals.request(store, "experiment", proto["protocol_id"], ENGINE,
                                 payload={"pre_registration_hash": proto["pre_registration_hash"], "option": best["claim_id"],
-                                         "legal_review_required": True, "investigation": R.input_id})
+                                         "legal_review_required": True, "investigation": R.input_id,
+                                         "eligible_for_execution": proto["eligibility"]["eligible_for_execution"],
+                                         "eligibility_reasons": proto["eligibility"]["reasons"]})
         R.approvals_.append(approvals.get(store, aid))
         R.protocol = art.item(proto["protocol_id"], "experiment_protocol", "draft_not_executable",
-                              f"Draft experiment for {best['option']['title']}", ENGINE, R.as_of, proto,
+                              ("EXPLORATORY, not eligible for execution: " if not proto["eligibility"]["eligible_for_execution"]
+                               else "") + f"Draft experiment for {best['option']['title']}", ENGINE, R.as_of, proto,
                               [("tests", best["claim_id"])] + [("tests", h) for h in best["hyp_claims"]],
                               {"approval_request": aid, "spec_version": strategy.PROTOCOL_VERSION})
     # ---------------------------------------------------------------- 5. evaluation at a later date (optional)

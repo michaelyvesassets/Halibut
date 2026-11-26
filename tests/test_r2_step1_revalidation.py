@@ -209,3 +209,48 @@ def test_an_internal_error_is_visible_stops_spending_and_keeps_the_records(uk, t
     assert rec["internal_errors"] == r["internal_errors"] and (out / "comparison.md").exists()
     assert "INTERNAL ERRORS" in (out / "comparison.md").read_text()
     store.close()
+
+
+def test_only_live_origins_may_call_live(uk, tmp_path):
+    """Without reusable replies for the first origin, a run restricted to the second origin refuses before ANY call; with
+    them, only the smoke test and the second origin's critic and strategist are sent."""
+    from halibut.investigation.revalidation import run_revalidation
+    store, orig_dir = _original_run(uk, tmp_path)
+    first, second = sorted(ORIGINS)
+    kw = dict(live=True, max_usd=0.04, environ=ENV, cfg_overrides={"approved": True}, log=lambda *_: None)
+    sent = []
+    aid = _approve(store)
+    with pytest.raises(ap.AuthorizationError, match="not covered by reusable paid replies"):
+        run_revalidation(store, tmp_path / "s.sqlite", uk / "m.toml", orig_dir, ORIGINS, EVAL, approval_id=aid,
+                         out_dir=tmp_path / "rv0", http_client=fake_claude(sent), live_origins=[second], **kw)
+    assert sent == [] and ap.get(store, aid)["used_by"] is None
+    prior = run_revalidation(store, tmp_path / "s.sqlite", uk / "m.toml", orig_dir, ORIGINS, EVAL, approval_id=aid,
+                             out_dir=tmp_path / "rv1", http_client=fake_claude([]), **kw)
+    # make the second origin's paid replies unavailable for reuse, as in the real r2r-57fa83dc8f2f (never called)
+    store.conn.execute("UPDATE agent_calls SET outcome='x' WHERE run_id=? AND role IN ('loop_critic','strategist')",
+                       (next(json.loads(p.read_text())["input_id"] for p in
+                             (Path(prior["output_dir"]) / "investigations").glob(f"*{second}.json")),))
+    store.conn.commit()
+    r = run_revalidation(store, tmp_path / "s.sqlite", uk / "m.toml", orig_dir, ORIGINS, EVAL, approval_id=_approve(store),
+                         out_dir=tmp_path / "rv2", http_client=fake_claude(sent), reuse_from=[prior["experiment_id"]],
+                         live_origins=[second], **kw)
+    systems = [b["system"] for b in sent]
+    assert len(sent) == 3 and systems.count(loop_agents.CRITIC_SYSTEM) == 1 and systems.count(loop_agents.STRATEGIST_SYSTEM) == 1
+    assert r["plan_step1"]["calls"] == 3 and {x["origin"] for x in r["plan_step1"]["reused_calls"]} == {first}
+    c = r["costs_step1"]["per_origin"]
+    assert prior["experiment_id"] != r["experiment_id"]  # ids never collide (they once did within one second)
+    assert c[first]["historical_reused_critic_strategist_usd"] > 0 and c[first]["incremental_live_usd"] == 0
+    assert c[second]["incremental_live_usd"] > 0 and c[second]["historical_reused_critic_strategist_usd"] == 0
+    store.close()
+
+
+def test_experiment_ids_never_collide_within_one_second(uk, tmp_path, monkeypatch):
+    """Ids were hash(original, origins, utc_now()) at 1 s resolution: two runs in the same second shared a spend scope
+    and mixed their ledger costs. A random nonce is now part of the id."""
+    from halibut.investigation import revalidation
+    store, orig_dir = _original_run(uk, tmp_path)
+    monkeypatch.setattr(revalidation, "utc_now", lambda: "2026-11-26T00:00:00Z")
+    ids = {revalidation.run_revalidation(store, tmp_path / "s.sqlite", uk / "m.toml", orig_dir, ORIGINS, EVAL,
+                                         out_dir=tmp_path / f"p{i}", log=lambda *_: None)["experiment_id"] for i in range(2)}
+    assert len(ids) == 2
+    store.close()
