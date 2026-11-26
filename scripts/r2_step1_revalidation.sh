@@ -70,6 +70,26 @@ trap 'log "terminated (SIGTERM)"; exit 143' TERM
 log "R2 Step 1 revalidation $( [ "$DRY_RUN" = 1 ] && echo '(DRY RUN: no paid call)' ) db=$DB"
 if [ "$DRY_RUN" != 1 ]; then
   : "${ANTHROPIC_API_KEY:?ANTHROPIC_API_KEY must be set in this terminal}"
+  # key check BEFORE any approval or spend reservation (r2r-dc620061d98c failed its smoke test with HTTP 401):
+  # format check offline, then GET /v1/models, which is free (no tokens) and needs a valid key. The key is never printed.
+  if ! python - <<'PY' 2>>"$RUN_DIR/execution.log"
+import os, re, sys
+k = os.environ.get("ANTHROPIC_API_KEY", "")
+if k.strip() != k or not re.fullmatch(r"sk-ant-[A-Za-z0-9_\-]{20,}", k):
+    sys.exit("ANTHROPIC_API_KEY is not a plausible Anthropic API key (placeholder, whitespace or wrong format)")
+import anthropic
+try:
+    anthropic.Anthropic(api_key=k, max_retries=0, timeout=20).models.list(limit=1)
+except anthropic.AuthenticationError:
+    sys.exit("ANTHROPIC_API_KEY was rejected by the API (HTTP 401): use a valid, active key")
+except anthropic.APIError as exc:
+    sys.exit(f"key check failed: {type(exc).__name__}")
+PY
+  then
+    log "refusing: API key check failed before any approval or paid call (see the line above in execution.log)"
+    exit 2
+  fi
+  log "API key check passed (GET /v1/models, no tokens, no charge)"
 fi
 if ! grep -q '^approved = false$' "$CONFIG"; then
   log "refusing: $CONFIG must keep approved = false (the second key is created only in a temporary copy)"
@@ -79,7 +99,7 @@ halibut agents --db "$DB" spend >"$RUN_DIR/spend_before.json"
 
 # 1. single-use approval record (sole-operator policy, ADR-019)
 APPROVAL="$(halibut approvals --db "$DB" request paid_run "$SUBJECT" --by "$OPERATOR" --max-usd "$CAP" \
-            --note "R2 Step 1 engineering revalidation: 5 live calls, generator from cache")"
+            --note "R2 Step 1 engineering revalidation: 3 live calls (smoke + 2026-05-23 critic and strategist); generator from cache; 2025-11-23 critic and strategist reused")"
 log "approval requested: $APPROVAL"
 halibut approvals --db "$DB" decide "$APPROVAL" granted --by "$OPERATOR" --attestation "$ATTEST" | tee -a "$RUN_DIR/execution.log"
 

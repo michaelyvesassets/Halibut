@@ -343,7 +343,8 @@ def markdown(r: dict) -> str:
     L += ["", "## Criteria (pre-registered)", ""]
     for k, desc in r["criteria"].items():
         v = r["criteria_results"].get(k)
-        L.append(f"- {'PASS' if v else 'FAIL' if v is False else 'n/a (dry run)'} **{k}**: {desc}")
+        na = "n/a (not evaluated: no live investigation completed)" if r["live"] else "n/a (dry run)"
+        L.append(f"- {'PASS' if v else 'FAIL' if v is False else na} **{k}**: {desc}")
     L += ["", f"Live spend ${r['cost']['live_spend_usd']:.6f} of cap ${r['cost']['cap_usd']}; plan worst case "
               f"${r['plan']['worst_case_usd']:.4f} (with retries ${r['plan']['worst_case_with_retries_usd']:.4f}); "
               f"cost per useful result: {r['cost']['cost_per_useful_result_usd']}.", "",

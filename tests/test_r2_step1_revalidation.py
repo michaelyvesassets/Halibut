@@ -254,3 +254,29 @@ def test_experiment_ids_never_collide_within_one_second(uk, tmp_path, monkeypatc
                                          out_dir=tmp_path / f"p{i}", log=lambda *_: None)["experiment_id"] for i in range(2)}
     assert len(ids) == 2
     store.close()
+
+
+def test_a_rejected_key_is_reported_consistently(uk, tmp_path):
+    """r2r-dc620061d98c: the smoke test got HTTP 401 'Invalid bearer token'. The report must show the failure and one
+    cost figure (the ledger's fail-closed reservation, in both the smoke and the incremental totals), Step 1's own plan,
+    and no 'dry run' labels in a live run. Nothing after the smoke test is sent."""
+    from halibut.investigation.revalidation import revalidation_markdown, run_revalidation
+    store, orig_dir = _original_run(uk, tmp_path)
+    sent = []
+
+    def reject(request):
+        sent.append(request)
+        return httpx.Response(401, json={"type": "error", "error": {"type": "authentication_error",
+                                                                     "message": "Invalid bearer token"}})
+    r = run_revalidation(store, tmp_path / "s.sqlite", uk / "m.toml", orig_dir, ORIGINS, EVAL, live=True,
+                         approval_id=_approve(store), max_usd=0.02, out_dir=tmp_path / "rv", environ=ENV,
+                         http_client=httpx.Client(transport=httpx.MockTransport(reject)),
+                         cfg_overrides={"approved": True}, log=lambda *_: None)
+    assert len(sent) == 1 and not r["smoke"]["ok"] and "401" in r["smoke"]["error"]
+    c = r["costs_step1"]
+    assert c["smoke_usd"] == pytest.approx(c["incremental_live_total_usd"]) and c["smoke_usd"] > 0
+    md = revalidation_markdown(r)
+    assert "SMOKE FAILED" in md and "n/a (dry run)" not in md and "no live investigation completed" in md
+    assert f"plan worst case ${r['plan_step1']['worst_case_usd']:.4f}" in md
+    assert r["verdict"]["pipeline_ready"] is False
+    store.close()

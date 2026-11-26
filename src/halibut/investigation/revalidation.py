@@ -89,7 +89,7 @@ CRITERIA_INTERPRETATION = {  # frozen criteria unchanged; how the validator chan
     "A1_smoke_structured_output_ok": "unaffected by the validator changes",
     "A4_documents_validate": "unaffected (documents gain an optional failures.completion field; the schema is unchanged)",
     "A5_identical_evidence": "unaffected; additionally proven by the identity preflight",
-    "A6_spend_within_cap": "unaffected; the cap is this run's ($0.04), and the original run's generator spend is reported "
+    "A6_spend_within_cap": "unaffected; the cap is this run's own, and the original run's generator spend is reported "
                            "separately as historical",
     "A2_all_live_investigations_completed": "a 'completed' investigation may now carry a partial rejection (ADR-020); "
                                             "the completion state (clean / partial_rejection) is reported next to it; "
@@ -478,7 +478,10 @@ def run_revalidation(store, db_path, market_path, original_run_dir, origins, eva
     pf = preflight(store, market, origins, evaluate_as_of, cfg.get("training_cutoff"))
     base = _report(exp_id, market, origins, evaluate_as_of, pf, plan, smoke, docs, spend, max_usd, live, cfg, approval_id)
     orig_fp = ident["per_origin"]
-    smoke_cost = float(smoke.get("cost_usd") or 0) if smoke else 0.0
+    # from the LEDGER, so it agrees with the incremental total: a failed attempt keeps its reservation as charged
+    # (fail-closed, budget.py) even when the provider is known not to bill it (e.g. HTTP 401)
+    smoke_cost = float(store.conn.execute("""SELECT COALESCE(SUM(CASE WHEN status='settled' THEN actual_usd ELSE reserved_usd
+        END), 0) FROM llm_spend_ledger WHERE run_id=?""", (f"{exp_id}:smoke",)).fetchone()[0])
     costs = {}
     for o in origins:
         hist = orig_fp[o]["original"]["generator_cost_usd"]
@@ -489,6 +492,9 @@ def run_revalidation(store, db_path, market_path, original_run_dir, origins, eva
         costs[o] = {"historical_generator_usd (r2v-b16fc9281536, recorded reply reused)": hist,
                     "historical_reused_critic_strategist_usd": reused, "incremental_live_usd": inc,
                     "total_equivalent_investigation_usd": hist + reused + inc}
+    base = {**base, "plan_original_experiment": base["plan"],  # the r2v plan; Step 1's own plan is plan_step1
+            "plan": {**base["plan"], "worst_case_usd": plan5["worst_case_usd"],
+                     "worst_case_with_retries_usd": plan5["worst_case_with_retries_usd"], "calls": plan5["calls"]}}
     report = {**base, "label": LABEL, "version": VERSION, "original_experiment": original["experiment_id"],
               "identity_preflight": ident, "plan_step1": plan5, "criteria_hash": CRITERIA_HASH,
               "criteria_unchanged": True, "criteria_interpretation": CRITERIA_INTERPRETATION,
@@ -532,7 +538,9 @@ def revalidation_markdown(r: dict) -> str:
     L += ["", f"Plan: {p['calls']} live calls (0 generator calls); worst case ${p['worst_case_usd']:.4f}, with retries "
               f"${p['worst_case_with_retries_usd']:.4f}; cap {p['cap_usd']}.", "", "## Costs (separately)", ""]
     c = r["costs_step1"]
-    L.append(f"- smoke ${c['smoke_usd']:.6f}; incremental live total ${c['incremental_live_total_usd']:.6f}; historical "
+    if r.get("smoke") and not r["smoke"].get("ok"):
+        L.append(f"- SMOKE FAILED: {r['smoke'].get('error', '')}")
+    L.append(f"- smoke ${c['smoke_usd']:.6f} (ledger; a failed attempt keeps its reservation, fail-closed); incremental live total ${c['incremental_live_total_usd']:.6f}; historical "
              f"generator total ${c['historical_generator_total_usd']:.6f} (recorded replies reused)")
     for o, v in c["per_origin"].items():
         L.append(f"- {o}: " + "; ".join(f"{k} ${x:.6f}" for k, x in v.items()))
