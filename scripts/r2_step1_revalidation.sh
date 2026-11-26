@@ -72,21 +72,40 @@ if [ "$DRY_RUN" != 1 ]; then
   : "${ANTHROPIC_API_KEY:?ANTHROPIC_API_KEY must be set in this terminal}"
   # key check BEFORE any approval or spend reservation (r2r-dc620061d98c failed its smoke test with HTTP 401):
   # format check offline, then GET /v1/models, which is free (no tokens) and needs a valid key. The key is never printed.
-  if ! python - <<'PY' 2>>"$RUN_DIR/execution.log"
+  # Outcomes are classified; only fixed messages are printed (never the key, never exception text). Exit codes:
+  # 10 format, 11 authentication (401), 12 permission (403), 13 rate limit (429), 14 provider outage (5xx/529),
+  # 15 network or timeout, 16 other.
+  set +e
+  python - <<'PY' 2>>"$RUN_DIR/execution.log"
 import os, re, sys
 k = os.environ.get("ANTHROPIC_API_KEY", "")
+def out(code, msg):
+    sys.stderr.write(f"key check: {msg}\n")
+    sys.exit(code)
 if k.strip() != k or not re.fullmatch(r"sk-ant-[A-Za-z0-9_\-]{20,}", k):
-    sys.exit("ANTHROPIC_API_KEY is not a plausible Anthropic API key (placeholder, whitespace or wrong format)")
-import anthropic
+    out(10, "FORMAT: ANTHROPIC_API_KEY is not a plausible Anthropic API key (placeholder, whitespace or wrong format)")
 try:
+    import anthropic
     anthropic.Anthropic(api_key=k, max_retries=0, timeout=20).models.list(limit=1)
 except anthropic.AuthenticationError:
-    sys.exit("ANTHROPIC_API_KEY was rejected by the API (HTTP 401): use a valid, active key")
-except anthropic.APIError as exc:
-    sys.exit(f"key check failed: {type(exc).__name__}")
+    out(11, "AUTHENTICATION (HTTP 401): the key was rejected; use a valid, active key")
+except anthropic.PermissionDeniedError:
+    out(12, "PERMISSION (HTTP 403): the key is valid but not permitted for this request or organisation")
+except anthropic.RateLimitError:
+    out(13, "RATE LIMIT (HTTP 429): retry later; the key itself was not rejected")
+except anthropic.InternalServerError:
+    out(14, "PROVIDER OUTAGE (HTTP 5xx/529): the API is unavailable or overloaded; retry later")
+except (anthropic.APITimeoutError, anthropic.APIConnectionError):
+    out(15, "NETWORK: could not reach the API (connection or timeout)")
+except anthropic.APIStatusError as exc:
+    out(14 if exc.status_code >= 500 else 16, f"UNEXPECTED HTTP {exc.status_code}")
+except BaseException as exc:  # noqa: BLE001  never print exception text: it could echo request details
+    out(16, f"UNEXPECTED {type(exc).__name__}")
 PY
-  then
-    log "refusing: API key check failed before any approval or paid call (see the line above in execution.log)"
+  KEYCHECK=$?
+  set -e
+  if [ "$KEYCHECK" != 0 ]; then
+    log "refusing: API key check failed (code $KEYCHECK; see 'key check:' above) before any approval or paid call"
     exit 2
   fi
   log "API key check passed (GET /v1/models, no tokens, no charge)"
