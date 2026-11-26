@@ -20,6 +20,20 @@ Definitions (v1):
                           'trend_break_detected' (trend extrapolation predicted the test, and the outcome broke it)
   per role                tokens, cost, latency and useful outputs of each agent role (generator, critic, strategist);
                           critic skill = share of refuted hypotheses that had a high-severity critique
+
+Definitions added for loop.v2 (``v2`` block; the v1 definitions above are unchanged):
+  discriminating test     a registered test on which a RIVAL hypothesis predicts the opposite direction
+  informative test (v2)   trend extrapolation did not predict it, OR it is discriminating (rivals disagree on it).
+                          Predicting trend continuation is fine if a rival predicts otherwise
+  informative confirmation / refutation
+                          an informative (v2) test that passed / failed; REPORTED SEPARATELY (a refutation is useful
+                          learning, not a successful prediction)
+  validated useful discovery (v2)
+                          an ORIGINAL hypothesis with no failed test and >= 1 passed informative (v2) test;
+                          not causal proof
+  information gaps        accepted gap records, by expected research value
+  critique structure      critiques by dimension; share of factual/numerical critiques citing evidence
+  numeric integrity       strategist options rejected for undeclared or non-reproducing numbers
 """
 
 from __future__ import annotations
@@ -95,7 +109,9 @@ def evaluate_document(doc: dict) -> dict:
     cost = float(doc["agents"]["costs"]["actual_cost_usd"] or 0)
     fc = [f for f in st["forecasts"] if (f["data"].get("score") or {}).get("status") == "scored"]
     gen = next((c for c in calls if c["role"] == "hypothesis_generator"), {})
+    v2block = _v2(doc, hyps, registered, by_h, res_by_t, f_items, cost) if "information_gaps" in st else None
     return {
+        "v2": v2block,
         "metrics_version": METRICS_VERSION, "investigation_id": doc["investigation_id"], "agents": doc["provenance"]["agents"],
         "as_of": doc["objective"]["as_of"], "evaluate_as_of": doc["objective"]["evaluate_as_of"], "status": doc["status"],
         "stop_reason": doc["stop_reason"], "panel_fingerprint": doc["evidence"]["panel"].get("fingerprint"),
@@ -141,3 +157,40 @@ def evaluate_document(doc: dict) -> dict:
 def overlap(a: dict, b: dict) -> dict:
     sa, sb = {tuple(x) for x in a["signatures"]}, {tuple(x) for x in b["signatures"]}
     return {"shared": len(sa & sb), "only_first": len(sa - sb), "jaccard": (len(sa & sb) / len(sa | sb)) if sa | sb else None}
+
+
+def _v2(doc, hyps, registered, by_h, res_by_t, f_items, cost) -> dict:
+    st = doc["stages"]
+    disc = [t for t in registered if t["data"].get("discriminates_from")]
+    inf = [t for t in registered if t["data"].get("discriminates_from")
+           or (t["data"]["spec"].get("trend_check") or {}).get("trend_consistent") is False]
+    out = Counter(res_by_t[t["id"]]["status"] for t in inf if t["id"] in res_by_t)
+    useful = []
+    for h in hyps:
+        ts = by_h[h["id"]]
+        res = [res_by_t[t["id"]]["status"] for t in ts if t["id"] in res_by_t]
+        if h["data"].get("novelty") == "original" and "failed" not in res and any(
+                t in inf and t["id"] in res_by_t and res_by_t[t["id"]]["status"] == "passed" for t in ts):
+            useful.append(h["data"]["ref"])
+    crit = st["critiques"]
+    fact = [c for c in crit if c["data"].get("dimension") in ("factual_contradiction", "numerical_accuracy")]
+    numeric_rej = [f for f in f_items if f["subject"] == "strategic_option" and any(
+        ("numeric_claims" in p or "does not reproduce" in p or "numeric claim" in p) for p in f["problems"])]
+    proto = doc["experiment_protocol"]
+    return {
+        "hypotheses_with_rivals": sum(1 for h in hyps if h["data"].get("rivals")),
+        "tests": {"registered": len(registered), "discriminating": len(disc), "informative": len(inf),
+                  "informative_confirmations": out.get("passed", 0), "informative_refutations": out.get("failed", 0),
+                  "informative_pending": out.get("pending", 0) + sum(1 for t in inf if t["id"] not in res_by_t)},
+        "rates": {"informativeness_v2": (len(inf) / len(registered)) if registered else None,
+                  "discrimination": (len(disc) / len(registered)) if registered else None},
+        "validated_useful_discoveries": useful,
+        "cost_per_validated_useful_discovery_usd": (cost / len(useful)) if useful else None,
+        "information_gaps": {"n": len(st.get("information_gaps", [])),
+                             "by_value": dict(Counter(g["data"]["expected_research_value"] for g in st.get("information_gaps", [])))},
+        "critiques": {"n": len(crit), "by_dimension": dict(Counter(c["data"].get("dimension") for c in crit)),
+                      "factual_or_numerical_citing_evidence": (sum(1 for c in fact if c["data"].get("evidence")) / len(fact))
+                      if fact else None,
+                      "rejected_without_evidence": sum(1 for f in f_items if f["failure_class"] == "validation.critique_needs_evidence")},
+        "strategy": {"options_rejected_numeric_integrity": len(numeric_rej),
+                     "protocol_eligibility": (proto or {}).get("data", {}).get("eligibility", {}).get("status")}}

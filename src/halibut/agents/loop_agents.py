@@ -50,9 +50,10 @@ STRATEGIST_SYSTEM = (
 SYSTEMS = {"hypothesis_generator": GENERATOR_SYSTEM, "loop_critic": CRITIC_SYSTEM, "strategist": STRATEGIST_SYSTEM}
 
 
-def call_role(router, store, role: str, payload: dict, schema: dict, run_id: str) -> dict:
-    """One routed, cached, accounted call. Returns {'data', 'response', 'outcome', 'failure_class', 'prompt_hash'}."""
-    system = SYSTEMS[role]
+def call_role(router, store, role: str, payload: dict, schema: dict, run_id: str, system: str | None = None) -> dict:
+    """One routed, cached, accounted call. Returns {'data', 'response', 'outcome', 'failure_class', 'prompt_hash'}.
+    ``system``: the contract's system prompt (default: loop.v1)."""
+    system = system or SYSTEMS[role]
     user = "BUNDLE:" + json.dumps(payload, sort_keys=True, default=str)
     ph = hashlib.sha256((system + user).encode()).hexdigest()[:16]
     provider, max_out = router.provider(role)

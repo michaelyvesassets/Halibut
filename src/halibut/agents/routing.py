@@ -46,7 +46,9 @@ class Router:
                 from .mock_loop import responder  # noqa: PLC0415
             else:
                 from .reference_loop import responder  # noqa: PLC0415
-            self._mock = MockProvider(responders or responder, name=kind, model=f"{kind}-loop-v1")
+            from .loop_v2_offline import v2_adapter  # noqa: PLC0415  (transparent for loop.v1 bundles)
+            self._mock = MockProvider(v2_adapter(responders or responder, rich=kind == "mock" and responders is None),
+                                      name=kind, model=f"{kind}-loop-v1")
         elif kind == "anthropic":
             from ..agents.llm import load_llm_config  # noqa: PLC0415
             self._cfg_path = Path(provider_config) if provider_config else \

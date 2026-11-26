@@ -1,0 +1,110 @@
+# Market investigation: UK cars, HYBRID-ELECTRIC (PETROL) segment, first registrations, 2019 onward.
+# R2 Step 2 second market: same source (DfT VEH0160) as uk_cars_bev_v1, different segment, so it is a second market
+# definition, NOT an independent data source. Only the segment, the objective brands and the id differ.
+# Test case only: everything industry-specific is in this file.
+#
+# Universe note: DfT first registrations include new cars AND vehicles imported
+# into the UK at first UK registration; they cannot be separated in VEH0160.
+# The original Dutch (RDW) demo is replaced by this UK fallback because
+# opendata.rdw.nl had no public DNS record on 2026-11-23.
+
+schema_version = "1.0"
+
+[market]
+id = "uk_cars_hev_first_registrations"
+name = "UK cars: first UK registrations by brand (hybrid-electric petrol segment)"
+category = "passenger cars (DfT body type 'Cars')"
+geography = "GB"
+gdelt_fips = ["UK"]                 # GDELT uses FIPS 10-4 codes
+as_of = "2026-11-23"
+mode = "annihilation"               # competitor-targeted displacement analysis
+focal = "kia"                       # the challenger whose displacement potential is investigated
+target = "toyota"                   # the incumbent segment leader
+
+# Industry-neutral declaration (market coverage contract v1, src/halibut/world/coverage.py).
+[measurement]
+category_key = "road_vehicles.cars"
+universe = "first UK registrations of cars (DfT VEH0160): new vehicles and imports at first UK registration"
+unit = "vehicles registered (count)"
+period = "quarter"
+share_basis = "share of all first registrations of cars in the period; segment shares within the fuel segment"
+category_taxonomy = "DfT body type 'Cars'"
+
+[resolution]
+wikidata_type_hints = ["Q786820"]   # automobile manufacturer
+keywords = ["automobile", "car manufacturer", "automaker", "automotive", "vehicle manufacturer"]
+
+[[competitors]]
+id = "byd"
+name = "BYD"
+search = "BYD Auto"
+aliases = ["byd", "byd auto", "byd co"]
+dft_make = "BYD"
+osm_brand = ["BYD"]
+
+[[competitors]]
+id = "volkswagen"
+name = "Volkswagen"
+search = "Volkswagen"
+aliases = ["volkswagen", "volkswagen ag", "vw"]
+dft_make = "VOLKSWAGEN"
+osm_brand = ["Volkswagen"]
+
+[[competitors]]
+id = "tesla"
+name = "Tesla"
+search = "Tesla, Inc."
+aliases = ["tesla", "tesla inc", "tesla motors"]
+dft_make = "TESLA"
+osm_brand = ["Tesla"]
+
+[[competitors]]
+id = "kia"
+name = "Kia"
+search = "Kia"
+aliases = ["kia", "kia motors", "kia corporation"]
+dft_make = "KIA"
+osm_brand = ["Kia"]
+
+[[competitors]]
+id = "mg"
+name = "MG"
+search = "MG Motor"
+aliases = ["mg motor", "saic motor", "mg motor uk"]
+dft_make = "MG"
+osm_brand = ["MG"]
+
+[[competitors]]
+id = "toyota"
+name = "Toyota"
+search = "Toyota"
+aliases = ["toyota", "toyota motor", "toyota motor corporation"]
+dft_make = "TOYOTA"
+osm_brand = ["Toyota"]
+
+[[competitors]]
+id = "ford"
+name = "Ford"
+search = "Ford Motor Company"
+aliases = ["ford motor", "ford motor company", "ford motor co"]
+dft_make = "FORD"
+osm_brand = ["Ford"]
+
+[[competitors]]
+id = "bmw"
+name = "BMW"
+search = "BMW"
+aliases = ["bmw", "bmw ag", "bmw group"]
+dft_make = "BMW"
+osm_brand = ["BMW"]
+
+[evidence]
+worldbank_indicators = ["NY.GDP.PCAP.CD", "FP.CPI.TOTL.ZG", "SP.POP.TOTL"]
+transactions = { provider = "dft", body_type = "Cars", segment = "Hybrid electric (petrol)" }
+footprint = { provider = "osm", tags = { shop = "car" } }
+media = { provider = "gdelt", start = "2026-05-01", end = "2026-10-31", n_files = 12, time_of_day = "120000" }
+
+[limits]
+max_requests = 80
+max_megabytes = 90
+max_seconds = 900

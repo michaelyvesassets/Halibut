@@ -76,8 +76,9 @@ def reference_library(ledger, market, panel, metrics: dict, exclude_run: str | N
     return lib
 
 
-def build_slice(market, panel, coverage: dict, lessons: list[dict], token_budget_chars: int = 24000) -> dict:
-    metrics = panel.metrics()
+def build_slice(market, panel, coverage: dict, lessons: list[dict], token_budget_chars: int = 24000,
+                extended: bool = False) -> dict:
+    metrics = panel.metrics(extended=extended)
     L4, P4 = panel.windows()
     rows = [{"id": m["id"], "template": m["template"], "entity": m["entity"], "window": m["window"],
              "value_pct": round(100 * m["value"], 4)} for m in metrics.values()]
@@ -96,7 +97,8 @@ def build_slice(market, panel, coverage: dict, lessons: list[dict], token_budget
                                  "note": "use template 'other' (with a description) for implications that need data not in "
                                          "this evidence; they are recorded as untested"}}
     text = json.dumps(s, sort_keys=True, default=str)
-    while len(text) > token_budget_chars and s["metrics"]:
+    budget = token_budget_chars * (2 if extended else 1)  # the extended measurement set is about twice as many rows
+    while len(text) > budget and s["metrics"]:
         s["metrics"] = s["metrics"][:-4]  # trim lowest-priority rows (stable order) to respect the budget
         text = json.dumps(s, sort_keys=True, default=str)
     s["slice_id"] = "slice:" + hashlib.sha256(text.encode()).hexdigest()[:16]

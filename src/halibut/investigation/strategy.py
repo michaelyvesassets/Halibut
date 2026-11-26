@@ -33,7 +33,8 @@ def _h(x) -> str:
     return hashlib.sha256(json.dumps(x, sort_keys=True, default=str).encode()).hexdigest()
 
 
-def validate_option(o: dict, hyp_refs: set, allowed: set, compile_criterion) -> tuple[list[str], list[dict]]:
+def validate_option(o: dict, hyp_refs: set, allowed: set, compile_criterion, check_text_numbers: bool = True
+                    ) -> tuple[list[str], list[dict]]:
     p, crit = [], []
     e = o["intended_effect"]
     if e["magnitude_low_pp"] > e["magnitude_high_pp"]:
@@ -54,7 +55,9 @@ def validate_option(o: dict, hyp_refs: set, allowed: set, compile_criterion) -> 
     text = " ".join([o["title"], e["basis"]] + [a["statement"] for a in o["assumptions"]] + o["risks"])
     if PROHIBITED.search(text):
         p.append("prohibited tactic mentioned")
-    p += check_numbers(text, allowed, {e["magnitude_low_pp"], e["magnitude_high_pp"]}) + check_directions(text)
+    if check_text_numbers:  # loop.v1; loop.v2 checks declared numeric claims instead (loop_v2.check_numeric_claims)
+        p += check_numbers(text, allowed, {e["magnitude_low_pp"], e["magnitude_high_pp"]})
+    p += check_directions(text)
     for i, sc in enumerate(o["success_criteria"]):
         spec, why = compile_criterion(sc)
         if spec is None:
@@ -91,10 +94,10 @@ def effect_target_problems(effect: dict, panel) -> list[str]:
     """Why an intended effect has no measurable target (empty when it has one). A gap is a difference between two
     entities, but the loop.v1 strategist schema's intended_effect carries only one entity, so a gap effect is
     under-specified: it is reported, never completed by guessing the second entity (e.g. from the success criteria)."""
-    if effect["template"] == "segment_share_gap":
+    if effect["template"] == "segment_share_gap" and not effect.get("entity_b"):
         return [f"intended effect on segment_share_gap names only {effect['entity']!r}: a gap needs a second entity, which "
                 "the loop.v1 strategist schema does not carry; the effect has no measurable target and is not simulated"]
-    if not panel.series(effect["template"], effect["entity"], None):
+    if not panel.series(effect["template"], effect["entity"], effect.get("entity_b") or None):
         return [f"intended effect {effect['template']} {effect['entity']!r} has no observations in this measurement set"]
     return []
 
@@ -153,8 +156,9 @@ def execution_eligibility(option: dict, criterion: dict, simulations: list[dict]
     if objective_template and e["template"] != objective_template:
         reasons.append(f"the intended effect measures {e['template']}, not the investigation's objective metric "
                        f"{objective_template}")
-    same = (criterion.get("template") == e["template"] and criterion.get("entity") == e["entity"])
-    want = INCREASE if e["direction"] == "increase" else DECREASE
+    same = (criterion.get("template") == e["template"] and criterion.get("entity") == e["entity"]
+            and (criterion.get("entity_b") or "") == (e.get("entity_b") or ""))
+    want = INCREASE + ("above_zero",) if e["direction"] == "increase" else DECREASE + ("below_zero",)
     if not same:
         reasons.append("the primary success criterion measures a different quantity from the intended effect")
     elif criterion.get("comparator") not in want:

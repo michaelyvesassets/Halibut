@@ -267,7 +267,8 @@ def test_result_schema_document_and_read_only_api(uk_store, tmp_path):
     store = fresh(tmp_path, uk_store)
     doc = run(store, uk_store / "m.toml", **UK)
     s = api.schema()
-    assert s["$id"] == art.SCHEMA_ID and set(art.STAGES) == set(s["properties"]["stages"]["properties"])
+    assert s["$id"] == art.SCHEMA_ID and set(art.STAGES + art.OPTIONAL_STAGES) == set(s["properties"]["stages"]["properties"])
+    assert s["properties"]["stages"]["required"] == list(art.STAGES)  # v2-only stages are optional: v1 documents unchanged
     published = json.loads((ROOT / "docs" / "architecture" / "schemas" / "investigation_result.v1.schema.json").read_text())
     assert published == s  # the published schema is the code's schema
     rows = api.list_investigations(store)

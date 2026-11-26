@@ -30,6 +30,17 @@ def add_investigation_commands(sub) -> None:
     r.add_argument("--max-usd", type=float, help="hard spend cap for this investigation (paid agents)")
     r.add_argument("--dry-run", action="store_true", help="paid agents: print the worst-case cost and exit (no request)")
     r.add_argument("--out", default="results/investigations")
+    r.add_argument("--contract", choices=("loop.v1", "loop.v2"), default="loop.v1",
+                   help="reasoning contract (loop.v1: Step 1, frozen; loop.v2: Step 2)")
+    r.add_argument("--measurements", choices=("base", "extended"), default="base",
+                   help="loop.v2 only: 'extended' adds non_segment_share and units_growth")
+    s2 = s.add_parser("step2", help="R2 Step 2 pre-registered benchmark (plan offline; --live is PAID and needs approval)")
+    s2.add_argument("run", choices=("2a", "2b"))
+    s2.add_argument("--live", action="store_true")
+    s2.add_argument("--approval")
+    s2.add_argument("--max-usd", type=float)
+    s2.add_argument("--provider-config")
+    s2.add_argument("--out", default="results/r2_step2")
     v = s.add_parser("validate", help="R2 live validation: reference vs mock vs Claude on identical evidence")
     v.add_argument("market")
     v.add_argument("--origins", nargs="+", required=True)
@@ -125,6 +136,22 @@ def _inv(args) -> int:
             if not rep["identity_preflight"]["identical"]:
                 return 5
             return 0 if (not args.live or rep["verdict"]["pipeline_ready"]) else 4
+        if args.inv_command == "step2":
+            from .step2 import CRITERIA_HASH, run_step2  # noqa: PLC0415
+            try:
+                rep = run_step2(store, args.db, args.run, live=args.live, approval_id=args.approval, max_usd=args.max_usd,
+                                out_dir=args.out, provider_config=args.provider_config)
+            except AuthorizationError as exc:
+                print(f"refused: {exc}", file=sys.stderr)
+                return 3
+            print(json.dumps({"experiment_id": rep["experiment_id"], "criteria_hash": CRITERIA_HASH, "plan": {
+                k: rep["plan"][k] for k in ("live_calls", "worst_case_usd", "worst_case_with_retries_usd", "cap_usd")},
+                "criteria_results": rep["criteria_results"], "summary": rep["summary"]["arms"]}, indent=1, default=str))
+            print(f"results: {rep['output_dir']}")
+            if rep.get("internal_errors"):
+                return 6
+            return 0 if (not args.live or all(v is not False for v in rep["criteria_results"].values()
+                                                 if v is not None)) else 4
         if args.inv_command == "validate":
             from .live_validation import markdown, run_validation  # noqa: PLC0415
             try:
@@ -147,7 +174,8 @@ def _inv(args) -> int:
             return 0
         try:
             doc = run_investigation(store, args.market, as_of=args.as_of, evaluate_as_of=args.evaluate_at, agents=args.agents,
-                                    approval_id=args.approval, max_usd=args.max_usd, faults=args.faults, log=lambda *_: None)
+                                    approval_id=args.approval, max_usd=args.max_usd, faults=args.faults,
+                                    contract=args.contract, measurements=args.measurements, log=lambda *_: None)
         except AuthorizationError as exc:
             print(f"refused: {exc}", file=sys.stderr)
             return 3

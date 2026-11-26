@@ -24,8 +24,10 @@ import json
 
 SCHEMA_ID = "halibut.investigation_result.v1"
 ITEM_TYPES = ("derived_metric", "explanation", "hypothesis", "critique", "assumption", "test", "test_result", "model_version",
-              "forecast", "estimate", "simulated_outcome", "strategic_proposal", "experiment_protocol", "lesson", "question")
+              "forecast", "estimate", "simulated_outcome", "strategic_proposal", "experiment_protocol", "lesson", "question",
+              "information_gap")  # information_gap: loop.v2 only
 STATUSES = ("completed", "stopped", "insufficient_evidence", "invalid_market")
+OPTIONAL_STAGES = ("information_gaps",)  # loop.v2 only (absent from v1 documents, so their hashes are unchanged)
 STAGES = ("explanations", "hypotheses", "critiques", "tests", "test_results", "model_specs", "assumptions", "forecasts",
           "estimates", "simulations", "strategic_options", "lessons")
 
@@ -55,7 +57,7 @@ SCHEMA = {
         "evidence": {"type": "object", "required": ["coverage", "panel", "metrics"]},
         "world_model": {"type": "object", "required": ["slice_id", "market", "entities", "anomalies"]},
         "stages": {"type": "object", "additionalProperties": False, "required": list(STAGES),
-                   "properties": {k: {"type": "array", "items": _ITEM} for k in STAGES}},
+                   "properties": {k: {"type": "array", "items": _ITEM} for k in STAGES + OPTIONAL_STAGES}},
         "experiment_protocol": {},
         "links": {"type": "array", "items": {"type": "object", "required": ["from", "relation", "to"]}},
         "failures": {"type": "object", "required": ["items", "calls"]},

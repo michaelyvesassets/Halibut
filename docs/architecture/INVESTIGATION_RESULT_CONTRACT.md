@@ -64,6 +64,7 @@ Every item in `stages.*`, `evidence.metrics` and `experiment_protocol` has the s
 | `simulations` | `simulated_outcome` | recorded | scenario, outcome_range, baseline, assumed effect and offsets, assumptions, baseline_status | `simulates` → option |
 | `strategic_options` | `strategic_proposal` | proposed | mode, levers, intended_effect, linked_hypotheses, supporting_evidence, assumptions, competitor_responses, cost (`known: false` when unknown), risks, uncertainty, success_criteria, compliance, `executable: false`, **simulation** (`status`: `simulated` or `not_simulated`, with `failure_class` and `reason` when not simulated; ADR-021) | `relies_on` → hypotheses, `simulated_by` → simulations |
 | `experiment_protocol` | `experiment_protocol` | draft_not_executable | design, primary_metric, power, guardrails, stop_rules, measurement, operator, pre_registration_hash, **eligibility** (`status`: `exploratory_not_eligible` or `eligible_pending_human_review`, `eligible_for_execution`, `reasons`; ADR-021) | `tests` → option, hypotheses |
+| `information_gaps` (**optional**; `loop.v2` only) | `information_gap` | open | missing_measurement, why_it_matters, distinguishes (refs and claims), potential_sources, expected_research_value, research_status, autonomous_research | `about` → hypotheses |
 | `lessons` | `lesson` / `question` | proposed | knowledge_id, status_detail / needs | `derived_from` or `about` → hypothesis, `evaluated_by` → results |
 
 **Display rules the frontend must respect:**
@@ -105,3 +106,16 @@ Requirements:
    appear in `data` without a version change; envelope changes need a new version.
 4. **Authentication** (when an HTTP layer exists): read access per tenant. Approving anything from a
    dashboard needs a new ADR, because approvals must stay attributable to a named person.
+
+## 5. loop.v2 additions (ADR-022; additive, absent from loop.v1 documents)
+
+| Where | New field |
+|---|---|
+| `stages.information_gaps` | optional stage; items of type `information_gap` |
+| hypothesis `data` | `explains` (metric id), `rivals` (refs), `discriminating_implications` ({implication id: rival refs}) |
+| test `data` | `discriminates_from` (rival refs that predict the opposite outcome) |
+| critique `data` | `dimension` (6 values), `evidence` (metric ids) |
+| strategic proposal `data.intended_effect` | `entity_b` (comparator company for pairwise targets) |
+| strategic proposal `data` | `numeric_claims`: each number in the text with value, unit, decimals, kind (`observed`, `calculated`, `assumed`) and source metric ids |
+| `provenance.prompt_version` | `loop.v2:base` or `loop.v2:extended` (`loop.v1` unchanged) |
+| `provenance.schemas` | `hypothesis_mechanism.v2`, `critic_structured.v2`, `strategy_options.v2` |

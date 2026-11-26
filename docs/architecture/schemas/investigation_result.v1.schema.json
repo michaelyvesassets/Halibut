@@ -92,7 +92,8 @@
         "strategic_proposal",
         "experiment_protocol",
         "lesson",
-        "question"
+        "question",
+        "information_gap"
        ],
        "type": "string"
       }
@@ -234,7 +235,8 @@
          "strategic_proposal",
          "experiment_protocol",
          "lesson",
-         "question"
+         "question",
+         "information_gap"
         ],
         "type": "string"
        }
@@ -314,7 +316,8 @@
          "strategic_proposal",
          "experiment_protocol",
          "lesson",
-         "question"
+         "question",
+         "information_gap"
         ],
         "type": "string"
        }
@@ -394,7 +397,8 @@
          "strategic_proposal",
          "experiment_protocol",
          "lesson",
-         "question"
+         "question",
+         "information_gap"
         ],
         "type": "string"
        }
@@ -474,7 +478,8 @@
          "strategic_proposal",
          "experiment_protocol",
          "lesson",
-         "question"
+         "question",
+         "information_gap"
         ],
         "type": "string"
        }
@@ -554,7 +559,8 @@
          "strategic_proposal",
          "experiment_protocol",
          "lesson",
-         "question"
+         "question",
+         "information_gap"
         ],
         "type": "string"
        }
@@ -634,7 +640,89 @@
          "strategic_proposal",
          "experiment_protocol",
          "lesson",
-         "question"
+         "question",
+         "information_gap"
+        ],
+        "type": "string"
+       }
+      },
+      "required": [
+       "id",
+       "type",
+       "status",
+       "label",
+       "produced_by",
+       "as_of",
+       "data",
+       "links",
+       "provenance"
+      ],
+      "type": "object"
+     },
+     "type": "array"
+    },
+    "information_gaps": {
+     "items": {
+      "additionalProperties": false,
+      "properties": {
+       "as_of": {
+        "type": "string"
+       },
+       "data": {
+        "type": "object"
+       },
+       "id": {
+        "type": "string"
+       },
+       "label": {
+        "type": "string"
+       },
+       "links": {
+        "items": {
+         "additionalProperties": false,
+         "properties": {
+          "relation": {
+           "type": "string"
+          },
+          "to": {
+           "type": "string"
+          }
+         },
+         "required": [
+          "relation",
+          "to"
+         ],
+         "type": "object"
+        },
+        "type": "array"
+       },
+       "produced_by": {
+        "type": "string"
+       },
+       "provenance": {
+        "type": "object"
+       },
+       "status": {
+        "type": "string"
+       },
+       "type": {
+        "enum": [
+         "derived_metric",
+         "explanation",
+         "hypothesis",
+         "critique",
+         "assumption",
+         "test",
+         "test_result",
+         "model_version",
+         "forecast",
+         "estimate",
+         "simulated_outcome",
+         "strategic_proposal",
+         "experiment_protocol",
+         "lesson",
+         "question",
+         "information_gap"
         ],
         "type": "string"
        }
@@ -714,7 +802,8 @@
          "strategic_proposal",
          "experiment_protocol",
          "lesson",
-         "question"
+         "question",
+         "information_gap"
         ],
         "type": "string"
        }
@@ -794,7 +883,8 @@
          "strategic_proposal",
          "experiment_protocol",
          "lesson",
-         "question"
+         "question",
+         "information_gap"
         ],
         "type": "string"
        }
@@ -874,7 +964,8 @@
          "strategic_proposal",
          "experiment_protocol",
          "lesson",
-         "question"
+         "question",
+         "information_gap"
         ],
         "type": "string"
        }
@@ -954,7 +1045,8 @@
          "strategic_proposal",
          "experiment_protocol",
          "lesson",
-         "question"
+         "question",
+         "information_gap"
         ],
         "type": "string"
        }
@@ -1034,7 +1126,8 @@
          "strategic_proposal",
          "experiment_protocol",
          "lesson",
-         "question"
+         "question",
+         "information_gap"
         ],
         "type": "string"
        }
@@ -1114,7 +1207,8 @@
          "strategic_proposal",
          "experiment_protocol",
          "lesson",
-         "question"
+         "question",
+         "information_gap"
         ],
         "type": "string"
        }

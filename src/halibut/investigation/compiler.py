@@ -31,6 +31,7 @@ from ..world.panel import next_quarters
 TEST_SPEC_VERSION = "hypothesis_test.v1"
 PUBLICATION_LAG_DAYS = 120
 INCREASE = ("increase_vs_L4", "above_reference")
+ZERO = ("above_zero", "below_zero")  # loop.v2: only for pairwise templates
 
 
 def _h(x) -> str:
@@ -43,6 +44,8 @@ def _quarter_end(p: str) -> date:
 
 
 def holds(x: float, comparator: str, ref: float) -> bool:
+    if comparator in ZERO:  # pairwise "A exceeds B" / "B exceeds A" (the correct encoding of a gap claim)
+        return x > 0 if comparator == "above_zero" else x < 0
     return x > ref if comparator in INCREASE else x < ref
 
 
@@ -50,11 +53,13 @@ def compile_implication(imp: dict, panel, metrics: dict) -> tuple[dict | None, s
     t, ent, entb = imp["template"], imp["entity"], (imp.get("entity_b") or None)
     if t == "other":
         return None, f"not testable with this evidence: {imp.get('description') or 'measurement not available'}"
-    if t in ("segment_share", "segment_mix", "market_segment_share", "segment_share_gap") and not panel.segment:
+    if t in ("segment_share", "segment_mix", "market_segment_share", "segment_share_gap", "non_segment_share") and not panel.segment:
         return None, f"template {t} needs a market segment; this panel has none"
     if t == "market_segment_share":
         if ent != "market":
             return None, "market_segment_share is a market-level metric (entity must be 'market')"
+    elif t == "units_growth" and ent == "market":
+        pass
     elif ent not in panel.entities:
         return None, f"entity {ent!r} is not a competitor in this market"
     if t == "segment_share_gap":
@@ -66,7 +71,11 @@ def compile_implication(imp: dict, panel, metrics: dict) -> tuple[dict | None, s
         return None, "no transaction periods available as of the investigation date"
     L4, _ = panel.windows()
     comp = imp["comparator"]
-    if comp in ("increase_vs_L4", "decrease_vs_L4"):
+    if comp in ZERO:
+        if t != "segment_share_gap":
+            return None, f"{comp} compares a pairwise gap with zero; template {t} is not pairwise"
+        ref, src = 0.0, "zero (pairwise comparison)"
+    elif comp in ("increase_vs_L4", "decrease_vs_L4"):
         ref, src = panel.value(t, ent, L4, entb)[0], "L4 window"
     else:
         rm = imp.get("reference_metric") or ""

@@ -417,3 +417,32 @@ hidden; already-paid replies are reused only when byte-identical.**
 - **Consequences:** no single proposal can abort an investigation, and no unavailable number is replaced by a guess. A
   defect is reported as a defect, not as a successful or merely empty investigation. Failed paid runs can be resumed
   without paying twice.
+
+### ADR-022
+**Reasoning contract `loop.v2`: competing mechanisms, information gaps, structured critique and numerically
+accountable strategy, next to a frozen `loop.v1`.**
+- **Status:** Proposed (2026-11-26). Implemented offline under the founder's R2 Step 2 approval; awaiting review. Plan
+  and criteria: [R2_STEP2_PREREGISTRATION.md](R2_STEP2_PREREGISTRATION.md).
+- **Context:** Step 1 established engineering reliability. Its intelligence result was:
+  - 7 accepted hypotheses, 2 of them original;
+  - 0 informative predictions and 0 validated useful discoveries;
+  - a critic that could not check facts it was never shown;
+  - strategist numbers that escaped validation.
+- **Decision:**
+  1. The contract is a per-investigation parameter. `loop.v1` is unchanged and stays the default, so recorded
+     requests, ids and document hashes do not move (tested on real data).
+  2. Discrimination is mechanical: a rival hypothesis predicts the opposite direction for the same quantity.
+     Originality = not all implications in the reference library, OR discriminating from a rival. Contradicting the
+     trend is not required.
+  3. Information gaps are structured records for future research agents. Researching them needs a separate,
+     approved capability.
+  4. Critiques carry a dimension and, for factual and numerical claims, the evidence metric. The critic sees the
+     evidence.
+  5. Strategist numbers are declared claims, reproduced exactly in every free-text field.
+  6. Extended, industry-neutral measurements (`non_segment_share`, `units_growth`, pairwise zero comparators) are a
+     separate switch (`measurements`), so their effect is measurable apart from the prompts.
+  7. Additive envelope changes within `investigation_result.v1`: the optional stage `information_gaps` and the item
+     type `information_gap`. Both are absent from v1 documents.
+- **Consequences:** Step 2 can separate the effects of the contract, the measurements and (later) the model on
+  identical evidence. Frontends ignoring unknown stages are unaffected; a frontend that validates strictly must
+  accept the optional stage.

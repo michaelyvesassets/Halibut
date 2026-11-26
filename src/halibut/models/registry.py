@@ -28,6 +28,8 @@ import json
 
 import numpy as np
 
+from ..world.panel import SHARE_LIKE
+
 from ..data.store import utc_now
 
 RULE = "model-validation-v1"
@@ -88,8 +90,8 @@ def check_spec(spec: dict, panel) -> list[str]:
     ser = panel.series(t.get("template"), t.get("entity"), t.get("entity_b"))
     if len(ser) < MIN_QUARTERS:
         p.append(f"target series has {len(ser)} quarters as of {panel.as_of}; at least {MIN_QUARTERS} are required")
-    if fam["bounded01"] and t.get("template") == "segment_share_gap":
-        p.append(f"{spec['family']} models a share in (0, 1); a share gap can be negative")
+    if fam["bounded01"] and t.get("template") not in SHARE_LIKE:
+        p.append(f"{spec['family']} models a share in (0, 1); {t.get('template')} can be negative")
     for a in spec.get("assumptions", []):
         lo_hi = fam["assumptions"].get(a.get("name"))
         if lo_hi is None:
@@ -190,7 +192,7 @@ def execute(spec: dict, panel) -> dict:
     if not _finite(point, sd):
         raise ModelUnavailable("numeric.nonfinite", [f"{spec['family']} produced a non-finite output for {desc}"])
     lo, hi = point - Z80 * sd, point + Z80 * sd
-    if t["template"] != "segment_share_gap":  # shares live in [0, 1]
+    if t["template"] in SHARE_LIKE:  # shares live in [0, 1]; gaps and growth rates can be negative
         point, lo, hi = (float(min(max(x, 0.0), 1.0)) for x in (point, lo, hi))
     out = {"point": point, "sd": sd, "interval80": [lo, hi], "last_period": ser[-1][0],
            "n_quarters": len(y), "inputs_hash": _h([list(map(float, y)), a, spec["family"]])}

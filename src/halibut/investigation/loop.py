@@ -42,6 +42,9 @@ from ..world.coverage import check_contract
 from ..world.panel import build_panel
 from . import artifact as art
 from . import compiler, strategy
+from . import loop_v2 as v2
+
+SUBJECT = {"hypotheses": "hypothesis", "explanations": "explanation", "information_gaps": "information_gap"}
 
 ENGINE = "engine:investigation"
 
@@ -95,9 +98,16 @@ OFFLINE_AGENTS = ("mock", "reference", "recorded")
 def run_investigation(store, market_path, *, as_of: str | None = None, evaluate_as_of: str | None = None,
                       agents: str = "mock", router: Router | None = None, approval_id: str | None = None,
                       max_usd: float | None = None, tenant: str = "public", faults: bool = False, decision: str | None = None,
-                      approval_subject: str | None = None, log=print) -> dict:
+                      approval_subject: str | None = None, contract: str = "loop.v1", measurements: str = "base",
+                      log=print) -> dict:
     """``approval_subject`` (default ``investigation:<market id>``): the subject of the granted paid_run approval
     that authorizes paid agents (a validation experiment authorizes several investigations with one approval)."""
+    if contract not in v2.CONTRACTS or measurements not in v2.MEASUREMENTS:
+        raise ValueError(f"unknown contract {contract!r} or measurements {measurements!r}")
+    if contract == v2.V1 and measurements != "base":
+        raise ValueError("loop.v1 is frozen to the base measurement set")
+    # the v1 prompt version stays exactly 'loop.v1' in every hash, so recorded v1 requests and ids are unchanged
+    pv = PROMPT_VERSION if contract == v2.V1 else f"{v2.CONTRACT}:{measurements}"
     market_path = Path(market_path)
     market = load_market(market_path)
     spec_sha = hashlib.sha256(market_path.read_bytes()).hexdigest()
@@ -113,14 +123,14 @@ def run_investigation(store, market_path, *, as_of: str | None = None, evaluate_
         if max_usd is None:
             raise approvals.AuthorizationError("paid agents need --max-usd")
         approvals.require(store, approval_id, "paid_run", approval_subject or f"investigation:{market.id}", cost_usd=max_usd)
-    pre_id = "inv:" + _h([spec_sha, t0, t_eval, agents, PROMPT_VERSION, faults, tenant, reg.RULE])[:16]
+    pre_id = "inv:" + _h([spec_sha, t0, t_eval, agents, pv, faults, tenant, reg.RULE])[:16]
     router = router or Router(agents, store, scope=pre_id, max_usd=max_usd)
     if agents not in OFFLINE_AGENTS:  # single use: bind the approval to this spend scope (or verify the binding)
         a = approvals.require(store, approval_id, "paid_run", approval_subject or f"investigation:{market.id}",
                               cost_usd=max_usd, use_id=router.scope)
         if a["used_by"] is None:
             approvals.claim_use(store, approval_id, router.scope, f"investigation {market.id} as of {as_of}")
-    input_id = "inv:" + _h([spec_sha, t0, t_eval, router.fingerprint, PROMPT_VERSION, faults, tenant, reg.RULE])[:16]
+    input_id = "inv:" + _h([spec_sha, t0, t_eval, router.fingerprint, pv, faults, tenant, reg.RULE])[:16]
     n = store.conn.execute("SELECT COUNT(*) FROM investigations WHERE investigation_id LIKE ?", (input_id + ".%",)).fetchone()[0]
     R = _Run(store, input_id, f"{input_id}.{n + 1}", t0, tenant)
     R.events.append("investigation.started", "L4", {"market": market.id, "as_of": t0, "evaluate_as_of": t_eval, "agents": agents},
@@ -133,14 +143,16 @@ def run_investigation(store, market_path, *, as_of: str | None = None, evaluate_
                  "success_metric": "segment_share" if (market.transactions or {}).get("segment") else "share",
                  "budget_usd": max_usd if agents not in OFFLINE_AGENTS else 0.0}
     ctx = {"market": market, "objective": objective, "router": router, "spec_sha": spec_sha, "agents": agents,
-           "faults": faults, "t_eval": t_eval}
+           "faults": faults, "t_eval": t_eval, "contract": contract, "measurements": measurements, "pv": pv}
+    if contract == v2.CONTRACT:
+        R.stages["information_gaps"] = []
     status, reason, evidence, world = "completed", None, {"coverage": {}, "panel": {}, "metrics": []}, \
         {"slice_id": "", "market": {}, "entities": [], "anomalies": []}
-    contract = check_contract(market)
-    evidence["coverage"] = {"contract": contract.as_dict()}
+    coverage_contract = check_contract(market)
+    evidence["coverage"] = {"contract": coverage_contract.as_dict()}
     panel = None
-    if not contract.valid:
-        status, reason = "invalid_market", "; ".join(contract.violations)[:500]
+    if not coverage_contract.valid:
+        status, reason = "invalid_market", "; ".join(coverage_contract.violations)[:500]
     else:
         try:
             panel = build_panel(store, market, as_of)
@@ -196,7 +208,10 @@ def _loop(R: _Run, ctx: dict, panel, evidence: dict):
            "contract": evidence["coverage"]["contract"],
            "per_competitor_quarters": {e: len(panel.series("share", e)) for e in panel.entities}, "gaps": []}
     cov["gaps"] = [f"{e}: {q} quarters" for e, q in cov["per_competitor_quarters"].items() if q < 8]
-    slice_, metrics = build_slice(market, panel, cov, lessons)
+    V2, ext = ctx["contract"] == v2.CONTRACT, ctx["measurements"] == "extended"
+    slice_, metrics = build_slice(market, panel, cov, lessons, extended=ext)
+    sysp = v2.systems(ctx["contract"])
+    agent_slice = v2.compact_slice(slice_, metrics) if V2 else slice_
     if ctx["faults"]:
         slice_["mock_faults"] = True
     exists = (lambda e: e in metrics or panel.exists(e))  # noqa: E731
@@ -213,29 +228,36 @@ def _loop(R: _Run, ctx: dict, panel, evidence: dict):
              "entities": [{"id": c.id, "name": c.name, "identifiers": c.identifiers} for c in market.competitors],
              "anomalies": slice_["anomalies"]}
     R.partial = {"evidence": evidence, "world": world}
-    prov = {"market_id": market.id, "investigation": R.input_id, "slice_id": slice_["slice_id"], "prompt_version": PROMPT_VERSION}
+    prov = {"market_id": market.id, "investigation": R.input_id, "slice_id": slice_["slice_id"], "prompt_version": ctx["pv"]}
     gen_by = AGENT_IDS["hypothesis_generator"]
 
     # ---------------------------------------------------------------- 1. explanations + original hypotheses
     families = [f for f in reg.FAMILIES if f != "simulation.share_shift"]
-    gschema = sch.generator_schema(list(metrics), panel.entities, families)
-    res = call_role(router, store, "hypothesis_generator", {"slice": slice_}, gschema, R.input_id)
+    if V2:
+        gschema = v2.generator_schema(list(metrics), panel.entities, families, ext)
+        res = call_role(router, store, "hypothesis_generator", {"slice": agent_slice, "contract": v2.CONTRACT}, gschema,
+                        R.input_id, system=sysp["hypothesis_generator"])
+        gschema = v2.inline(gschema)  # local validation of the same contract
+    else:
+        gschema = sch.generator_schema(list(metrics), panel.entities, families)
+        res = call_role(router, store, "hypothesis_generator", {"slice": slice_}, gschema, R.input_id)
     R.calls.append(_call_summary("hypothesis_generator", res))
     if res["data"] is None:
         R.fail("hypothesis_generator", "call", "failed", res["failure_class"] or "call.error", [res["outcome"]], {}, gen_by)
         return "stopped", f"hypothesis generator reply unusable ({res['outcome']})", evidence, world
-    valid, rejected, arrays, top = sch.split_multi(res["data"], gschema, ["explanations", "hypotheses"])
+    arrays_v = ["explanations", "hypotheses"] + (["information_gaps"] if V2 else [])
+    valid, rejected, arrays, top = sch.split_multi(res["data"], gschema, arrays_v)
     if top:
         R.fail("hypothesis_generator", "schema", "rejected", "call.schema_top_level", top, res["data"], gen_by)
         return "stopped", f"hypothesis generator reply violates its schema: {top[0]}", evidence, world
     for key, probs in arrays.items():  # an array rejected as a whole: recorded with its items, never trimmed
-        R.fail({"hypotheses": "hypothesis", "explanations": "explanation"}[key], "schema", "rejected", "schema.array_limit",
+        R.fail(SUBJECT[key], "schema", "rejected", "schema.array_limit",
                probs, {"array": key, "items": res["data"][key]}, gen_by)
     if "hypotheses" in arrays:
         return "stopped", f"hypothesis generator reply: {arrays['hypotheses'][0]}", evidence, world
     for key, rows in rejected.items():
         for _, it, pr in rows:
-            R.fail({"hypotheses": "hypothesis", "explanations": "explanation"}[key], "schema", "rejected",
+            R.fail(SUBJECT[key], "schema", "rejected",
                    classify_problems(pr, None), pr, it, gen_by)
     for e in valid["explanations"]:
         pr = check_numbers(e["statement"], allowed) + check_directions(e["statement"])
@@ -249,6 +271,8 @@ def _loop(R: _Run, ctx: dict, panel, evidence: dict):
                                            [("cites", x) for x in e["evidence"]], prov))
     library = reference_library(R.ledger, market, panel, metrics, exclude_run=R.input_id)
     accepted, seen = [], []
+    # v2: discrimination between rival hypotheses, from the schema-valid hypotheses that pass the semantic checks
+    disc = v2.discrimination([h for h in valid["hypotheses"] if not _semantic_checks(h, allowed, [])]) if V2 else {}
     for h in valid["hypotheses"]:
         pr = _semantic_checks(h, allowed, [a["ref"] for a in accepted])
         if pr:
@@ -261,7 +285,10 @@ def _loop(R: _Run, ctx: dict, panel, evidence: dict):
             continue
         seen.append(sigs)
         testable = {signature(i) for i in h["observable_implications"] if i["template"] != "other"}
-        novelty = "restatement" if testable and testable <= library else "original"
+        discriminating = {i: r for (ref, i), r in disc.items() if ref == h["ref"]}
+        # v2: original if not all testable implications are in the library, OR it discriminates from a rival (a
+        # mechanism may predict trend continuation and still say something its rival does not)
+        novelty = "original" if (discriminating or not (testable and testable <= library)) else "restatement"
         payload = {"origin": "original", "novelty": novelty, "ref": h["ref"], "mechanism": h["mechanism"],
                    "conditions": h["conditions"], "assumptions": h["assumptions"],
                    "alternative_explanations": h["alternative_explanations"],
@@ -270,6 +297,8 @@ def _loop(R: _Run, ctx: dict, panel, evidence: dict):
                                      "direction": i["comparator"]} for i in h["observable_implications"]],
                    "uncertainty": h["uncertainty"], "refutation_criteria": h["refutation_criteria"],
                    "novelty_claim": h["novelty_claim"], "model_request": h["model_request"]}
+        if V2:
+            payload.update({"explains": h["explains"], "rivals": h["rivals"], "discriminating_implications": discriminating})
         hc = R.claim("hypothesis", h["statement"], gen_by, payload, evidence=h["supporting_evidence"], exists=exists,
                      provenance={**prov, "model": router.describe()["roles"]["hypothesis_generator"]["model"]})
         if not hc:
@@ -280,13 +309,24 @@ def _loop(R: _Run, ctx: dict, panel, evidence: dict):
                                      [("cites", x) for x in h["supporting_evidence"]], prov))
     if not accepted:
         return "completed", "no hypothesis passed validation", evidence, world
+    if V2:
+        _information_gaps(R, valid.get("information_gaps", []), accepted, allowed, prov, gen_by)
 
     # ---------------------------------------------------------------- 2. critique (one batched call)
     refs = [h["ref"] for h in accepted]
-    cschema = sch.loop_critic_schema(refs)
-    cres = call_role(router, store, "loop_critic", {"slice": {"market": slice_["market"]}, "hypotheses": [
-        {k: h[k] for k in ("ref", "statement", "mechanism", "assumptions", "observable_implications", "novelty")}
-        for h in accepted]}, cschema, R.input_id)
+    if V2:  # the critic sees the evidence so it can check claims against it
+        cschema = v2.critic_schema(refs, list(metrics))
+        cres = call_role(router, store, "loop_critic", {"contract": v2.CONTRACT, "slice": {
+            k: agent_slice[k] for k in ("market", "metrics", "metric_id_format", "templates")}, "hypotheses": [
+            {k: h[k] for k in ("ref", "statement", "explains", "rivals", "mechanism", "assumptions", "supporting_evidence",
+                               "observable_implications", "novelty")} for h in accepted]}, cschema, R.input_id,
+            system=sysp["loop_critic"])
+        cschema = v2.inline(cschema)
+    else:
+        cschema = sch.loop_critic_schema(refs)
+        cres = call_role(router, store, "loop_critic", {"slice": {"market": slice_["market"]}, "hypotheses": [
+            {k: h[k] for k in ("ref", "statement", "mechanism", "assumptions", "observable_implications", "novelty")}
+            for h in accepted]}, cschema, R.input_id)
     R.calls.append(_call_summary("loop_critic", cres))
     if cres["data"] is not None:
         citems, crej, ctop = sch.split_items(cres["data"], cschema, "critiques")
@@ -297,14 +337,20 @@ def _loop(R: _Run, ctx: dict, panel, evidence: dict):
         by_ref = {h["ref"]: h for h in accepted}
         for c in citems:
             h = by_ref[c["hypothesis_ref"]]
-            cc = R.claim("critique", c["statement"], AGENT_IDS["loop_critic"],
-                         {"target": h["claim_id"], "severity": c["severity"], "challenged_assumption": c["challenged_assumption"]},
-                         provenance=prov)
+            pr = v2.critique_problems(c) if V2 else []
+            if pr:
+                R.fail("critique", "validation", "rejected", "validation.critique_needs_evidence", pr, c, AGENT_IDS["loop_critic"])
+                continue
+            data = {"severity": c["severity"], "challenged_assumption": c["challenged_assumption"]}
+            if V2:
+                data.update({"dimension": c["dimension"], "evidence": c["evidence"]})
+            cc = R.claim("critique", c["statement"], AGENT_IDS["loop_critic"], {"target": h["claim_id"], **data},
+                         evidence=c.get("evidence", []), exists=exists, provenance=prov)
             if cc:
                 R.link(cc, "critiques", h["claim_id"], AGENT_IDS["loop_critic"])
                 R.add("critiques", art.item(cc, "critique", "proposed", c["statement"], AGENT_IDS["loop_critic"], R.as_of,
-                                            {"severity": c["severity"], "challenged_assumption": c["challenged_assumption"]},
-                                            [("critiques", h["claim_id"])], prov))
+                                            data, [("critiques", h["claim_id"])] + [("cites", x) for x in c.get("evidence", [])],
+                                            prov))
     else:
         R.fail("loop_critic", "call", "failed", cres["failure_class"] or "call.error", [cres["outcome"]], {}, AGENT_IDS["loop_critic"])
 
@@ -319,7 +365,8 @@ def _loop(R: _Run, ctx: dict, panel, evidence: dict):
             R.add("tests", art.item(t["test_id"], "test", t["status"], f"{h['ref']}.{imp['id']}: " + (
                 f"{spec['template']} {spec['entity']}{'-' + spec['entity_b'] if spec['entity_b'] else ''} {spec['comparator']} "
                 f"{100 * spec['reference_value']:.2f}% over {', '.join(spec['target_periods'])}" if spec else f"not testable: {why}"),
-                ENGINE, R.as_of, {"spec": spec, "reason": why, "spec_hash": t["spec_hash"], "implication": imp},
+                ENGINE, R.as_of, {"spec": spec, "reason": why, "spec_hash": t["spec_hash"], "implication": imp,
+                                  **({"discriminates_from": disc.get((h["ref"], imp["id"]), [])} if V2 else {})},
                 [("tests", h["claim_id"])], {"spec_version": compiler.TEST_SPEC_VERSION}))
             R.link(t["test_id"], "tests", h["claim_id"], ENGINE)
             if spec is None:
@@ -342,11 +389,18 @@ def _loop(R: _Run, ctx: dict, panel, evidence: dict):
         if e:
             tgt = {"template": objective_template(panel), "entity": e, "entity_b": None}
             baselines[(tgt["template"], e)] = official_baseline(R, panel, tgt, prov)
-    sschema = sch.strategist_schema(refs, panel.entities, list(metrics), ALLOWED_LEVERS, MODES)
-    sres = call_role(router, store, "strategist", {"slice": slice_, "hypotheses": hyp_view, "allowed_levers": ALLOWED_LEVERS,
-                                                   "baselines": [{"template": k[0], "entity": k[1], **{x: v[x] for x in (
-                                                       "point", "interval80", "model", "status")}}
-                                                       for k, v in baselines.items()]}, sschema, R.input_id)
+    bl_view = [{"template": k[0], "entity": k[1], **{x: v[x] for x in ("point", "interval80", "model", "status")}}
+               for k, v in baselines.items()]
+    if V2:
+        sschema = v2.strategist_schema(refs, panel.entities, list(metrics), ALLOWED_LEVERS, MODES, ext)
+        sres = call_role(router, store, "strategist", {"contract": v2.CONTRACT, "slice": agent_slice, "hypotheses": hyp_view,
+                                                       "allowed_levers": ALLOWED_LEVERS, "baselines": bl_view}, sschema,
+                         R.input_id, system=sysp["strategist"])
+        sschema = v2.inline(sschema)
+    else:
+        sschema = sch.strategist_schema(refs, panel.entities, list(metrics), ALLOWED_LEVERS, MODES)
+        sres = call_role(router, store, "strategist", {"slice": slice_, "hypotheses": hyp_view, "allowed_levers": ALLOWED_LEVERS,
+                                                       "baselines": bl_view}, sschema, R.input_id)
     R.calls.append(_call_summary("strategist", sres))
     options = []
     if sres["data"] is not None:
@@ -495,18 +549,22 @@ def _option(R: _Run, ctx, panel, metrics, o, by_ref, allowed, baselines, prov):
     def crit(sc):
         imp = {**sc, "template": sc["template"], "description": "success criterion", "would_refute_if": "criterion not met"}
         return compiler.compile_implication(imp, panel, metrics)
-    pr, criteria = strategy.validate_option(o, set(by_ref), allowed, crit)
+    V2 = ctx["contract"] == v2.CONTRACT
+    # v2: the free-text number check is replaced by declared, exactly reproducible numeric claims (all text fields)
+    pr, criteria = strategy.validate_option(o, set(by_ref), allowed, crit, check_text_numbers=not V2)
+    if V2:
+        pr += v2.validate_option(o, panel.entities, {k: m["value"] for k, m in metrics.items()})
     if pr:
         R.fail("strategic_option", "validation", "rejected", classify_problems(pr, None), pr, o, by)
         return None
     e = o["intended_effect"]
-    tgt = {"template": e["template"], "entity": e["entity"], "entity_b": None}
+    tgt = {"template": e["template"], "entity": e["entity"], "entity_b": e.get("entity_b") or None}
     unsupported = strategy.effect_target_problems(e, panel)
     if unsupported:
         base = {"point": None, "interval80": None, "model": None, "model_version_id": None, "status": "unavailable",
                 "failure_class": "option.effect_target_unsupported", "problems": unsupported}
     else:
-        key = (tgt["template"], tgt["entity"])
+        key = (tgt["template"], tgt["entity"]) + ((tgt["entity_b"],) if tgt["entity_b"] else ())
         if key not in baselines:
             baselines[key] = official_baseline(R, panel, tgt, prov)
         base = baselines[key]
@@ -535,6 +593,8 @@ def _option(R: _Run, ctx, panel, metrics, o, by_ref, allowed, baselines, prov):
                "cost": o["cost"] if o["cost"]["known"] else {"known": False, "basis": o["cost"]["basis"]},
                "risks": o["risks"], "uncertainty": o["uncertainty"], "success_criteria": criteria,
                "requires_approval": True, "compliance": compliance, "executable": False, "simulation": simulation}
+    if V2:  # every number in the option's text, with its kind (observed / calculated / assumed) and source metrics
+        payload["numeric_claims"] = o["numeric_claims"]
     oc = R.claim("strategic_proposal", o["title"], by, payload, evidence=o["supporting_evidence"],
                  exists=lambda x: x in metrics, provenance=prov)
     if not oc:
@@ -563,6 +623,24 @@ def _option(R: _Run, ctx, panel, metrics, o, by_ref, allowed, baselines, prov):
                                           R.as_of, s, [("simulates", oc)], {"calibration": "uncalibrated"}))
     R.add("strategic_options", art.item(oc, "strategic_proposal", "proposed", o["title"], by, R.as_of, payload, links, prov))
     return {"claim_id": oc, "option": o, "criteria": criteria, "sims": sims, "hyp_claims": hyp_claims}
+
+
+def _information_gaps(R: _Run, gaps, accepted, allowed, prov, by):
+    """loop.v2: missing measurements that would distinguish hypotheses, recorded as open questions in learning memory
+    for FUTURE research agents. Nothing is researched or fetched here; research needs a separate, approved capability."""
+    refs = {h["ref"]: h["claim_id"] for h in accepted}
+    for g in gaps:
+        pr = v2.gap_problems(g, set(refs), allowed)
+        if pr:
+            R.fail("information_gap", "validation", "rejected", classify_problems(pr, None), pr, g, by)
+            continue
+        q = f"{g['id']}: {g['missing_measurement']} (would distinguish {', '.join(g['distinguishes'])})"
+        rec = {**g, "distinguishes_claims": [refs[r] for r in g["distinguishes"]], "research_status": "not_requested",
+               "autonomous_research": "disabled (needs a separately approved research capability)"}
+        kid = R.memory.submit("question", q, by, {"tags": ["kind:information_gap", f"investigation:{R.input_id}"]}, [],
+                              record=rec, available_at=R.as_of)
+        R.add("information_gaps", art.item(kid, "information_gap", "open", q, by, R.as_of, rec,
+                                           [("about", refs[r]) for r in g["distinguishes"]], prov))
 
 
 def _set_item_status(R: _Run, cid, status, st):
@@ -691,8 +769,9 @@ def _document(R: _Run, ctx, status, reason, evidence, world, panel) -> dict:
                                 "actual_cost_usd": sum(c["actual_cost_usd"] or 0 for c in R.calls),
                                 "cache_hits": sum(1 for c in R.calls if c["cached"])}},
            "approvals": [{k: a[k] for k in ("approval_id", "kind", "subject", "status", "requested_by")} for a in R.approvals_],
-           "provenance": {"engine_version": ENGINE_VERSION, "prompt_version": PROMPT_VERSION,
-                          "schemas": {k: sch.SCHEMA_VERSIONS[k] for k in ("hypothesis_generator", "loop_critic", "strategist")},
+           "provenance": {"engine_version": ENGINE_VERSION, "prompt_version": ctx["pv"],
+                          "schemas": ({k: sch.SCHEMA_VERSIONS[k] for k in ("hypothesis_generator", "loop_critic", "strategist")}
+                                      if ctx["contract"] == v2.V1 else dict(v2.SCHEMA_VERSIONS)),
                           "registry_rule": reg.RULE, "test_spec_version": compiler.TEST_SPEC_VERSION,
                           "market_spec_sha256": ctx["spec_sha"], "panel": (panel.snapshot if panel else {}),
                           "agents": ctx["agents"]}}

@@ -17,6 +17,13 @@ Metric templates (the closed MEASUREMENT grammar; mechanisms stay free text):
   market_segment_share  market segment units / market units   (entity = "market")
   segment_share_gap     segment_share(entity) - segment_share(entity_b)
 
+Extended measurements (R2 Step 2, ``loop.v2`` with measurements='extended'; never in the v1 metric set):
+
+  non_segment_share     entity non-segment units / market non-segment units (e.g. "is the brand growing outside
+                        the segment?", the test the r2v replies needed for dilution claims)
+  units_growth          entity units over the periods / entity units over the same periods one year earlier - 1
+                        (entity = "market" for the market total); separates share loss from volume loss
+
 Values are pooled over a set of periods (sum of numerators / sum of denominators). Every metric
 exposed to agents carries a recomputable definition; EI recomputes it from the panel.
 """
@@ -32,8 +39,11 @@ from pathlib import Path
 from ..data.store import to_timestamp
 
 TEMPLATES = ("share", "segment_share", "segment_mix", "market_segment_share", "segment_share_gap")
+EXTENDED_TEMPLATES = ("non_segment_share", "units_growth")
+SHARE_LIKE = ("share", "segment_share", "segment_mix", "market_segment_share", "non_segment_share")  # values in [0, 1]
 WINDOW_IDS = {"share": "share", "segment_share": "segment_share", "segment_mix": "segment_mix",
-              "market_segment_share": "market_segment_share"}
+              "market_segment_share": "market_segment_share", "non_segment_share": "non_segment_share",
+              "units_growth": "units_growth"}
 QUARTER = "quarter"
 
 
@@ -46,6 +56,11 @@ def next_quarters(last: str, n: int = 2) -> list[str]:
             y, q = y + 1, 1
         out.append(f"{y}-Q{q}")
     return out
+
+
+def shift_quarter(p: str, n: int) -> str:
+    y, q = int(p[:4]), int(p[-1]) - 1 + n
+    return f"{y + q // 4}-Q{q % 4 + 1}"
 
 
 def _is_quarter(p: str) -> bool:
@@ -96,6 +111,22 @@ class SharePanel:
             if a[0] is None or b[0] is None:
                 return None, [], None
             return a[0] - b[0], a[1] + b[1], max(a[2], b[2])
+        if template == "non_segment_share":
+            ea, ei, eav = self._units(entity, "all", periods)
+            es, si, sav = self._units(entity, "seg", periods)
+            ma, mi, mav = self._units(M, "all", periods)
+            ms, msi, msv = self._units(M, "seg", periods)
+            if None in (ea, es, ma, ms) or ma - ms <= 0:
+                return None, [], None
+            return (ea - es) / (ma - ms), ei + si + mi + msi, max(eav or "", sav or "", mav or "", msv or "")
+        if template == "units_growth":
+            key = (M if entity == "market" else entity, "all")
+            prev = [shift_quarter(q, -4) for q in periods]
+            n, ni, na = self._units(*key, periods)
+            d, di, da = self._units(*key, prev)
+            if n is None or d is None or d <= 0:
+                return None, [], None
+            return n / d - 1.0, ni + di, max(na or "", da or "")
         num_key, den_key = {"share": ((entity, "all"), (M, "all")), "segment_share": ((entity, "seg"), (M, "seg")),
                             "segment_mix": ((entity, "seg"), (entity, "all")),
                             "market_segment_share": ((M, "seg"), (M, "all"))}[template]
@@ -116,16 +147,22 @@ class SharePanel:
     def metric_id(self, template: str, window: str, entity: str) -> str:
         return f"metric:{WINDOW_IDS[template]}:{window}" + ("" if template == "market_segment_share" else f":{entity}")
 
-    def metrics(self) -> dict:
-        """Window metrics exposed to agents: id -> {value, definition, inputs}."""
+
+    def metrics(self, extended: bool = False) -> dict:
+        """Window metrics exposed to agents: id -> {value, definition, inputs}. ``extended`` adds the Step 2 templates
+        (non_segment_share, units_growth); the default set is the v1 set, unchanged."""
         L4, P4 = self.windows()
         out = {}
         if len(L4) < 4 or len(P4) < 4:
             return out
         for w, periods in (("L4", L4), ("P4", P4)):
             combos = [("market_segment_share", "market")] if self.segment else []
+            if extended:
+                combos += [("units_growth", "market")]
             for e in self.entities:
                 combos += [("share", e)] + ([("segment_share", e), ("segment_mix", e)] if self.segment else [])
+                if extended:
+                    combos += ([("non_segment_share", e)] if self.segment else []) + [("units_growth", e)]
             for t, e in combos:
                 v, ids, _ = self.value(t, e, periods)
                 if v is None:

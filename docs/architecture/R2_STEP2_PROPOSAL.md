@@ -1,6 +1,6 @@
 # R2 Step 2 proposal: from trend recognition to discriminating explanatory hypotheses
 
-Status: **proposal only (2026-11-24); not implemented, not approved, not executed.** It needs founder approval, a new
+Status: **approved by the founder on 2026-11-26 and implemented offline: see [R2_STEP2_PREREGISTRATION.md](R2_STEP2_PREREGISTRATION.md)** (the pre-registered plan, and how the implementation differs from this proposal). Original proposal status: proposal only (2026-11-24). It needs founder approval, a new
 pre-registration (new prompt version and criteria hash) and its own paid-run approval. Evidence base:
 [R2_POSTMORTEM_r2v-b16fc9281536.md](R2_POSTMORTEM_r2v-b16fc9281536.md).
 
