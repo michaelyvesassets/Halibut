@@ -99,7 +99,7 @@ def run_investigation(store, market_path, *, as_of: str | None = None, evaluate_
                       agents: str = "mock", router: Router | None = None, approval_id: str | None = None,
                       max_usd: float | None = None, tenant: str = "public", faults: bool = False, decision: str | None = None,
                       approval_subject: str | None = None, contract: str = "loop.v1", measurements: str = "base",
-                      log=print) -> dict:
+                      prospective: bool = False, log=print) -> dict:
     """``approval_subject`` (default ``investigation:<market id>``): the subject of the granted paid_run approval
     that authorizes paid agents (a validation experiment authorizes several investigations with one approval)."""
     if contract not in v2.CONTRACTS or measurements not in v2.MEASUREMENTS:
@@ -108,6 +108,11 @@ def run_investigation(store, market_path, *, as_of: str | None = None, evaluate_
         raise ValueError("loop.v1 is frozen to the base measurement set")
     # the v1 prompt version stays exactly 'loop.v1' in every hash, so recorded v1 requests and ids are unchanged
     pv = PROMPT_VERSION if contract == v2.V1 else f"{v2.CONTRACT}:{measurements}"
+    registered_at = utc_now()
+    if prospective:  # registration is the REAL call time; the evidence date must be the registration date (no backdating)
+        if as_of and as_of != registered_at[:10]:
+            raise ValueError(f"a prospective investigation registers on its run date ({registered_at[:10]}), not {as_of}")
+        as_of, evaluate_as_of = registered_at[:10], None
     market_path = Path(market_path)
     market = load_market(market_path)
     spec_sha = hashlib.sha256(market_path.read_bytes()).hexdigest()
@@ -143,7 +148,8 @@ def run_investigation(store, market_path, *, as_of: str | None = None, evaluate_
                  "success_metric": "segment_share" if (market.transactions or {}).get("segment") else "share",
                  "budget_usd": max_usd if agents not in OFFLINE_AGENTS else 0.0}
     ctx = {"market": market, "objective": objective, "router": router, "spec_sha": spec_sha, "agents": agents,
-           "faults": faults, "t_eval": t_eval, "contract": contract, "measurements": measurements, "pv": pv}
+           "faults": faults, "t_eval": t_eval, "contract": contract, "measurements": measurements, "pv": pv,
+           "prospective": {"registered_at": registered_at} if prospective else None}
     if contract == v2.CONTRACT:
         R.stages["information_gaps"] = []
     status, reason, evidence, world = "completed", None, {"coverage": {}, "panel": {}, "metrics": []}, \
@@ -272,11 +278,17 @@ def _loop(R: _Run, ctx: dict, panel, evidence: dict):
     library = reference_library(R.ledger, market, panel, metrics, exclude_run=R.input_id)
     accepted, seen = [], []
     # v2: discrimination between rival hypotheses, from the schema-valid hypotheses that pass the semantic checks
-    disc = v2.discrimination([h for h in valid["hypotheses"] if not _semantic_checks(h, allowed, [])]) if V2 else {}
+    cands = [h for h in valid["hypotheses"] if not _semantic_checks(h, allowed, [])] if V2 else []
+    disc, assessments = (v2.discrimination(cands), v2.rival_assessments(cands)) if V2 else ({}, {})
     for h in valid["hypotheses"]:
         pr = _semantic_checks(h, allowed, [a["ref"] for a in accepted])
         if pr:
             R.fail("hypothesis", "validation", "rejected", classify_problems(pr, None), pr, h, gen_by)
+            continue
+        dup = v2.duplicate_mechanism(h, accepted) if V2 else None
+        if dup:
+            R.fail("hypothesis", "conversion", "dropped", "duplicate.mechanism",
+                   [f"its mechanism duplicates {dup} (same explained movement, near-identical cause and pathway)"], h, gen_by)
             continue
         sigs = frozenset(signature(i) for i in h["observable_implications"])
         if sigs in seen:
@@ -288,7 +300,8 @@ def _loop(R: _Run, ctx: dict, panel, evidence: dict):
         discriminating = {i: r for (ref, i), r in disc.items() if ref == h["ref"]}
         # v2: original if not all testable implications are in the library, OR it discriminates from a rival (a
         # mechanism may predict trend continuation and still say something its rival does not)
-        novelty = "original" if (discriminating or not (testable and testable <= library)) else "restatement"
+        original_common = not (testable and testable <= library)  # the definition shared by every arm
+        novelty = "original" if (discriminating or original_common) else "restatement"
         payload = {"origin": "original", "novelty": novelty, "ref": h["ref"], "mechanism": h["mechanism"],
                    "conditions": h["conditions"], "assumptions": h["assumptions"],
                    "alternative_explanations": h["alternative_explanations"],
@@ -297,8 +310,10 @@ def _loop(R: _Run, ctx: dict, panel, evidence: dict):
                                      "direction": i["comparator"]} for i in h["observable_implications"]],
                    "uncertainty": h["uncertainty"], "refutation_criteria": h["refutation_criteria"],
                    "novelty_claim": h["novelty_claim"], "model_request": h["model_request"]}
-        if V2:
-            payload.update({"explains": h["explains"], "rivals": h["rivals"], "discriminating_implications": discriminating})
+        if V2:  # (v1's 'novelty' IS the common definition; v1 payloads stay byte-identical)
+            payload["novelty_common"] = "original" if original_common else "restatement"
+            payload.update({"explains": h["explains"], "rivals": h["rivals"], "discriminating_implications": discriminating,
+                            "rival_assessment": assessments.get(h["ref"], [])})
         hc = R.claim("hypothesis", h["statement"], gen_by, payload, evidence=h["supporting_evidence"], exists=exists,
                      provenance={**prov, "model": router.describe()["roles"]["hypothesis_generator"]["model"]})
         if not hc:
@@ -369,6 +384,8 @@ def _loop(R: _Run, ctx: dict, panel, evidence: dict):
                                   **({"discriminates_from": disc.get((h["ref"], imp["id"]), [])} if V2 else {})},
                 [("tests", h["claim_id"])], {"spec_version": compiler.TEST_SPEC_VERSION}))
             R.link(t["test_id"], "tests", h["claim_id"], ENGINE)
+            if spec is not None and ctx["prospective"]:
+                _future_test(R, ctx, panel, metrics, h, imp, spec, tests_by_h)
             if spec is None:
                 continue
             fams = ["baseline.level", "baseline.momentum"]
@@ -623,6 +640,32 @@ def _option(R: _Run, ctx, panel, metrics, o, by_ref, allowed, baselines, prov):
                                           R.as_of, s, [("simulates", oc)], {"calibration": "uncalibrated"}))
     R.add("strategic_options", art.item(oc, "strategic_proposal", "proposed", o["title"], by, R.as_of, payload, links, prov))
     return {"claim_id": oc, "option": o, "criteria": criteria, "sims": sims, "hyp_claims": hyp_claims}
+
+
+def _future_test(R: _Run, ctx, panel, metrics, h, imp, spec, tests_by_h):
+    """Prospective runs: label the nominal window's periods against the REAL registration time, and register the same
+    implication on the first two genuinely FUTURE quarters (an engine-registered horizon extension, applied identically
+    to every arm and labelled as such)."""
+    reg = ctx["prospective"]["registered_at"]
+    published = set(panel.periods)
+    nominal = R.stages["tests"][-1]
+    nominal["data"] = {**nominal["data"], "registered_at": reg, "horizon": "nominal",
+                       "window_classes": compiler.window_classes(spec["target_periods"], reg, published)}
+    fw = compiler.future_window(reg)
+    fspec, why = compiler.compile_implication(imp, panel, metrics, target_periods=fw)
+    if fspec is None:
+        return
+    t = compiler.register_test(R.store, h["claim_id"], f"{imp['id']}@future", fspec, why, R.input_id, R.as_of)
+    tests_by_h[h["claim_id"]].append(t)
+    R.add("tests", art.item(t["test_id"], "test", t["status"], f"{h['ref']}.{imp['id']}@future: {fspec['template']} "
+                            f"{fspec['entity']} {fspec['comparator']} over {', '.join(fw)} (engine horizon extension)",
+                            ENGINE, R.as_of, {"spec": fspec, "reason": None, "spec_hash": t["spec_hash"], "implication": imp,
+                                              "registered_at": reg, "horizon": "future_window",
+                                              "window_classes": compiler.window_classes(fw, reg, published),
+                                              "note": "the agent's implication applied to the first quarters that start "
+                                                      "after registration; identical for every arm"},
+                            [("tests", h["claim_id"])], {"spec_version": compiler.TEST_SPEC_VERSION}))
+    R.link(t["test_id"], "tests", h["claim_id"], ENGINE)
 
 
 def _information_gaps(R: _Run, gaps, accepted, allowed, prov, by):

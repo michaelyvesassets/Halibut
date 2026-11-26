@@ -3,8 +3,9 @@
 Status:
 - **Implemented and tested offline (2026-11-26). Not run.**
 - **Each live run needs the founder's approval** and runs only through `scripts/r2_step2_run.sh 2a|2b`.
-- **Criteria hash `22bae60509f6a2f9…`** (`step2.CRITERIA_HASH`, pinned by `tests/test_r2_step2.py`). It must not
-  change after any Step 2 call.
+- **Criteria hash `223362694f7d254f…`** (`step2.CRITERIA_HASH`, pinned by `tests/test_r2_step2.py`). It covers the
+  criteria, thresholds, arms, runs, the prospective protocol and the retry setting, and must not change after any Step 2
+  call. It was revised on 2026-11-26 after the founder's review, before any Step 2 call.
 
 Related:
 - [R2_STEP2_PROPOSAL.md](R2_STEP2_PROPOSAL.md);
@@ -56,10 +57,10 @@ Model changes are a **later, separate factor**: the same arms rerun with other m
 
 **Runs.** Each is separately approved and single-use; each worst case is within the ADR-019 limit.
 
-| Run | Investigations | Calls | Worst case (retries) | Expected |
+| Run | Investigations | Calls | Worst case (no retries; all attempts) | Expected |
 |---|---|---|---|---|
-| 2a: matched factor run | UK BEV at **2025-08-23** and **2026-02-23** (held out, never sent to any agent; resolved by 2026-11-23) × arms A, B, C | 19 | $0.0946 ($0.189) | about $0.04 |
-| 2b: prospective, second market and critic benchmark | UK BEV at **2026-11-23** (prospective) × A, C; UK hybrid-electric (petrol) at 2026-02-23 × A, C; critic benchmark (2 sets) | 15 | $0.0693 ($0.139) | about $0.03 |
+| 2a: matched factor run | UK BEV at **2025-08-23** and **2026-02-23** (held out, never sent to any agent; resolved by 2026-11-23) × arms A, B, C | 19 | $0.0946 | about $0.04 |
+| 2b: prospective, second market and critic benchmark | UK BEV at the **registration date** (prospective; §3.1) × A, C; UK hybrid-electric (petrol) at 2026-02-23 × A, C; critic benchmark (2 sets) | 15 | $0.0693 | about $0.03 |
 
 Every attempt, retries included, is capped fail-closed at the run's cap ($0.10). The total expected cost is about
 $0.07.
@@ -80,34 +81,87 @@ $0.07.
 - prospective pending tests;
 - critic benchmark scores.
 
-## 3. Acceptance criteria (exact; computed on Claude output)
+## 3. Evaluation method and acceptance criteria (exact; computed on Claude output)
+
+**One assessment method for every arm** (`evaluation._common`). It uses only what v1 and v2 both produce:
+- implications, mechanisms and cited evidence;
+- tests and results.
+
+**Competing pairs are detected from the hypotheses' own predictions, declared or not.** A pair counts only if it
+passes every mechanism gate (`loop_v2.assess_pair`):
+- both hypotheses explain the same observation;
+- their mechanisms are meaningfully distinct (word overlap at most 0.5);
+- one is not a pure negation of the other;
+- the disputed quantity concerns the explained movement's entities, so the test is interpretable.
+
+Near-duplicate mechanisms are dropped (`duplicate.mechanism`). **Opposing predictions alone never count.**
+
+**Informative test:**
+- trend extrapolation did not predict it, OR
+- it is on a disputed quantity of a competing pair.
+
+**Validated useful result:** an original hypothesis (library definition, the same for every arm) with no failed test
+and at least one passed informative test. It is labelled **predictive support, not causal proof**.
+
+v2-only fields are **contract compliance** (`evaluation.v2`, criteria K*). They are reported apart and never scored
+against v1:
+- declared rivals;
+- information gaps;
+- critique dimensions;
+- numeric claims.
+
+B6 measures the **combined** effect of the reasoning contract and the evidence presentation (prompts, schemas,
+compact evidence, and a critic that sees the evidence). It is not the effect of prompt wording alone.
 
 | Id | Criterion | Run |
 |---|---|---|
-| A1 | the smoke call with a `$defs`/`$ref` schema returns `{"ok": true}` | each |
-| A2 | every live investigation is `completed` (no internal error) | each |
-| A3 | no live call truncated, refused or rejected as a whole | each |
-| A4 | every document validates against `investigation_result.v1` | each |
-| A5 | all arms at the same market and origin saw the same panel fingerprint | each |
-| A6 | live spend (smoke included) ≤ the approved cap | each |
-| B1 | arm C: accepted / (accepted + rejected) hypotheses ≥ 0.80 | each |
-| B2 | arm C: ≥ 2 original hypotheses in every investigation | each |
-| B3 | arm C: ≥ 1 rival pair in every investigation | each |
-| B4 | arm C: ≥ 25% of registered tests discriminating | each |
-| B5 | arm C: ≥ 40% of registered tests informative (v2 definition) | each |
-| B6 | arm C: ≥ 60% of implications compile into registered tests | each |
-| B7 | arm C: every investigation has ≥ 1 accepted information gap distinguishing ≥ 2 hypotheses | each |
-| B8 | informativeness (v2) of arm B − arm A ≥ +0.20 (pooled over matched origins; descriptive) | 2a |
-| C1 | critic benchmark recall ≥ 0.60 (correct target, dimension and evidence) | 2b |
-| C2 | critic precision ≥ 0.60 (medium/high critiques that detect a planted defect) | 2b |
-| C3 | ≤ 25% of clean controls receive a high-severity critique | 2b |
-| D1 | arm C: ≥ 50% of proposed options pass v2 validation | each |
-| D2 | no drafted protocol is eligible unless every eligibility check passes | each |
+| A1–A6 | engineering: smoke with a `$defs` schema; all completed; no truncation, refusal or top-level failure; documents validate; matched evidence; spend (smoke, failed-attempt reservations) ≤ cap | each |
+| B1 | arm C: evidence fidelity ≥ 0.80 | each |
+| B2 | arm C: ≥ 2 original hypotheses (common definition) per investigation | each |
+| B3 | arm C: ≥ 1 gated competing pair per investigation | each |
+| B4 | arm C: informativeness (common) ≥ 0.40 | each |
+| B5 | arm C: testability ≥ 0.60 | each |
+| B6 | informativeness (common) of B − A ≥ +0.20 (combined contract and evidence presentation; descriptive) | 2a |
+| K1 | compliance, arm C: ≥ 1 information gap distinguishing ≥ 2 hypotheses per investigation | each |
+| K2 | compliance, arm C: ≥ 50% of options pass v2 validation | each |
+| C1–C4 | critic benchmark: recall ≥ 0.60; precision ≥ 0.60; ≤ 25% of clean controls with a high-severity critique; evidence-reference accuracy ≥ 0.80. Also reported: recall by defect type, precision by dimension, all critiques on clean controls | 2b |
+| D1 | no protocol eligible unless every eligibility check passes | each |
 | E1 | arm B generator input tokens (API usage) ≤ arm A at the same origin | 2a |
+| P1 | every prospective test registered at the real call time, on DfT data retrieved ≤ 7 days earlier, with ≥ 1 `future` window | 2b |
+| P2 | no period already published at registration scored as prospective | 2b |
 
-A criterion a run cannot evaluate is `null` (for example C* in 2a), never `false`. The B criteria test whether the
-contract elicits the intended reasoning; they are not claims of predictive superiority. With 6 to 10 investigations,
-every contrast is descriptive, not a significance test.
+A criterion a run cannot evaluate is `null`, never `false`. With 6 to 10 investigations, every contrast is
+descriptive.
+
+**Reported per arm and per role, from API usage:**
+- input and output tokens, latency and cache hits;
+- incremental and historical (reused) cost;
+- cost per validated useful result.
+
+No evidence is removed because it was not cited. Every metric stays in the slice; only redundant encoding was
+removed.
+
+### 3.1 Prospective protocol (frozen in the criteria hash)
+
+- **Registration** happens at the real call time (`utc_now`), never backdated. Evidence is as of the registration
+  date, and the origin is that date.
+- **Publication check:** DfT data must have been retrieved at most 7 days before registration, or the run is refused.
+  The current data were retrieved on 2026-11-23, so they are fresh until 2026-11-30.
+- **Window classes:** each target period is labelled `already_published`, `unpublished_historical`,
+  `partially_elapsed` (a nowcast) or `future`.
+- **Future window:** every implication is also registered on the **first two quarters starting after registration**
+  (engine horizon extension, identical for every arm, labelled as such). For a registration in late 2026, the
+  nominal window is 2026-Q3 (unpublished historical) and 2026-Q4 (nowcast); the future window is 2027-Q1 and 2027-Q2.
+- **Resolution:** once, on the first published vintage containing all target periods; later revisions are ignored.
+- **No tuning:** nothing is rerun or re-scored after outcomes are seen.
+
+### 3.2 Budget and authorization
+
+- **Live calls are not retried** (`RETRIES = 0`). The worst case therefore includes every attempt: 2a is **$0.0946**
+  for 19 calls, within the **hard cumulative cap of $0.10** (smoke and failed-attempt reservations included) and the
+  ADR-019 sole-founder limit. A transient failure stops that investigation, recorded, and nothing is re-bought.
+- **2b is prepared and frozen but separately authorized.** It needs its own approval, `R2_STEP2B_AUTHORIZED=yes`
+  (script) and `--authorized-2b` (CLI).
 
 **Expected improvements (hypotheses, not results):**
 - discriminating tests and informative refutations should appear (v1 Haiku produced 0 informative predictions);

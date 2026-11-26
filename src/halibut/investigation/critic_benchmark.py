@@ -170,7 +170,25 @@ def score(critiques_by_set: dict, bench: dict) -> dict:
         d[0] += hit
         d[1] += 1
     n_clean = sum(1 for v in bench["key"].values() if v["kind"] == "clean")
+    by_dim, ev_bound, ev_right, clean_any = {}, 0, 0, set()
+    for sid, crits in critiques_by_set.items():
+        for c in crits:
+            v = bench["key"].get(f"{sid}:{c['hypothesis_ref']}")
+            if v is None or c["severity"] not in ("medium", "high"):
+                continue
+            d = by_dim.setdefault(c["dimension"], [0, 0])
+            d[1] += 1
+            d[0] += v["kind"] != "clean" and c["dimension"] in v["accept"] and (
+                not v["evidence"] or bool(set(c.get("evidence", [])) & set(v["evidence"])))
+            if v["kind"] == "clean":
+                clean_any.add(f"{sid}:{c['hypothesis_ref']}")
+            if v["evidence"] and c.get("evidence"):
+                ev_bound += 1
+                ev_right += bool(set(c["evidence"]) & set(v["evidence"]))
     return {"version": VERSION, "planted": len(found), "detected": sum(found.values()),
+            "precision_by_dimension": {k: x[0] / x[1] for k, x in sorted(by_dim.items())},
+            "evidence_reference_accuracy": (ev_right / ev_bound) if ev_bound else None,
+            "clean_controls_with_any_medium_or_high_critique": len(clean_any),
             "recall": (sum(found.values()) / len(found)) if found else None,
             "recall_by_type": {t: d[0] / d[1] for t, d in sorted(by_type.items())},
             "precision": (tp_crit / n_med_high) if n_med_high else None,

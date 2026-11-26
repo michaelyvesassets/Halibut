@@ -41,6 +41,7 @@ def add_investigation_commands(sub) -> None:
     s2.add_argument("--max-usd", type=float)
     s2.add_argument("--provider-config")
     s2.add_argument("--out", default="results/r2_step2")
+    s2.add_argument("--authorized-2b", action="store_true", help="run 2b is separately authorized by the founder")
     v = s.add_parser("validate", help="R2 live validation: reference vs mock vs Claude on identical evidence")
     v.add_argument("market")
     v.add_argument("--origins", nargs="+", required=True)
@@ -140,7 +141,7 @@ def _inv(args) -> int:
             from .step2 import CRITERIA_HASH, run_step2  # noqa: PLC0415
             try:
                 rep = run_step2(store, args.db, args.run, live=args.live, approval_id=args.approval, max_usd=args.max_usd,
-                                out_dir=args.out, provider_config=args.provider_config)
+                                out_dir=args.out, provider_config=args.provider_config, authorized_2b=args.authorized_2b)
             except AuthorizationError as exc:
                 print(f"refused: {exc}", file=sys.stderr)
                 return 3

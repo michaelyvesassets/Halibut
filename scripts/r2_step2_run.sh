@@ -15,9 +15,15 @@ REPO="$(git rev-parse --show-toplevel)"
 cd "$REPO"
 RUN="${1:?usage: r2_step2_run.sh 2a|2b}"
 case "$RUN" in 2a|2b) ;; *) echo "unknown run $RUN (2a or 2b)"; exit 2 ;; esac
+EXTRA_FLAGS=()
+if [ "$RUN" = 2b ]; then  # separately authorized: prepared and frozen, not to be executed without the founder's go-ahead
+  [ "${R2_STEP2B_AUTHORIZED:-}" = "yes" ] || { echo "run 2b is separately authorized: set R2_STEP2B_AUTHORIZED=yes only after approval"; exit 2; }
+  EXTRA_FLAGS=(--authorized-2b)
+  # prospective registration needs fresh publication data (<= 7 days); refresh it first, e.g.: halibut intel investigate ...
+fi
 DB="${HALIBUT_DB:-data/halibut.sqlite}"
 DRY_RUN="${DRY_RUN:-0}"
-CAP="0.10"  # worst case: 2a $0.0946 (19 calls), 2b $0.0693 (15 calls); expected about $0.04 and $0.03
+CAP="0.10"  # hard cumulative cap incl. smoke, failed-attempt reservations; Step 2 calls are not retried (RETRIES = 0)
 SUBJECT="r2_step2:${RUN}"
 OPERATOR="founder"
 CONFIG="configs/llm/anthropic.toml"
@@ -128,5 +134,5 @@ LIVE_FLAGS=(--live --approval "$APPROVAL" --provider-config "$TMP_CONFIG")
 if [ "$DRY_RUN" = 1 ]; then
   LIVE_FLAGS=()
 fi
-halibut investigation --db "$DB" step2 "$RUN" --max-usd "$CAP" --out "$RUN_DIR" "${LIVE_FLAGS[@]}" 2>&1 | tee "$RUN_DIR/step2_output.log"
+halibut investigation --db "$DB" step2 "$RUN" --max-usd "$CAP" --out "$RUN_DIR" "${EXTRA_FLAGS[@]}" "${LIVE_FLAGS[@]}" 2>&1 | tee "$RUN_DIR/step2_output.log"
 log "experiment command completed"

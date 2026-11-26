@@ -239,25 +239,88 @@ def quantity(imp: dict) -> tuple:
     return (imp["template"], imp["entity"], imp.get("entity_b") or "")
 
 
-def discrimination(accepted: list[dict]) -> dict:
-    """{(ref, implication id): [rival refs that predict the OPPOSITE direction for the same quantity]}. Mechanical: a
-    rival counts only if it is an accepted hypothesis of this reply, lists or is listed as a rival, and its OWN
-    implication on the same quantity points the other way."""
+_STOP = {"the", "and", "for", "with", "its", "their", "from", "that", "this", "than", "into", "more", "less", "are", "is",
+         "of", "to", "in", "on", "by", "as", "an", "a", "or", "not", "but", "which", "while", "rather", "share", "segment"}
+DISTINCT_MAX_SIMILARITY = 0.5   # mechanism word overlap (Jaccard) above this: not meaningfully distinct
+DUPLICATE_MIN_SIMILARITY = 0.8  # above this with the same explained movement: a duplicate mechanism
+
+
+def _words(h: dict) -> set:
+    m = h.get("mechanism") or {}
+    return {w for w in re.findall(r"[a-z][a-z\-]+", f"{m.get('cause', '')} {m.get('pathway', '')}".lower()) if w not in _STOP}
+
+
+def mechanism_similarity(h: dict, r: dict) -> float:
+    a, b = _words(h), _words(r)
+    return len(a & b) / len(a | b) if a | b else 1.0
+
+
+def _entities_of(mid: str) -> set:
+    parts = (mid or "").split(":")
+    return {parts[3]} if len(parts) > 3 else {"market"}
+
+
+def assess_pair(h: dict, r: dict) -> dict:
+    """Quality gates for a rival pair. Opposing predictions ALONE never count: the pair must explain the same
+    observation, have meaningfully distinct mechanisms, not be a pure negation of each other, and disagree on a
+    quantity about the explained movement's entities (an interpretable test)."""
+    reasons = []
+    same = h.get("explains") == r.get("explains") or bool(set(h.get("supporting_evidence", [])) & set(r.get("supporting_evidence", [])))
+    if not same:
+        reasons.append("the rivals do not explain the same observation")
+    sim = mechanism_similarity(h, r)
+    if sim > DISTINCT_MAX_SIMILARITY:
+        reasons.append(f"mechanisms are not meaningfully distinct (word overlap {sim:.2f})")
+    qh, qr = {}, {}
+    for src, dst in ((h, qh), (r, qr)):
+        for i in src["observable_implications"]:
+            if i["template"] != "other":
+                dst.setdefault(quantity(i), set()).add(DIRECTION.get(i["comparator"]))
+    shared = set(qh) & set(qr)
+    disputed = [q for q in shared if any((x, y) in OPPOSITE for x in qh[q] for y in qr[q])]
+    if not disputed:
+        reasons.append("no shared quantity on which they predict opposite outcomes")
+    elif set(qh) == set(qr) == set(disputed):
+        reasons.append("artificial disagreement: one hypothesis is a pure negation of the other")
+    focus = _entities_of(h.get("explains")) | _entities_of(r.get("explains"))
+    interpretable = [q for q in disputed if {q[1], q[2]} & focus]
+    if disputed and not interpretable:
+        reasons.append("the disputed quantity is unrelated to the explained movement (not interpretable)")
+    return {"rival": r["ref"], "counted": not reasons, "reasons": reasons, "mechanism_similarity": round(sim, 2),
+            "disputed_quantities": [list(q) for q in interpretable]}
+
+
+def rival_assessments(accepted: list[dict]) -> dict:
+    """{ref: [assess_pair(...)]} for every declared rival (either direction) that is an accepted hypothesis."""
     by = {h["ref"]: h for h in accepted}
     out = {}
     for h in accepted:
-        rivals = {r for r in h.get("rivals", []) if r in by and r != h["ref"]} | \
+        rivals = {x for x in h.get("rivals", []) if x in by and x != h["ref"]} | \
                  {o["ref"] for o in accepted if h["ref"] in o.get("rivals", []) and o["ref"] != h["ref"]}
-        for imp in h["observable_implications"]:
-            if imp["template"] == "other":
-                continue
-            d = DIRECTION.get(imp["comparator"])
-            hits = sorted(r for r in rivals for j in by[r]["observable_implications"]
-                          if j["template"] != "other" and quantity(j) == quantity(imp)
-                          and (d, DIRECTION.get(j["comparator"])) in OPPOSITE)
-            if hits:
-                out[(h["ref"], imp["id"])] = hits
+        out[h["ref"]] = [assess_pair(h, by[x]) for x in sorted(rivals)]
     return out
+
+
+def discrimination(accepted: list[dict]) -> dict:
+    """{(ref, implication id): [rival refs]} for implications on a disputed quantity of a rival pair that passes EVERY
+    quality gate (assess_pair). Mechanical; never from claims about what a rival 'would' predict."""
+    out = {}
+    for h in accepted:
+        for a in rival_assessments(accepted).get(h["ref"], []):
+            if not a["counted"]:
+                continue
+            for imp in h["observable_implications"]:
+                if imp["template"] != "other" and list(quantity(imp)) in a["disputed_quantities"]:
+                    out.setdefault((h["ref"], imp["id"]), []).append(a["rival"])
+    return {k: sorted(set(v)) for k, v in out.items()}
+
+
+def duplicate_mechanism(h: dict, earlier: list[dict]) -> str | None:
+    """The ref of an earlier hypothesis with the same explained movement and a near-identical mechanism, if any."""
+    for e in earlier:
+        if e.get("explains") == h.get("explains") and mechanism_similarity(h, e) >= DUPLICATE_MIN_SIMILARITY:
+            return e["ref"]
+    return None
 
 
 def gap_problems(g: dict, accepted_refs, allowed_numbers) -> list[str]:
@@ -290,6 +353,40 @@ def free_text(x, key=None) -> list[str]:
     if isinstance(x, list):
         return [s for v in x for s in free_text(v, key)]
     return []
+
+
+ASSUMPTION_FIELDS = ("intended_effect.basis", "assumptions.statement")
+
+
+def text_fields(x, path="") -> list[tuple[str, str]]:
+    """(field path without indices, text) for every free-text string of an option."""
+    key = path.rsplit(".", 1)[-1]
+    if key in _NON_TEXT:
+        return []
+    if isinstance(x, str):
+        return [(path, x)]
+    if isinstance(x, dict):
+        return [t for k, v in x.items() for t in text_fields(v, f"{path}.{k}" if path else k)]
+    if isinstance(x, list):
+        return [t for v in x for t in text_fields(v, path)]
+    return []
+
+
+def disguised_assumptions(option: dict) -> list[str]:
+    """An ASSUMED number may appear only where assumptions belong (the effect basis or an assumption statement) and
+    only in a sentence that says it is assumed, so a hypothetical cannot pass as an observed fact."""
+    assumed = {c["text"] for c in option.get("numeric_claims", []) if c["kind"] == "assumed"}
+    p = []
+    for path, text in text_fields(option):
+        for sent in re.split(r"(?<=[.;])\s+", text):
+            for tok in ANY_NUMBER.findall(sent):
+                if tok not in assumed:
+                    continue
+                if path not in ASSUMPTION_FIELDS:
+                    p.append(f"assumed number {tok} appears in {path}, where it reads as a fact")
+                elif "assum" not in sent.lower():
+                    p.append(f"assumed number {tok} in {path} is not marked as assumed in its sentence")
+    return p
 
 
 def check_pairwise(effect: dict, entities) -> list[str]:
@@ -371,4 +468,4 @@ def check_numeric_claims(option: dict, metric_values: dict) -> list[str]:
 
 def validate_option(option: dict, entities, metric_values: dict) -> list[str]:
     return (check_pairwise(option["intended_effect"], entities) + check_objective_agreement(option)
-            + check_numeric_claims(option, metric_values))
+            + check_numeric_claims(option, metric_values) + disguised_assumptions(option))

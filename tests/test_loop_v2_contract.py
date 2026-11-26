@@ -89,21 +89,42 @@ def test_kinds_separate_observed_calculated_and_assumed():
                         "operation": "value", "metric_ids": ["metric:segment_share:L4:byd"]})  # the recorded O1 number
 
 
-def _h(ref, imps, rivals=()):
-    return {"ref": ref, "rivals": list(rivals), "observable_implications": [
-        {"id": f"I{i + 1}", "template": t, "entity": e, "entity_b": b, "comparator": c} for i, (t, e, b, c) in enumerate(imps)]}
+def _h(ref, imps, rivals=(), cause="", explains="metric:share:L4:a", ev=("metric:share:L4:a",)):
+    return {"ref": ref, "rivals": list(rivals), "explains": explains, "supporting_evidence": list(ev),
+            "mechanism": {"cause": cause, "pathway": ""},
+            "observable_implications": [{"id": f"I{i + 1}", "template": t, "entity": e, "entity_b": b, "comparator": c}
+                                        for i, (t, e, b, c) in enumerate(imps)]}
 
 
-def test_discrimination_is_mechanical_and_needs_a_real_rival():
-    h1 = _h("H1", [("share", "a", "", "increase_vs_L4"), ("segment_share", "a", "", "increase_vs_L4")], ["H2"])
-    h2 = _h("H2", [("share", "a", "", "decrease_vs_L4"), ("segment_share", "a", "", "increase_vs_L4")])
-    d = v2.discrimination([h1, h2])
-    assert d == {("H1", "I1"): ["H2"], ("H2", "I1"): ["H1"]}  # only the quantity on which they disagree
-    assert v2.discrimination([{**h1, "rivals": []}, h2]) == {}  # disagreeing without being named rivals is not enough
-    assert v2.discrimination([h1]) == {}                        # a rival that is not an accepted hypothesis does not count
-    gap = _h("H3", [("segment_share_gap", "a", "b", "above_zero")], ["H4"])
-    gap2 = _h("H4", [("segment_share_gap", "a", "b", "below_zero")])
-    assert v2.discrimination([gap, gap2]) == {("H3", "I1"): ["H4"], ("H4", "I1"): ["H3"]}
+A_MECH, B_MECH = "dealer network expansion widens availability", "temporary price incentives pull demand forward"
+
+
+def test_discrimination_needs_a_real_gated_rival():
+    h1 = _h("H1", [("share", "a", "", "increase_vs_L4"), ("segment_share", "a", "", "increase_vs_L4")], ["H2"], A_MECH)
+    h2 = _h("H2", [("share", "a", "", "decrease_vs_L4"), ("segment_share", "a", "", "increase_vs_L4")], [], B_MECH)
+    assert v2.discrimination([h1, h2]) == {("H1", "I1"): ["H2"], ("H2", "I1"): ["H1"]}  # only the disputed quantity
+    assert v2.discrimination([{**h1, "rivals": []}, h2]) == {}   # disagreeing without being named rivals: no
+    assert v2.discrimination([h1]) == {}                         # a rival that is not an accepted hypothesis: no
+
+
+def test_opposing_predictions_alone_do_not_count():
+    base = [("share", "a", "", "increase_vs_L4"), ("segment_share", "a", "", "increase_vs_L4")]
+    flip = [("share", "a", "", "decrease_vs_L4"), ("segment_share", "a", "", "decrease_vs_L4")]
+    cases = {
+        "not meaningfully distinct": (_h("H1", base[:1] + base[1:], ["H2"], A_MECH), _h("H2", flip[:1] + base[1:], [], A_MECH)),
+        "pure negation": (_h("H1", base, ["H2"], A_MECH), _h("H2", flip, [], B_MECH)),
+        "same observation": (_h("H1", base, ["H2"], A_MECH),
+                             _h("H2", flip[:1] + base[1:], [], B_MECH, "metric:share:L4:b", ("metric:share:L4:b",))),
+        "not interpretable": (_h("H1", base + [("share", "z", "", "increase_vs_L4")], ["H2"], A_MECH),
+                              _h("H2", base + [("share", "z", "", "decrease_vs_L4")], [], B_MECH)),
+    }
+    for why, (a, b) in cases.items():
+        ass = v2.assess_pair(a, b)
+        assert not ass["counted"] and any(why in r for r in ass["reasons"]), (why, ass)
+        assert v2.discrimination([a, b]) == {}
+    dup = _h("H3", base, [], A_MECH)
+    assert v2.duplicate_mechanism(dup, [_h("H1", flip, [], A_MECH)]) == "H1"
+    assert v2.duplicate_mechanism(dup, [_h("H1", flip, [], B_MECH)]) is None
 
 
 def test_information_gaps_and_critiques_are_validated():

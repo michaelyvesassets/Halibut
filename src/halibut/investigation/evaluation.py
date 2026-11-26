@@ -21,19 +21,22 @@ Definitions (v1):
   per role                tokens, cost, latency and useful outputs of each agent role (generator, critic, strategist);
                           critic skill = share of refuted hypotheses that had a high-severity critique
 
-Definitions added for loop.v2 (``v2`` block; the v1 definitions above are unchanged):
-  discriminating test     a registered test on which a RIVAL hypothesis predicts the opposite direction
-  informative test (v2)   trend extrapolation did not predict it, OR it is discriminating (rivals disagree on it).
-                          Predicting trend continuation is fine if a rival predicts otherwise
+COMMON block (identical method for every arm, v1 or v2; only fields both contracts produce):
+  original (common)       testable implications not all in the reference library (v1's definition)
+  competing pair          two accepted hypotheses, DECLARED OR NOT, passing the mechanism gates of loop_v2.assess_pair
+                          (same observation, distinct mechanisms, not a pure negation, interpretable disputed quantity).
+                          Opposing predictions alone never count
+  informative test        trend extrapolation did not predict it, OR it is on a disputed quantity of a competing pair
+  discriminating resolution
+                          a competing pair's disputed tests resolved with one passing and the other failing
   informative confirmation / refutation
-                          an informative (v2) test that passed / failed; REPORTED SEPARATELY (a refutation is useful
-                          learning, not a successful prediction)
-  validated useful discovery (v2)
-                          an ORIGINAL hypothesis with no failed test and >= 1 passed informative (v2) test;
-                          not causal proof
-  information gaps        accepted gap records, by expected research value
-  critique structure      critiques by dimension; share of factual/numerical critiques citing evidence
-  numeric integrity       strategist options rejected for undeclared or non-reproducing numbers
+                          an informative test that passed / failed (REPORTED SEPARATELY)
+  validated useful result an ORIGINAL (common) hypothesis with no failed test and >= 1 passed informative test;
+                          predictive support only, NOT causal proof
+  cost per validated useful result, tokens, latency and cache hits per role
+
+COMPLIANCE block (loop.v2 only): declared rivals, information gaps, critique dimensions/evidence, numeric-claim
+  rejections. This is CONTRACT COMPLIANCE, reported apart from intelligence and never used to score an arm against v1.
 """
 
 from __future__ import annotations
@@ -109,9 +112,10 @@ def evaluate_document(doc: dict) -> dict:
     cost = float(doc["agents"]["costs"]["actual_cost_usd"] or 0)
     fc = [f for f in st["forecasts"] if (f["data"].get("score") or {}).get("status") == "scored"]
     gen = next((c for c in calls if c["role"] == "hypothesis_generator"), {})
+    common = _common(doc, hyps, registered, by_h, res_by_t, cost)
     v2block = _v2(doc, hyps, registered, by_h, res_by_t, f_items, cost) if "information_gaps" in st else None
     return {
-        "v2": v2block,
+        "common": common, "v2": v2block,
         "metrics_version": METRICS_VERSION, "investigation_id": doc["investigation_id"], "agents": doc["provenance"]["agents"],
         "as_of": doc["objective"]["as_of"], "evaluate_as_of": doc["objective"]["evaluate_as_of"], "status": doc["status"],
         "stop_reason": doc["stop_reason"], "panel_fingerprint": doc["evidence"]["panel"].get("fingerprint"),
@@ -159,7 +163,68 @@ def overlap(a: dict, b: dict) -> dict:
     return {"shared": len(sa & sb), "only_first": len(sa - sb), "jaccard": (len(sa & sb) / len(sa | sb)) if sa | sb else None}
 
 
+def _pseudo(h: dict) -> dict:
+    d = h["data"]
+    return {"ref": d.get("ref"), "mechanism": d.get("mechanism") or {}, "explains": d.get("explains"),
+            "supporting_evidence": [ln["to"] for ln in h["links"] if ln["relation"] == "cites"],
+            "observable_implications": d.get("observable_implications", [])}
+
+
+def _common(doc, hyps, registered, by_h, res_by_t, cost) -> dict:
+    from .loop_v2 import assess_pair, quantity  # noqa: PLC0415
+    ps = {h["id"]: _pseudo(h) for h in hyps}
+    reg_ids = {t["id"] for t in registered}
+    test_of = {(h["id"], t["data"]["implication"]["id"]): t for h in hyps for t in by_h[h["id"]]}
+    pairs, disputed_tests, resolutions = [], set(), {"discriminating": 0, "both_passed": 0, "both_failed": 0, "pending": 0}
+    for i, a in enumerate(hyps):
+        for b in hyps[i + 1:]:
+            ass = assess_pair(ps[a["id"]], ps[b["id"]])
+            if not ass["counted"]:
+                continue
+            pairs.append([a["data"].get("ref"), b["data"].get("ref")])
+            for q in map(tuple, ass["disputed_quantities"]):
+                ta = next((test_of[(a["id"], m["id"])] for m in ps[a["id"]]["observable_implications"]
+                           if m["template"] != "other" and quantity(m) == q and (a["id"], m["id"]) in test_of), None)
+                tb = next((test_of[(b["id"], m["id"])] for m in ps[b["id"]]["observable_implications"]
+                           if m["template"] != "other" and quantity(m) == q and (b["id"], m["id"]) in test_of), None)
+                for t in (ta, tb):
+                    if t and t["id"] in reg_ids:
+                        disputed_tests.add(t["id"])
+                if ta and tb and ta["id"] in reg_ids and tb["id"] in reg_ids:
+                    ra, rb = (res_by_t.get(x["id"], {}).get("status") for x in (ta, tb))
+                    key = "pending" if None in (ra, rb) or "pending" in (ra, rb) else \
+                        "discriminating" if {ra, rb} == {"passed", "failed"} else \
+                        "both_passed" if ra == rb == "passed" else "both_failed"
+                    resolutions[key] += 1
+    trend_inf = {t["id"] for t in registered if (t["data"]["spec"].get("trend_check") or {}).get("trend_consistent") is False}
+    inf = trend_inf | disputed_tests
+    out = Counter(res_by_t[t]["status"] for t in inf if t in res_by_t)
+    orig = lambda h: (h["data"].get("novelty_common") or h["data"].get("novelty")) == "original"  # noqa: E731
+    useful = []
+    for h in hyps:
+        res = [res_by_t[t["id"]]["status"] for t in by_h[h["id"]] if t["id"] in res_by_t]
+        if orig(h) and "failed" not in res and any(t["id"] in inf and res_by_t.get(t["id"], {}).get("status") == "passed"
+                                                   for t in by_h[h["id"]]):
+            useful.append(h["data"].get("ref"))
+    calls = doc["agents"]["calls"]
+    return {"hypotheses_original": sum(1 for h in hyps if orig(h)), "competing_pairs": pairs,
+            "tests": {"registered": len(registered), "trend_informative": len(trend_inf), "disputed": len(disputed_tests),
+                      "informative": len(inf), "informative_confirmations": out.get("passed", 0),
+                      "informative_refutations": out.get("failed", 0),
+                      "informative_pending": sum(1 for t in inf if res_by_t.get(t, {}).get("status") in (None, "pending"))},
+            "resolutions": resolutions,
+            "rates": {"informativeness": (len(inf) / len(registered)) if registered else None},
+            "validated_useful_results": useful,
+            "cost_per_validated_useful_result_usd": (cost / len(useful)) if useful else None,
+            "label": "predictive support, not causal proof",
+            "efficiency": {"input_tokens": sum(c["input_tokens"] or 0 for c in calls),
+                           "output_tokens": sum(c["output_tokens"] or 0 for c in calls),
+                           "latency_s": round(sum(c["latency_seconds"] or 0 for c in calls), 2),
+                           "cache_hits": sum(1 for c in calls if c["cached"]), "cost_usd": cost}}
+
+
 def _v2(doc, hyps, registered, by_h, res_by_t, f_items, cost) -> dict:
+    """loop.v2 CONTRACT COMPLIANCE (and v2-declared rival metrics). Not an intelligence score across arms: see _common."""
     st = doc["stages"]
     disc = [t for t in registered if t["data"].get("discriminates_from")]
     inf = [t for t in registered if t["data"].get("discriminates_from")

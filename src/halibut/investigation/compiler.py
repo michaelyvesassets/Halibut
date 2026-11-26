@@ -49,7 +49,36 @@ def holds(x: float, comparator: str, ref: float) -> bool:
     return x > ref if comparator in INCREASE else x < ref
 
 
-def compile_implication(imp: dict, panel, metrics: dict) -> tuple[dict | None, str | None]:
+def _quarter_start(p: str) -> date:
+    y, q = int(p[:4]), int(p[-1])
+    return date(y, 3 * q - 2, 1)
+
+
+def window_classes(periods, registered_at: str, published) -> dict:
+    """Each target period relative to the REAL registration time: already_published (not a prediction),
+    unpublished_historical (ended, not yet published), partially_elapsed (a nowcast), future (starts after registration)."""
+    reg = date.fromisoformat(registered_at[:10])
+    out = {}
+    for p in periods:
+        if p in published:
+            out[p] = "already_published"
+        elif _quarter_end(p) < reg:
+            out[p] = "unpublished_historical"
+        elif _quarter_start(p) <= reg:
+            out[p] = "partially_elapsed"
+        else:
+            out[p] = "future"
+    return out
+
+
+def future_window(registered_at: str, n: int = 2) -> list[str]:
+    """The first n quarters that start strictly after the registration date (genuinely future)."""
+    reg = date.fromisoformat(registered_at[:10])
+    y, q = reg.year, (reg.month - 1) // 3 + 1
+    return next_quarters(f"{y}-Q{q}", n)
+
+
+def compile_implication(imp: dict, panel, metrics: dict, target_periods: list[str] | None = None) -> tuple[dict | None, str | None]:
     t, ent, entb = imp["template"], imp["entity"], (imp.get("entity_b") or None)
     if t == "other":
         return None, f"not testable with this evidence: {imp.get('description') or 'measurement not available'}"
@@ -90,7 +119,7 @@ def compile_implication(imp: dict, panel, metrics: dict) -> tuple[dict | None, s
         ref, src = metrics[rm]["value"], rm
     if ref is None:
         return None, "the reference value is not computable from the evidence"
-    targets = next_quarters(panel.periods[-1], 2)
+    targets = list(target_periods) if target_periods else next_quarters(panel.periods[-1], 2)
     spec = {"spec_version": TEST_SPEC_VERSION, "template": t, "entity": ent, "entity_b": entb, "comparator": comp,
             "reference_value": ref, "reference_source": src, "target_periods": targets, "as_of": panel.as_of,
             "market_id": panel.market_id, "panel_source": panel.source, "would_refute_if": imp.get("would_refute_if", ""),

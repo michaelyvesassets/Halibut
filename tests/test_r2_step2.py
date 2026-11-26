@@ -35,12 +35,16 @@ def test_v2_pipeline_offline(uk_store, tmp_path):
     assert all("numeric_claims" in o["data"] for o in st["strategic_options"])
     gap_opt = [o for o in st["strategic_options"] if o["data"]["intended_effect"]["template"] == "segment_share_gap"]
     assert gap_opt and gap_opt[0]["data"]["simulation"]["status"] == "simulated"  # pairwise targets are now simulable
-    e = evaluate_document(doc)["v2"]
-    assert e["tests"]["discriminating"] >= 2 and e["hypotheses_with_rivals"] >= 2
-    assert e["tests"]["informative_confirmations"] + e["tests"]["informative_refutations"] >= 1
+    ev = evaluate_document(doc)
+    e, c = ev["v2"], ev["common"]
+    assert e["tests"]["discriminating"] >= 2 and e["hypotheses_with_rivals"] >= 2  # compliance (declared rivals)
+    assert c["competing_pairs"] and c["tests"]["disputed"] >= 2                  # common method, same for every arm
+    assert c["tests"]["informative_confirmations"] + c["tests"]["informative_refutations"] >= 1
+    assert c["label"] == "predictive support, not causal proof"
     v1 = run(fresh(tmp_path / "v1" if (tmp_path / "v1").mkdir() is None else tmp_path, uk_store), uk_store / "m.toml", **UK)
     assert "information_gaps" not in v1["stages"] and v1["provenance"]["prompt_version"] == "loop.v1"
-    assert evaluate_document(v1)["v2"] is None
+    e1 = evaluate_document(v1)
+    assert e1["v2"] is None and e1["common"]["tests"]["registered"] == evaluate_document(v1)["tests"]["registered"]
     store.close()
 
 
@@ -128,14 +132,22 @@ def test_step2_runner_end_to_end_with_fake_transport(uk, tmp_path):
     sent = []
     r = step2.run_step2(store, tmp_path / "s.sqlite", "t", live=True, approval_id=aid, max_usd=0.10, out_dir=tmp_path / "o",
                         environ=ENV, http_client=_fake(sent), cfg_overrides={"approved": True}, runs=runs, log=lambda *_: None)
-    assert len(sent) == 1 + 3 * 3 + 2  # smoke, 3 arms x 3 roles, 2 benchmark sets
+    assert len(sent) == 1 + 3 * 3 + 2  # smoke, 3 arms x 3 roles, 2 benchmark sets (no retries: RETRIES = 0)
+    assert r["plan"]["retries"] == 0 and r["plan"]["worst_case_with_retries_usd"] == r["plan"]["worst_case_usd"]
     assert "$defs" in json.dumps(sent[0])  # the smoke test checks $defs/$ref support before anything else
     res = r["criteria_results"]
     assert set(res) == set(step2.CRITERIA) and all(res[k] for k in ("A1_smoke_with_defs_ok", "A2_all_investigations_completed",
                                                                   "A4_documents_validate", "A5_matched_evidence",
-                                                                  "A6_spend_within_cap", "D2_no_ineligible_protocol_executable"))
-    assert r["critic_benchmark"]["score"]["planted"] >= 5 and r["spend_usd"] <= 0.10
-    assert set(r["summary"]["arms"]) == set(step2.ARMS) and "contract_effect_B_minus_A" in r["summary"]["contrasts"]
+                                                                  "A6_spend_within_cap", "D1_no_ineligible_protocol_executable"))
+    assert res["P1_registered_at_run_time_with_future_window"] is None  # not evaluable without prospective investigations
+    sc = r["critic_benchmark"]["score"]
+    assert sc["planted"] >= 5 and "precision_by_dimension" in sc and "evidence_reference_accuracy" in sc
+    assert r["spend_usd"] <= 0.10
+    arms = r["summary"]["arms"]
+    assert set(arms) == set(step2.ARMS) and "combined_contract_and_evidence_presentation_B_minus_A" in r["summary"]["contrasts"]
+    assert arms["A_v1_base"]["compliance_v2"] is None and arms["C_v2_extended"]["compliance_v2"]  # compliance apart
+    assert all(set(a["per_role"]["hypothesis_generator"]) >= {"input_tokens", "output_tokens", "latency_s", "cache_hits"}
+               for a in arms.values())
     out = Path(r["output_dir"])
     assert (out / "execution_records.json").exists() and len(json.loads((out / "manifest.json").read_text())["investigations"]) == 3
     assert ap.get(store, aid)["used_by"] == r["experiment_id"]
@@ -145,15 +157,65 @@ def test_step2_runner_end_to_end_with_fake_transport(uk, tmp_path):
     store.close()
 
 
+def test_2b_is_separately_authorized_and_prospective_needs_fresh_data(uk, tmp_path):
+    store = fresh(tmp_path, uk)
+    aid = ap.request(store, "paid_run", "r2_step2:2b", "founder", max_usd=0.10)
+    ap.decide(store, aid, "granted", "founder", evidence={"attestation": ATTEST})
+    sent = []
+    with pytest.raises(ap.AuthorizationError, match="separately authorized"):
+        step2.run_step2(store, tmp_path / "s.sqlite", "2b", live=True, approval_id=aid, max_usd=0.10, out_dir=tmp_path / "o",
+                        environ=ENV, http_client=_fake(sent), cfg_overrides={"approved": True}, log=lambda *_: None)
+    m = str(uk / "m.toml")
+    runs = {"p": {"investigations": [(m, None, "C_v2_extended", None, "prospective")], "benchmark": None}}
+    assert step2.publication_check(store)["fresh"]  # the fixture just fetched its data
+    store.conn.execute("UPDATE snapshots SET retrieved_at='2026-01-01T00:00:00Z' WHERE dataset_id LIKE 'dft_veh0160%'")
+    store.conn.commit()
+    with pytest.raises(ap.AuthorizationError, match="refresh the data"):  # stale publication data: refused
+        step2.run_step2(store, tmp_path / "s.sqlite", "p", live=True, approval_id=aid, max_usd=0.10, out_dir=tmp_path / "o",
+                        environ=ENV, http_client=_fake(sent), cfg_overrides={"approved": True}, runs=runs, log=lambda *_: None)
+    assert sent == [] and ap.get(store, aid)["used_by"] is None
+    store.close()
+
+
+def test_prospective_registration_is_never_backdated_and_has_a_future_window(uk_store, tmp_path):
+    from halibut.data.store import utc_now
+    with pytest.raises(ValueError, match="registers on its run date"):
+        run(fresh(tmp_path, uk_store), uk_store / "m.toml", contract="loop.v2", prospective=True, as_of="2025-05-23")
+    doc = run(fresh(tmp_path / "x" if (tmp_path / "x").mkdir() is None else tmp_path, uk_store), uk_store / "m.toml",
+              contract="loop.v2", prospective=True)
+    today = utc_now()[:10]
+    assert doc["objective"]["as_of"].startswith(today) and doc["objective"]["evaluate_as_of"] is None
+    fut = [t for t in doc["stages"]["tests"] if t["data"].get("horizon") == "future_window"]
+    nom = [t for t in doc["stages"]["tests"] if t["data"].get("horizon") == "nominal"]
+    assert fut and nom and all(t["data"]["registered_at"][:10] == today for t in fut + nom)
+    assert all(set(t["data"]["window_classes"].values()) == {"future"} for t in fut)
+    assert all(t["status"] == "registered" and not [r for r in doc["stages"]["test_results"]
+                                                     if any(ln["to"] == t["id"] for ln in r["links"])] for t in fut)
+    assert not [t for t in fut if "already_published" in t["data"]["window_classes"].values()]
+
+
+def test_assumptions_cannot_disguise_facts():
+    opt = {"title": "Lift BYD", "risks": ["BYD's share is 1.5% already"], "assumptions": [], "cost": {"basis": "unknown"},
+           "intended_effect": {"template": "share", "entity": "byd", "direction": "increase", "magnitude_low_pp": 0.5,
+                               "magnitude_high_pp": 1.5, "basis": "ASSUMED lift of 0.5 to 1.5 pp; BYD holds 1.5 today"},
+           "numeric_claims": [{"text": t, "value": float(t), "unit": "pp", "kind": "assumed", "decimals": 1, "operation": "none",
+                               "metric_ids": []} for t in ("0.5", "1.5")]}
+    p = v2.disguised_assumptions(opt)
+    assert any("risks" in x for x in p) and any("not marked as assumed" in x for x in p)
+    ok = {**opt, "risks": ["slow effect"], "intended_effect": {**opt["intended_effect"], "basis": "ASSUMED lift of 0.5 to 1.5 pp"}}
+    assert v2.disguised_assumptions(ok) == []
+
+
 def test_preregistered_criteria_are_frozen():
     assert step2.CRITERIA_HASH == FROZEN_STEP2_CRITERIA_HASH
     assert set(step2.THRESHOLDS) <= {k.split("_")[0] for k in step2.CRITERIA}
     assert all(arm in step2.ARMS for r in step2.RUNS.values() for _, _, arm, _, _ in r["investigations"])
     prospective = [x for r in step2.RUNS.values() for x in r["investigations"] if x[4] == "prospective"]
-    assert prospective and all(x[3] is None and x[1] >= "2026-11-23" for x in prospective)
+    assert prospective and all(x[1] is None and x[3] is None for x in prospective)  # origin = the real registration date
+    assert step2.RETRIES == 0 and set(step2.PROSPECTIVE_PROTOCOL) >= {"registration", "resolution", "no_tuning"}
 
 
-FROZEN_STEP2_CRITERIA_HASH = "22bae60509f6a2f9298fa0e122c36b6dcb093ebe27a5b85e8c9f99d18c204ed2"  # pre-registered 2026-11-26; must not change after any Step 2 call
+FROZEN_STEP2_CRITERIA_HASH = "223362694f7d254f225808caecee081eeccb0444be4d582035eb667b43e3d91d"  # pre-registered 2026-11-26; must not change after any Step 2 call
 
 
 @pytest.mark.parametrize("seed", range(8))
