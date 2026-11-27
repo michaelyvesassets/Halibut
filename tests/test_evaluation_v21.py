@@ -197,3 +197,75 @@ def test_manual_overlay_only_adds_labelled_contradictions():
     from pathlib import Path
     mr = json.loads((Path(__file__).resolve().parents[1] / "registry" / "evaluations" / "manual_reviews.json").read_text())
     assert all(r["status"] == "contradicted" and r["source"] and r["reason"] for r in mr["reviews"])
+
+
+# ---------------------------------------------------------------------------------------------- critic benchmark v3
+def _bench_v3(uk_store, tmp_path):
+    import dataclasses
+    from halibut.intel.market import load_market
+    from halibut.world.context import build_slice
+    from halibut.world.panel import build_panel
+    st = fresh(tmp_path, uk_store)
+    m = dataclasses.replace(load_market(uk_store / "m.toml"), as_of=UK["as_of"])
+    p = build_panel(st, m, UK["as_of"])
+    s, met = build_slice(m, p, {"status": "covered", "contract": {}, "gaps": []}, [], extended=True)
+    return p, met, st
+
+
+def test_v3_canonical_items_are_clean_and_each_mutation_is_isolated():
+    p = synthetic_panel()
+    met = p.metrics(extended=True)
+    for e in ("a", "b"):
+        assert cb.check_item(cb.canonical(e, met), met) == []
+    e = "a"
+    c = cb.canonical(e, met)
+    for kind in ("wrong_number", "misencoded_test", "unsupported_detail", "causal_overclaim"):
+        x, _ = cb.mutate(kind, c, e, met, other="b")
+        assert cb.check_item(x, met) == cb.EXPECTED_ISSUES[kind], kind
+        diff = [k for k in ("statement", "assumptions", "observable_implications", "mechanism") if x[k] != c[k]]
+        assert len(diff) == 1, (kind, diff)  # exactly one changed component
+
+
+def test_v3_boundary_checks_catch_impossible_and_contradicted_items():
+    met = {"metric:segment_share:L4:t": {"value": 0.10}, "metric:segment_share:P4:t": {"value": 0.13},
+           "metric:segment_mix:L4:t": {"value": 1.0}, "metric:non_segment_share:L4:t": {"value": 0.0}}
+    c = cb.canonical("t", met)
+    assert cb.check_item(c, met) == []
+    imp, ev = cb.mutate("impossible_prediction", c, "t", met)
+    assert cb.check_item(imp, met) == ["impossible_prediction"] and ev == ["metric:segment_mix:L4:t"]
+    con, _ = cb.mutate("contradicted_assumption", c, "t", met)
+    assert cb.check_item(con, met) == ["contradicted_assumption"]
+    bad = {**c, "mechanism": {**c["mechanism"], "direction": "increase"}}  # mechanism and test disagree
+    assert "direction_inconsistent" in cb.check_item(bad, met)
+
+
+def test_v3_build_scoring_and_separation(uk_store, tmp_path):
+    p, met, st = _bench_v3(uk_store, tmp_path)
+    try:
+        b = cb.build_v3(p, met)
+    except ValueError:
+        pytest.skip("fixture panel lacks two mixed brands (the real UK panel is used for the audit package)")
+    payload = json.dumps(b["sets"])
+    assert "planted" not in payload and "clean" not in payload  # keys stay apart from critic inputs
+    for s in b["sets"]:
+        ents = [b["key"][f"{s['set_id']}:{h['ref']}"]["entity"] for h in s["hypotheses"]]
+        assert len(ents) == len(set(ents))  # no variant beside its own canonical
+    st.close()
+
+
+def test_v3_scorer_separates_dimensions_and_does_not_penalise_legitimate_extra_criticism():
+    key = {"S1:H1": {"kind": "wrong_number", "accept": ["numerical_accuracy", "factual_contradiction"],
+                     "evidence": ["metric:x"], "min_severity": "medium", "ideal_severity": "high"},
+           "S1:H2": {"kind": "clean", "accept": [], "evidence": [], "min_severity": None, "ideal_severity": None}}
+    b = {"key": key, "audit": {"status": "proposed"}}
+    good = {"S1": [{"hypothesis_ref": "H1", "dimension": "factual_contradiction", "severity": "high", "evidence": ["metric:x"]},
+                   {"hypothesis_ref": "H1", "dimension": "alternative_explanation", "severity": "medium", "evidence": []},
+                   {"hypothesis_ref": "H2", "dimension": "test_validity", "severity": "low", "evidence": []}]}
+    s = cb.score_v3(good, b)
+    assert s["detection_rate"] == s["classification_rate"] == s["severity_accuracy"] == s["evidence_reference_accuracy"] == 1
+    assert s["false_positives_on_clean"] == 0 and s["methodological_comments_on_clean"] == 1 and s["label"].startswith("UNAUDITED")
+    weak = {"S1": [{"hypothesis_ref": "H1", "dimension": "numerical_accuracy", "severity": "low", "evidence": []},
+                   {"hypothesis_ref": "H2", "dimension": "numerical_accuracy", "severity": "medium", "evidence": []}]}
+    w = cb.score_v3(weak, b)
+    assert w["detection_rate"] == 1 and w["classification_rate"] == 1 and w["severity_accuracy"] == 0
+    assert w["evidence_reference_accuracy"] == 0 and w["false_positives_on_clean"] == 1

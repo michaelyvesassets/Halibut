@@ -1,3 +1,5 @@
+> **REJECTED in founder review on 2026-11-27 and SUPERSEDED by benchmark v3** (`critic_benchmark_v3_uk_bev_2026-02-23.md`): items carried additional unintended defects, and some clean controls were not sound. Kept for the record only; do not audit.
+
 # Critic benchmark v2: human audit package (UK BEV, evidence as of 2026-02-23)
 
 Benchmark `critic_benchmark.v2`, key sha256 `c32e45532949af9b…`, payload sha256 `4ebd619493b7e358…`. **Audit status: PROPOSED.**

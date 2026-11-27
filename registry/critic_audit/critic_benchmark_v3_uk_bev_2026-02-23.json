@@ -1,0 +1,638 @@
+{
+ "audit": {
+  "auditor": null,
+  "checklist": [
+   "the item carries exactly the stated defect and no other",
+   "every number in a clean item equals the evidence",
+   "every mechanism refers only to quantities in the evidence (no external facts)",
+   "the expected dimension and evidence ids are the only correct ones",
+   "each defective item differs from its canonical by exactly one change",
+   "absolute volume, segment share, total share and segment mix are not confused (except the planted confusion)"
+  ],
+  "rule": "an independent person, blind to critic outputs, confirms every item before scores are 'audited'",
+  "status": "proposed"
+ },
+ "key": {
+  "S1:H1": {
+   "accept": [],
+   "deterministic_issues": [],
+   "entity": "tesla",
+   "evidence": [],
+   "ideal_severity": null,
+   "kind": "clean",
+   "min_severity": null
+  },
+  "S1:H2": {
+   "accept": [
+    "unsupported_detail",
+    "causal_identification"
+   ],
+   "deterministic_issues": [
+    "causal_claim",
+    "external_fact"
+   ],
+   "entity": "volkswagen",
+   "evidence": [],
+   "ideal_severity": "medium",
+   "kind": "unsupported_detail",
+   "min_severity": "medium"
+  },
+  "S1:H3": {
+   "accept": [
+    "numerical_accuracy",
+    "factual_contradiction"
+   ],
+   "deterministic_issues": [
+    "number_mismatch"
+   ],
+   "entity": "byd",
+   "evidence": [
+    "metric:segment_share:L4:byd"
+   ],
+   "ideal_severity": "high",
+   "kind": "wrong_number",
+   "min_severity": "medium"
+  },
+  "S2:H1": {
+   "accept": [
+    "factual_contradiction"
+   ],
+   "deterministic_issues": [
+    "contradicted_assumption"
+   ],
+   "entity": "tesla",
+   "evidence": [
+    "metric:non_segment_share:L4:tesla",
+    "metric:non_segment_share:P4:tesla",
+    "metric:segment_mix:L4:tesla",
+    "metric:segment_mix:P4:tesla"
+   ],
+   "ideal_severity": "high",
+   "kind": "contradicted_assumption",
+   "min_severity": "medium"
+  },
+  "S2:H2": {
+   "accept": [
+    "numerical_accuracy",
+    "factual_contradiction"
+   ],
+   "deterministic_issues": [
+    "quantity_confusion"
+   ],
+   "entity": "volkswagen",
+   "evidence": [
+    "metric:segment_mix:L4:volkswagen",
+    "metric:segment_share:L4:volkswagen"
+   ],
+   "ideal_severity": "high",
+   "kind": "quantity_confusion",
+   "min_severity": "medium"
+  },
+  "S2:H3": {
+   "accept": [],
+   "deterministic_issues": [],
+   "entity": "byd",
+   "evidence": [],
+   "ideal_severity": null,
+   "kind": "clean",
+   "min_severity": null
+  },
+  "S3:H1": {
+   "accept": [],
+   "deterministic_issues": [],
+   "entity": "volkswagen",
+   "evidence": [],
+   "ideal_severity": null,
+   "kind": "clean",
+   "min_severity": null
+  },
+  "S3:H2": {
+   "accept": [
+    "test_validity"
+   ],
+   "deterministic_issues": [
+    "misencoded_test"
+   ],
+   "entity": "byd",
+   "evidence": [],
+   "ideal_severity": "high",
+   "kind": "misencoded_test",
+   "min_severity": "medium"
+  },
+  "S3:H3": {
+   "accept": [
+    "test_validity",
+    "factual_contradiction",
+    "numerical_accuracy"
+   ],
+   "deterministic_issues": [
+    "impossible_prediction"
+   ],
+   "entity": "tesla",
+   "evidence": [
+    "metric:segment_mix:L4:tesla"
+   ],
+   "ideal_severity": "high",
+   "kind": "impossible_prediction",
+   "min_severity": "medium"
+  },
+  "S4:H1": {
+   "accept": [],
+   "deterministic_issues": [],
+   "entity": "tesla",
+   "evidence": [],
+   "ideal_severity": null,
+   "kind": "clean",
+   "min_severity": null
+  },
+  "S4:H2": {
+   "accept": [],
+   "deterministic_issues": [],
+   "entity": "byd",
+   "evidence": [],
+   "ideal_severity": null,
+   "kind": "clean",
+   "min_severity": null
+  },
+  "S4:H3": {
+   "accept": [
+    "causal_identification",
+    "test_validity",
+    "unsupported_detail"
+   ],
+   "deterministic_issues": [
+    "causal_claim"
+   ],
+   "entity": "volkswagen",
+   "evidence": [],
+   "ideal_severity": "medium",
+   "kind": "causal_overclaim",
+   "min_severity": "medium"
+  }
+ },
+ "key_sha256": "7e94d61d2b84c383de1e3807476ac5751728760d5195cd8bc8967034aaf0c4fe",
+ "payload_sha256": "99c3eda0ab0f5685a871ac00d1a1e061d298c8ef9d099d02b07837efe1c509e0",
+ "seed": 0,
+ "sets": [
+  {
+   "hypotheses": [
+    {
+     "assumptions": [
+      {
+       "kind": "market_structure",
+       "statement": "the recent direction persists for two quarters"
+      }
+     ],
+     "explains": "metric:segment_share:L4:tesla",
+     "mechanism": {
+      "cause": "short-run persistence of the recent within-segment movement",
+      "direction": "decrease",
+      "effect_template": "segment_share",
+      "pathway": "a brand's within-segment share tends to keep its recent direction for a short time"
+     },
+     "novelty": "original",
+     "observable_implications": [
+      {
+       "comparator": "decrease_vs_L4",
+       "description": "segment_share tesla decrease_vs_L4",
+       "entity": "tesla",
+       "entity_b": "",
+       "id": "I1",
+       "reference_metric": "",
+       "template": "segment_share",
+       "would_refute_if": "the opposite movement"
+      }
+     ],
+     "ref": "H1",
+     "rivals": [],
+     "statement": "tesla's segment share (its share of the segment's registrations) moved from 13.32% to 10.66%. This hypothesis expects the same direction over the next two quarters; it makes no claim about why.",
+     "supporting_evidence": [
+      "metric:segment_share:L4:tesla",
+      "metric:segment_share:P4:tesla"
+     ]
+    },
+    {
+     "assumptions": [
+      {
+       "kind": "market_structure",
+       "statement": "the recent direction persists for two quarters"
+      }
+     ],
+     "explains": "metric:segment_share:L4:volkswagen",
+     "mechanism": {
+      "cause": "short-run persistence of the recent within-segment movement",
+      "direction": "increase",
+      "effect_template": "segment_share",
+      "pathway": "a brand's within-segment share tends to keep its recent direction for a short time"
+     },
+     "novelty": "original",
+     "observable_implications": [
+      {
+       "comparator": "increase_vs_L4",
+       "description": "segment_share volkswagen increase_vs_L4",
+       "entity": "volkswagen",
+       "entity_b": "",
+       "id": "I1",
+       "reference_metric": "",
+       "template": "segment_share",
+       "would_refute_if": "the opposite movement"
+      }
+     ],
+     "ref": "H2",
+     "rivals": [],
+     "statement": "volkswagen's segment share (its share of the segment's registrations) moved from 5.51% to 7.70%. This hypothesis expects the same direction over the next two quarters; the movement is driven by recent model launches.",
+     "supporting_evidence": [
+      "metric:segment_share:L4:volkswagen",
+      "metric:segment_share:P4:volkswagen"
+     ]
+    },
+    {
+     "assumptions": [
+      {
+       "kind": "market_structure",
+       "statement": "the recent direction persists for two quarters"
+      }
+     ],
+     "explains": "metric:segment_share:L4:byd",
+     "mechanism": {
+      "cause": "short-run persistence of the recent within-segment movement",
+      "direction": "increase",
+      "effect_template": "segment_share",
+      "pathway": "a brand's within-segment share tends to keep its recent direction for a short time"
+     },
+     "novelty": "original",
+     "observable_implications": [
+      {
+       "comparator": "increase_vs_L4",
+       "description": "segment_share byd increase_vs_L4",
+       "entity": "byd",
+       "entity_b": "",
+       "id": "I1",
+       "reference_metric": "",
+       "template": "segment_share",
+       "would_refute_if": "the opposite movement"
+      }
+     ],
+     "ref": "H3",
+     "rivals": [],
+     "statement": "byd's segment share (its share of the segment's registrations) moved from 1.71% to 7.13%. This hypothesis expects the same direction over the next two quarters; it makes no claim about why.",
+     "supporting_evidence": [
+      "metric:segment_share:L4:byd",
+      "metric:segment_share:P4:byd"
+     ]
+    }
+   ],
+   "set_id": "S1"
+  },
+  {
+   "hypotheses": [
+    {
+     "assumptions": [
+      {
+       "kind": "market_structure",
+       "statement": "the recent direction persists for two quarters"
+      },
+      {
+       "kind": "market_structure",
+       "statement": "tesla also sells substantial volumes outside the segment"
+      }
+     ],
+     "explains": "metric:segment_share:L4:tesla",
+     "mechanism": {
+      "cause": "short-run persistence of the recent within-segment movement",
+      "direction": "decrease",
+      "effect_template": "segment_share",
+      "pathway": "a brand's within-segment share tends to keep its recent direction for a short time"
+     },
+     "novelty": "original",
+     "observable_implications": [
+      {
+       "comparator": "decrease_vs_L4",
+       "description": "segment_share tesla decrease_vs_L4",
+       "entity": "tesla",
+       "entity_b": "",
+       "id": "I1",
+       "reference_metric": "",
+       "template": "segment_share",
+       "would_refute_if": "the opposite movement"
+      }
+     ],
+     "ref": "H1",
+     "rivals": [],
+     "statement": "tesla's segment share (its share of the segment's registrations) moved from 13.32% to 10.66%. This hypothesis expects the same direction over the next two quarters; it makes no claim about why.",
+     "supporting_evidence": [
+      "metric:segment_share:L4:tesla",
+      "metric:segment_share:P4:tesla"
+     ]
+    },
+    {
+     "assumptions": [
+      {
+       "kind": "market_structure",
+       "statement": "the recent direction persists for two quarters"
+      }
+     ],
+     "explains": "metric:segment_share:L4:volkswagen",
+     "mechanism": {
+      "cause": "short-run persistence of the recent within-segment movement",
+      "direction": "increase",
+      "effect_template": "segment_share",
+      "pathway": "a brand's within-segment share tends to keep its recent direction for a short time"
+     },
+     "novelty": "original",
+     "observable_implications": [
+      {
+       "comparator": "increase_vs_L4",
+       "description": "segment_share volkswagen increase_vs_L4",
+       "entity": "volkswagen",
+       "entity_b": "",
+       "id": "I1",
+       "reference_metric": "",
+       "template": "segment_share",
+       "would_refute_if": "the opposite movement"
+      }
+     ],
+     "ref": "H2",
+     "rivals": [],
+     "statement": "volkswagen's segment share (its share of the segment's registrations) moved from 5.51% to 19.10%. This hypothesis expects the same direction over the next two quarters; it makes no claim about why.",
+     "supporting_evidence": [
+      "metric:segment_share:L4:volkswagen",
+      "metric:segment_share:P4:volkswagen"
+     ]
+    },
+    {
+     "assumptions": [
+      {
+       "kind": "market_structure",
+       "statement": "the recent direction persists for two quarters"
+      }
+     ],
+     "explains": "metric:segment_share:L4:byd",
+     "mechanism": {
+      "cause": "short-run persistence of the recent within-segment movement",
+      "direction": "increase",
+      "effect_template": "segment_share",
+      "pathway": "a brand's within-segment share tends to keep its recent direction for a short time"
+     },
+     "novelty": "original",
+     "observable_implications": [
+      {
+       "comparator": "increase_vs_L4",
+       "description": "segment_share byd increase_vs_L4",
+       "entity": "byd",
+       "entity_b": "",
+       "id": "I1",
+       "reference_metric": "",
+       "template": "segment_share",
+       "would_refute_if": "the opposite movement"
+      }
+     ],
+     "ref": "H3",
+     "rivals": [],
+     "statement": "byd's segment share (its share of the segment's registrations) moved from 1.71% to 4.75%. This hypothesis expects the same direction over the next two quarters; it makes no claim about why.",
+     "supporting_evidence": [
+      "metric:segment_share:L4:byd",
+      "metric:segment_share:P4:byd"
+     ]
+    }
+   ],
+   "set_id": "S2"
+  },
+  {
+   "hypotheses": [
+    {
+     "assumptions": [
+      {
+       "kind": "market_structure",
+       "statement": "the recent direction persists for two quarters"
+      }
+     ],
+     "explains": "metric:segment_share:L4:volkswagen",
+     "mechanism": {
+      "cause": "short-run persistence of the recent within-segment movement",
+      "direction": "increase",
+      "effect_template": "segment_share",
+      "pathway": "a brand's within-segment share tends to keep its recent direction for a short time"
+     },
+     "novelty": "original",
+     "observable_implications": [
+      {
+       "comparator": "increase_vs_L4",
+       "description": "segment_share volkswagen increase_vs_L4",
+       "entity": "volkswagen",
+       "entity_b": "",
+       "id": "I1",
+       "reference_metric": "",
+       "template": "segment_share",
+       "would_refute_if": "the opposite movement"
+      }
+     ],
+     "ref": "H1",
+     "rivals": [],
+     "statement": "volkswagen's segment share (its share of the segment's registrations) moved from 5.51% to 7.70%. This hypothesis expects the same direction over the next two quarters; it makes no claim about why.",
+     "supporting_evidence": [
+      "metric:segment_share:L4:volkswagen",
+      "metric:segment_share:P4:volkswagen"
+     ]
+    },
+    {
+     "assumptions": [
+      {
+       "kind": "market_structure",
+       "statement": "the recent direction persists for two quarters"
+      }
+     ],
+     "explains": "metric:segment_share:L4:byd",
+     "mechanism": {
+      "cause": "short-run persistence of the recent within-segment movement",
+      "direction": "increase",
+      "effect_template": "segment_share",
+      "pathway": "a brand's within-segment share tends to keep its recent direction for a short time"
+     },
+     "novelty": "original",
+     "observable_implications": [
+      {
+       "comparator": "above_reference",
+       "description": "segment_share_gap byd-volkswagen above_reference",
+       "entity": "byd",
+       "entity_b": "volkswagen",
+       "id": "I1",
+       "reference_metric": "metric:segment_share:L4:volkswagen",
+       "template": "segment_share_gap",
+       "would_refute_if": "the opposite movement"
+      }
+     ],
+     "ref": "H2",
+     "rivals": [],
+     "statement": "byd's segment share (its share of the segment's registrations) moved from 1.71% to 4.75%. This hypothesis expects the same direction over the next two quarters; it makes no claim about why.",
+     "supporting_evidence": [
+      "metric:segment_share:L4:byd",
+      "metric:segment_share:P4:byd"
+     ]
+    },
+    {
+     "assumptions": [
+      {
+       "kind": "market_structure",
+       "statement": "the recent direction persists for two quarters"
+      }
+     ],
+     "explains": "metric:segment_share:L4:tesla",
+     "mechanism": {
+      "cause": "short-run persistence of the recent within-segment movement",
+      "direction": "decrease",
+      "effect_template": "segment_share",
+      "pathway": "a brand's within-segment share tends to keep its recent direction for a short time"
+     },
+     "novelty": "original",
+     "observable_implications": [
+      {
+       "comparator": "decrease_vs_L4",
+       "description": "segment_share tesla decrease_vs_L4",
+       "entity": "tesla",
+       "entity_b": "",
+       "id": "I1",
+       "reference_metric": "",
+       "template": "segment_share",
+       "would_refute_if": "the opposite movement"
+      },
+      {
+       "comparator": "increase_vs_L4",
+       "description": "segment_mix tesla increase_vs_L4",
+       "entity": "tesla",
+       "entity_b": "",
+       "id": "I2",
+       "reference_metric": "",
+       "template": "segment_mix",
+       "would_refute_if": "the opposite movement"
+      }
+     ],
+     "ref": "H3",
+     "rivals": [],
+     "statement": "tesla's segment share (its share of the segment's registrations) moved from 13.32% to 10.66%. This hypothesis expects the same direction over the next two quarters; it makes no claim about why.",
+     "supporting_evidence": [
+      "metric:segment_share:L4:tesla",
+      "metric:segment_share:P4:tesla"
+     ]
+    }
+   ],
+   "set_id": "S3"
+  },
+  {
+   "hypotheses": [
+    {
+     "assumptions": [
+      {
+       "kind": "market_structure",
+       "statement": "the recent direction persists for two quarters"
+      }
+     ],
+     "explains": "metric:segment_share:L4:tesla",
+     "mechanism": {
+      "cause": "short-run persistence of the recent within-segment movement",
+      "direction": "decrease",
+      "effect_template": "segment_share",
+      "pathway": "a brand's within-segment share tends to keep its recent direction for a short time"
+     },
+     "novelty": "original",
+     "observable_implications": [
+      {
+       "comparator": "decrease_vs_L4",
+       "description": "segment_share tesla decrease_vs_L4",
+       "entity": "tesla",
+       "entity_b": "",
+       "id": "I1",
+       "reference_metric": "",
+       "template": "segment_share",
+       "would_refute_if": "the opposite movement"
+      }
+     ],
+     "ref": "H1",
+     "rivals": [],
+     "statement": "tesla's segment share (its share of the segment's registrations) moved from 13.32% to 10.66%. This hypothesis expects the same direction over the next two quarters; it makes no claim about why.",
+     "supporting_evidence": [
+      "metric:segment_share:L4:tesla",
+      "metric:segment_share:P4:tesla"
+     ]
+    },
+    {
+     "assumptions": [
+      {
+       "kind": "market_structure",
+       "statement": "the recent direction persists for two quarters"
+      }
+     ],
+     "explains": "metric:segment_share:L4:byd",
+     "mechanism": {
+      "cause": "short-run persistence of the recent within-segment movement",
+      "direction": "increase",
+      "effect_template": "segment_share",
+      "pathway": "a brand's within-segment share tends to keep its recent direction for a short time"
+     },
+     "novelty": "original",
+     "observable_implications": [
+      {
+       "comparator": "increase_vs_L4",
+       "description": "segment_share byd increase_vs_L4",
+       "entity": "byd",
+       "entity_b": "",
+       "id": "I1",
+       "reference_metric": "",
+       "template": "segment_share",
+       "would_refute_if": "the opposite movement"
+      }
+     ],
+     "ref": "H2",
+     "rivals": [],
+     "statement": "byd's segment share (its share of the segment's registrations) moved from 1.71% to 4.75%. This hypothesis expects the same direction over the next two quarters; it makes no claim about why.",
+     "supporting_evidence": [
+      "metric:segment_share:L4:byd",
+      "metric:segment_share:P4:byd"
+     ]
+    },
+    {
+     "assumptions": [
+      {
+       "kind": "market_structure",
+       "statement": "the recent direction persists for two quarters"
+      }
+     ],
+     "explains": "metric:segment_share:L4:volkswagen",
+     "mechanism": {
+      "cause": "short-run persistence of the recent within-segment movement",
+      "direction": "increase",
+      "effect_template": "segment_share",
+      "pathway": "a brand's within-segment share tends to keep its recent direction for a short time"
+     },
+     "novelty": "original",
+     "observable_implications": [
+      {
+       "comparator": "increase_vs_L4",
+       "description": "segment_share volkswagen increase_vs_L4",
+       "entity": "volkswagen",
+       "entity_b": "",
+       "id": "I1",
+       "reference_metric": "",
+       "template": "segment_share",
+       "would_refute_if": "the opposite movement"
+      }
+     ],
+     "ref": "H3",
+     "rivals": [],
+     "statement": "volkswagen's segment share (its share of the segment's registrations) moved from 5.51% to 7.70%. This hypothesis expects the same direction over the next two quarters; a continuation would demonstrate that the brand's appeal to segment buyers is the cause.",
+     "supporting_evidence": [
+      "metric:segment_share:L4:volkswagen",
+      "metric:segment_share:P4:volkswagen"
+     ]
+    }
+   ],
+   "set_id": "S4"
+  }
+ ],
+ "severity_rubric": {
+  "high": "the claim is contradicted by the evidence, mathematically impossible, rests on a wrong central number, or its test cannot measure what it claims",
+  "low": "a weakness worth noting that does not undermine the claim (e.g. limited power, a plausible alternative)",
+  "medium": "the claim relies on facts or causal inferences the evidence does not establish, or confuses two quantities in a way that does not by itself contradict the evidence"
+ },
+ "version": "critic_benchmark.v3"
+}

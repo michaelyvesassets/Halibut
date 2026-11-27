@@ -185,9 +185,13 @@ def _inv(args) -> int:
             m = dataclasses.replace(load_market(args.market), as_of=args.as_of)
             pnl = build_panel(store, m, args.as_of)
             _, met = build_slice(m, pnl, {"status": "covered", "contract": {}, "gaps": []}, [], extended=True)
-            b = cb.build_v2(pnl, met)
+            b = cb.build_v3(pnl, met)
             Path(args.out).write_text(json.dumps(b, indent=1, sort_keys=True) + "\n")
-            print(f"{args.out}: {len(b['key'])} items, audit status {b['audit']['status']} (needs independent human audit)")
+            md = Path(args.out).with_suffix(".md")
+            md.write_text(cb.audit_markdown(b, met, f"Critic benchmark v3: human audit package ({m.id}, evidence as of "
+                                                   f"{args.as_of})"))
+            print(f"{args.out} and {md}: {len(b['key'])} items, audit status {b['audit']['status']} "
+                  "(needs independent human audit)")
             return 0
         if args.inv_command == "step2":
             from .step2 import CRITERIA_HASH, run_step2  # noqa: PLC0415

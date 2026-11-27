@@ -29,9 +29,11 @@ Scores (no keywords; excessive criticism is penalised):
 
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
 import random
+import re
 
 VERSION = "critic_benchmark.v1"
 ACCEPT = {"contradicted_assumption": ("factual_contradiction",), "wrong_number": ("numerical_accuracy", "factual_contradiction"),
@@ -335,3 +337,269 @@ def score_v2(critiques_by_set: dict, bench: dict, schema_failures: int = 0) -> d
             "false_positives_on_clean": fp, "false_positive_rate_per_clean": fp / clean if clean else None,
             "misdirected_high_severity": misdirected, "generic_caveats": caveats, "schema_failures": schema_failures,
             "by_type": by_type}
+
+
+# =============================================================================================== v3 (canonical first)
+VERSION_V3 = "critic_benchmark.v3"
+SEVERITY_RUBRIC = {
+    "high": "the claim is contradicted by the evidence, mathematically impossible, rests on a wrong central number, or its "
+            "test cannot measure what it claims",
+    "medium": "the claim relies on facts or causal inferences the evidence does not establish, or confuses two quantities "
+              "in a way that does not by itself contradict the evidence",
+    "low": "a weakness worth noting that does not undermine the claim (e.g. limited power, a plausible alternative)"}
+# kind -> accepted dimensions (any is a correct classification), minimum acceptable severity, ideal severity
+KINDS_V3 = {
+    "wrong_number": (("numerical_accuracy", "factual_contradiction"), "medium", "high"),
+    "quantity_confusion": (("numerical_accuracy", "factual_contradiction"), "medium", "high"),
+    "contradicted_assumption": (("factual_contradiction",), "medium", "high"),
+    "impossible_prediction": (("test_validity", "factual_contradiction", "numerical_accuracy"), "medium", "high"),
+    "misencoded_test": (("test_validity",), "medium", "high"),
+    "unsupported_detail": (("unsupported_detail", "causal_identification"), "medium", "medium"),
+    "causal_overclaim": (("causal_identification", "test_validity", "unsupported_detail"), "medium", "medium"),
+}
+CHECKABLE_FACTS = ("factual_contradiction", "numerical_accuracy")  # claims that are false by construction on a clean item
+EXTERNAL_FACT_WORDS = ("launch", "price", "dealer", "fleet", "incentive", "advert", "loyal")
+CAUSAL_WORDS = ("cause", "causes", "caused", "driven by", "because of", "demonstrate", "proves", "due to")
+
+
+def _num(s):
+    return [float(x) for x in re.findall(r"(?<![\w.])(\d+(?:\.\d+)?)%", s)]
+
+
+def check_item(h: dict, metrics: dict) -> list[str]:
+    """Deterministic boundary and consistency checks of ONE hypothesis against the evidence. A clean item returns []."""
+    issues = []
+    text = " ".join([h["statement"], h["mechanism"]["cause"], h["mechanism"]["pathway"]] + [a["statement"] for a in h["assumptions"]])
+    low = text.lower()
+    tmpl_words = {"segment share": "segment_share", "segment mix": "segment_mix", "total share": "share"}
+    for sent in re.split(r"(?<=\.)\s+", h["statement"].lower()):  # every % in a sentence naming a quantity is that quantity
+        word = next((w for w in tmpl_words if w in sent), None)
+        if word is None:
+            continue
+        tmpl = tmpl_words[word]
+        mine = [100 * x["value"] for k, x in metrics.items() if k.split(":")[1] == tmpl and k.split(":")[-1] in sent]
+        for v in _num(sent):
+            if not any(abs(v - y) < 0.006 for y in mine):
+                others = [k for k, x in metrics.items() if abs(100 * x["value"] - v) < 0.006 and k.split(":")[1] != tmpl
+                          and k.split(":")[-1] in sent]
+                issues.append("quantity_confusion" if others else "number_mismatch")
+    m = h["mechanism"]
+    for i in h["observable_implications"]:
+        d = DIRECTION_OF.get(i["comparator"])
+        if i["template"] == m["effect_template"] and i["entity"] == h["observable_implications"][0]["entity"] and d and d != m["direction"]:
+            issues.append("direction_inconsistent")
+        if i["template"] in ("segment_mix", "segment_share", "share") and i["comparator"] in ("increase_vs_L4", "decrease_vs_L4"):
+            v = metrics.get(f"metric:{i['template']}:L4:{i['entity']}")
+            if v and ((v["value"] >= 0.9999 and d == "increase") or (v["value"] <= 1e-6 and d == "decrease")):
+                issues.append("impossible_prediction")
+        if i["template"] == "segment_share_gap" and i["comparator"] in ("above_reference", "below_reference"):
+            issues.append("misencoded_test")
+    for a in h["assumptions"]:
+        if "outside the segment" in a["statement"].lower():
+            e = h["observable_implications"][0]["entity"]
+            mix = metrics.get(f"metric:segment_mix:L4:{e}")
+            if mix and mix["value"] >= 0.99:
+                issues.append("contradicted_assumption")
+    if any(w in low for w in EXTERNAL_FACT_WORDS):
+        issues.append("external_fact")
+    if any(w in low for w in CAUSAL_WORDS):
+        issues.append("causal_claim")
+    return sorted(set(issues))
+
+
+DIRECTION_OF = {"increase_vs_L4": "increase", "above_reference": "increase", "decrease_vs_L4": "decrease",
+                "below_reference": "decrease"}
+EXPECTED_ISSUES = {"wrong_number": ["number_mismatch"], "quantity_confusion": ["quantity_confusion"],
+                   "contradicted_assumption": ["contradicted_assumption"], "impossible_prediction": ["impossible_prediction"],
+                   "misencoded_test": ["misencoded_test"], "unsupported_detail": ["causal_claim", "external_fact"],
+                   "causal_overclaim": ["causal_claim"]}
+
+
+def canonical(e: str, metrics: dict) -> dict:
+    """A clean continuation claim about ONE quantity (segment share): correct numbers, no causal claim, direction
+    consistent everywhere, no boundary issue."""
+    l4, p4 = metrics[f"metric:segment_share:L4:{e}"]["value"], metrics[f"metric:segment_share:P4:{e}"]["value"]
+    d = "increase" if l4 > p4 else "decrease"
+    return _hyp(f"{e}'s segment share (its share of the segment's registrations) moved from {100 * p4:.2f}% to "
+                f"{100 * l4:.2f}%. This hypothesis expects the same direction over the next two quarters; it makes no "
+                "claim about why.",
+                "short-run persistence of the recent within-segment movement",
+                "a brand's within-segment share tends to keep its recent direction for a short time", "segment_share", d,
+                ["the recent direction persists for two quarters"],
+                [f"metric:segment_share:L4:{e}", f"metric:segment_share:P4:{e}"],
+                [_imp("I1", "segment_share", e, "increase_vs_L4" if d == "increase" else "decrease_vs_L4")])
+
+
+def mutate(kind: str, h: dict, e: str, metrics: dict, other: str | None = None) -> tuple[dict, list]:
+    """ONE isolated change of a canonical item; returns the item and the accepted evidence ids."""
+    x = copy.deepcopy(h)
+    l4 = 100 * metrics[f"metric:segment_share:L4:{e}"]["value"]
+    if kind == "wrong_number":
+        x["statement"] = x["statement"].replace(f"to {l4:.2f}%", f"to {1.5 * l4:.2f}%")
+        return x, [f"metric:segment_share:L4:{e}"]
+    if kind == "quantity_confusion":
+        mix = 100 * metrics[f"metric:segment_mix:L4:{e}"]["value"]
+        x["statement"] = x["statement"].replace(f"to {l4:.2f}%", f"to {mix:.2f}%")
+        return x, [f"metric:segment_share:L4:{e}", f"metric:segment_mix:L4:{e}"]
+    if kind == "contradicted_assumption":
+        x["assumptions"].append({"statement": f"{e} also sells substantial volumes outside the segment", "kind": "market_structure"})
+        return x, [k for k in (f"metric:segment_mix:L4:{e}", f"metric:segment_mix:P4:{e}", f"metric:non_segment_share:L4:{e}",
+                               f"metric:non_segment_share:P4:{e}") if k in metrics]
+    if kind == "impossible_prediction":
+        x["observable_implications"].append(_imp("I2", "segment_mix", e, "increase_vs_L4"))
+        return x, [f"metric:segment_mix:L4:{e}"]
+    if kind == "misencoded_test":
+        x["observable_implications"] = [_imp("I1", "segment_share_gap", e, "above_reference", other,
+                                             f"metric:segment_share:L4:{other}")]
+        return x, []
+    if kind == "unsupported_detail":
+        x["statement"] = x["statement"].replace("it makes no claim about why.", "the movement is driven by recent model launches.")
+        return x, []
+    if kind == "causal_overclaim":
+        x["statement"] = x["statement"].replace("it makes no claim about why.",
+                                                "a continuation would demonstrate that the brand's appeal to segment buyers "
+                                                "is the cause.")
+        return x, []
+    raise ValueError(kind)
+
+
+def build_v3(panel, metrics: dict, seed: int = 0) -> dict:
+    """Canonical items first, then isolated mutations; every item checked deterministically (canonical: no issue;
+    mutation: exactly its intended issue). Four sets; within a set at most one item per brand, so no variant can be
+    diffed against its own canonical."""
+    mid = panel.metric_id
+    ok = [e for e in panel.entities if all(k in metrics for k in (mid("segment_share", "L4", e), mid("segment_share", "P4", e),
+                                                                mid("segment_mix", "L4", e)))
+          and 0.001 < metrics[mid("segment_share", "L4", e)]["value"] < 0.999
+          and abs(metrics[mid("segment_share", "L4", e)]["value"] - metrics[mid("segment_share", "P4", e)]["value"]) > 0.001]
+    pure = [e for e in ok if metrics[mid("segment_mix", "L4", e)]["value"] >= 0.9999]
+    mixed = [e for e in ok if metrics[mid("segment_mix", "L4", e)]["value"] < 0.99
+             and abs(metrics[mid("segment_mix", "L4", e)]["value"] - metrics[mid("segment_share", "L4", e)]["value"]) > 0.005]
+    if not pure or len(mixed) < 2:
+        raise ValueError("benchmark v3 needs a single-segment brand and two mixed brands with moving segment shares")
+    p, a, b = pure[0], mixed[0], mixed[1]
+    C = {e: canonical(e, metrics) for e in (p, a, b)}
+    for e, h in C.items():
+        assert check_item(h, metrics) == [], (e, check_item(h, metrics))
+    plan = [[("clean", p), ("wrong_number", a), ("unsupported_detail", b)],
+            [("clean", a), ("quantity_confusion", b), ("contradicted_assumption", p)],
+            [("clean", b), ("misencoded_test", a), ("impossible_prediction", p)],
+            [("clean", p), ("causal_overclaim", b), ("clean", a)]]
+    rng, sets, key = random.Random(seed), [], {}
+    for si, row in enumerate(plan):
+        items = []
+        for kind, e in row:
+            if kind == "clean":
+                h, ev = C[e], []
+            else:
+                h, ev = mutate(kind, C[e], e, metrics, other=a if e != a else b)
+                assert check_item(h, metrics) == EXPECTED_ISSUES[kind], (kind, check_item(h, metrics))
+            items.append((kind, ev, h, e))
+        rng.shuffle(items)
+        hyps = []
+        for j, (kind, ev, h, e) in enumerate(items):
+            ref = f"H{j + 1}"
+            hyps.append({"ref": ref, **h})
+            acc, mn, ideal = KINDS_V3.get(kind, ((), None, None))
+            key[f"S{si + 1}:{ref}"] = {"kind": kind, "entity": e, "accept": list(acc),
+                                       "evidence": sorted(ev), "min_severity": mn, "ideal_severity": ideal,
+                                       "deterministic_issues": check_item(h, metrics)}
+        sets.append({"set_id": f"S{si + 1}", "hypotheses": hyps})
+    return {"version": VERSION_V3, "seed": seed, "sets": sets, "key": key, "key_sha256": _h(key), "payload_sha256": _h(sets),
+            "severity_rubric": SEVERITY_RUBRIC,
+            "audit": {"status": "proposed", "auditor": None, "checklist": AUDIT_CHECKLIST + [
+                "each defective item differs from its canonical by exactly one change",
+                "absolute volume, segment share, total share and segment mix are not confused (except the planted confusion)"],
+                "rule": "an independent person, blind to critic outputs, confirms every item before scores are 'audited'"}}
+
+
+def score_v3(critiques_by_set: dict, bench: dict, schema_failures: int = 0) -> dict:
+    """Detection, classification, severity and evidence are scored SEPARATELY; any accepted dimension or evidence id
+    counts; extra critiques never add credit and are never penalised on planted items; on clean items only checkable
+    false claims (factual or numerical, medium+) and high-severity claims are false positives; other comments are
+    methodological and neither credited nor penalised."""
+    per = {k: [] for k in bench["key"]}
+    for sid, crits in critiques_by_set.items():
+        for c in crits:
+            k = f"{sid}:{c['hypothesis_ref']}"
+            if k in per:
+                per[k].append(c)
+    det = cls = sev = ev = ev_n = fp = meth = 0
+    by_kind = {}
+    planted = [k for k, v in bench["key"].items() if v["kind"] != "clean"]
+    for k, v in bench["key"].items():
+        cs = per[k]
+        if v["kind"] == "clean":
+            bad = [c for c in cs if (c["dimension"] in CHECKABLE_FACTS and SEV[c["severity"]] >= 1) or c["severity"] == "high"]
+            fp += len(bad)
+            meth += len(cs) - len(bad)
+            continue
+        t = by_kind.setdefault(v["kind"], {"detected": 0, "classified": 0, "severity_ok": 0, "evidence_ok": None})
+        if any(c["dimension"] in DEFECT_CLAIM_DIMS for c in cs):
+            det += 1
+            t["detected"] += 1
+        right = [c for c in cs if c["dimension"] in v["accept"]]
+        if right:
+            cls += 1
+            t["classified"] += 1
+            if max(SEV[c["severity"]] for c in right) >= SEV[v["min_severity"]]:
+                sev += 1
+                t["severity_ok"] += 1
+            if v["evidence"]:
+                ev_n += 1
+                hit = any(set(c.get("evidence", [])) & set(v["evidence"]) for c in right)
+                ev += hit
+                t["evidence_ok"] = hit
+    n, nc = len(planted), sum(1 for v in bench["key"].values() if v["kind"] == "clean")
+    audited = (bench.get("audit") or {}).get("status") == "audited"
+    return {"version": VERSION_V3, "audited": audited, "label": "AUDITED" if audited else "UNAUDITED (diagnostic only)",
+            "planted": n, "clean_controls": nc, "detection_rate": det / n if n else None,
+            "classification_rate": cls / n if n else None, "severity_accuracy": sev / cls if cls else None,
+            "evidence_reference_accuracy": ev / ev_n if ev_n else None, "false_positives_on_clean": fp,
+            "methodological_comments_on_clean": meth, "schema_failures": schema_failures, "by_kind": by_kind}
+
+
+def audit_markdown(b: dict, metrics: dict, title: str) -> str:
+    L = [f"# {title}", "", f"Benchmark `{b['version']}`; key sha256 `{b['key_sha256'][:16]}…`; payload sha256 "
+         f"`{b['payload_sha256'][:16]}…`. **Audit status: {b['audit']['status'].upper()}.**", "",
+         "**For the auditor only; never shown to the critic.** The critic receives the blinded sets, without this key. Audit "
+         "each item blind to any critic output. Scores are labelled AUDITED only after every item is confirmed.", "",
+         "## Construction", "", "- canonical clean items first, one per brand: a continuation claim about segment share only, "
+         "with correct numbers, no causal claim, and the same direction in the mechanism and the test;",
+         "- each defective item is ONE isolated mutation of a canonical item;",
+         "- a deterministic checker (`check_item`) must find no issue in a canonical item and exactly the intended issue in "
+         "each mutation;",
+         "- within a set, at most one item per brand, so no variant can be compared with its own canonical.", "",
+         "## Severity rubric", ""] + [f"- **{k}**: {v}" for k, v in b["severity_rubric"].items()] + [
+         "", "## Audit checklist (every item)", ""] + [f"- [ ] {c}" for c in b["audit"]["checklist"]]
+    cited = sorted({e for s in b["sets"] for h in s["hypotheses"] for e in h["supporting_evidence"]} |
+                   {e for v in b["key"].values() for e in v["evidence"]} |
+                   {i["reference_metric"] for s in b["sets"] for h in s["hypotheses"] for i in h["observable_implications"]
+                    if i["reference_metric"]})
+    L += ["", "## Evidence used by the items", "", "| Metric | Value (%) |", "|---|---|"] + \
+         [f"| `{c}` | {100 * metrics[c]['value']:.4f} |" for c in cited if c in metrics]
+    for s in b["sets"]:
+        L += ["", f"## Set {s['set_id']}"]
+        for h in s["hypotheses"]:
+            k = b["key"][f"{s['set_id']}:{h['ref']}"]
+            L += ["", f"### {s['set_id']}:{h['ref']}: " + ("CLEAN CONTROL" if k["kind"] == "clean" else f"PLANTED DEFECT: {k['kind']}"),
+                  "", f"- **Statement:** {h['statement']}",
+                  f"- **Mechanism:** {h['mechanism']['cause']} → {h['mechanism']['pathway']} ({h['mechanism']['effect_template']}, "
+                  f"{h['mechanism']['direction']})",
+                  f"- **Assumptions:** {'; '.join(a['statement'] for a in h['assumptions'])}",
+                  f"- **Supporting evidence:** {', '.join('`' + e + '`' for e in h['supporting_evidence'])}",
+                  "- **Implications:** " + "; ".join(
+                      f"{i['template']} {i['entity']}{('-' + i['entity_b']) if i['entity_b'] else ''} {i['comparator']}"
+                      + (f" vs `{i['reference_metric']}`" if i["reference_metric"] else "") for i in h["observable_implications"]),
+                  f"- **Deterministic check:** {k['deterministic_issues'] or 'no issue'}"]
+            if k["kind"] == "clean":
+                L += ["- **Expected:** no factual or numerical claim, and nothing at high severity. Methodological comments "
+                      "(for example that continuation is a weak test) are allowed and not penalised."]
+            else:
+                L += [f"- **Accepted classifications:** {' or '.join(k['accept'])}; minimum severity **{k['min_severity']}** "
+                      f"(ideal {k['ideal_severity']})" + (f"; accepted evidence: {', '.join('`' + e + '`' for e in k['evidence'])}"
+                                                          if k["evidence"] else "")]
+            L += ["- **Auditor verdict:** [ ] confirmed  [ ] not confirmed (notes: ____ )"]
+    L += ["", "## Sign-off", "", "- Auditor: ____  Date: ____  All items confirmed: [ ] yes",
+          "- After sign-off only: set `audit.status` to `audited` (and the auditor) in the JSON.", ""]
+    return "\n".join(L)
