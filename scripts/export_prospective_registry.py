@@ -9,11 +9,14 @@ Usage: python scripts/export_prospective_registry.py <run_dir/r2s...> [--verify]
 
 from __future__ import annotations
 
+import gzip
 import hashlib
 import json
 import sqlite3
 import sys
 from pathlib import Path
+
+EVIDENCE = Path("registry/evidence")
 
 
 def _h(x) -> str:
@@ -25,9 +28,11 @@ def export(exp_dir: Path, db="data/halibut.sqlite") -> dict:
     c = sqlite3.connect(db)
     c.row_factory = sqlite3.Row
     docs = {d["investigation_id"]: d for d in (json.loads(p.read_text()) for p in (exp_dir / "investigations").glob("*.json"))}
-    snaps = [dict(r) for r in c.execute("""SELECT dataset_id, retrieved_at, publisher_updated, sha256 FROM snapshots
+    snaps = [dict(r) for r in c.execute("""SELECT dataset_id, retrieved_at, publisher_updated, sha256, raw_path FROM snapshots
         WHERE dataset_id LIKE 'dft_veh0160%' AND retrieved_at <= ? ORDER BY retrieved_at DESC LIMIT 2""",
                                          (rep["publication_check"]["checked_at"],))]
+    for sn in snaps:  # the raw evidence itself (gzip), so it is recoverable, not merely hashed
+        sn["archive"] = archive(Path(sn.pop("raw_path")), sn["sha256"])
     tests = []
     for p in rep["summary"]["prospective_pending_tests"]:
         row = c.execute("SELECT * FROM hypothesis_tests WHERE test_id=?", (p["test"],)).fetchone()
@@ -48,6 +53,17 @@ def export(exp_dir: Path, db="data/halibut.sqlite") -> dict:
             "tests": tests}
     body["registry_sha256"] = _h(body)
     return body
+
+
+def archive(raw: Path, sha256: str) -> str:
+    """Copy a raw evidence snapshot into registry/evidence/ (gzip) and check it decompresses to the recorded sha256."""
+    out = EVIDENCE / f"{sha256}.gz"  # content-addressed: identical evidence is stored once
+    if not out.exists():
+        out.parent.mkdir(parents=True, exist_ok=True)
+        with open(out, "wb") as f, gzip.GzipFile(filename="", fileobj=f, mode="wb", compresslevel=9, mtime=0) as g:
+            g.write(raw.read_bytes())  # deterministic bytes (no timestamp, no file name)
+    assert hashlib.sha256(gzip.decompress(out.read_bytes())).hexdigest() == sha256, f"archive {out} does not match {sha256}"
+    return str(out)
 
 
 if __name__ == "__main__":

@@ -2,12 +2,14 @@
  "criteria_hash": "223362694f7d254f225808caecee081eeccb0444be4d582035eb667b43e3d91d",
  "evidence_snapshots": [
   {
+   "archive": "registry/evidence/204fb505266ddc565b3585260ed7bc4f231958ae71fb9422015ea55a085a87a5.gz",
    "dataset_id": "dft_veh0160_models",
    "publisher_updated": "2026-09-23T08:30:04Z",
    "retrieved_at": "2026-11-23T13:00:29Z",
    "sha256": "204fb505266ddc565b3585260ed7bc4f231958ae71fb9422015ea55a085a87a5"
   },
   {
+   "archive": "registry/evidence/204fb505266ddc565b3585260ed7bc4f231958ae71fb9422015ea55a085a87a5.gz",
    "dataset_id": "dft_veh0160_makes",
    "publisher_updated": "2026-09-23T08:30:04Z",
    "retrieved_at": "2026-11-23T13:00:26Z",
@@ -45,7 +47,7 @@
   "publisher_updated": "2026-09-23T08:30:04Z",
   "retrieved_at": "2026-11-23T13:00:29Z"
  },
- "registry_sha256": "fbf12b1d768173f26712b68a39fdb22d6e6c98770dfcc87288e962b47b28f70e",
+ "registry_sha256": "f4495f3f67d6e57e1269d6f8f08aa8c98fd274b0fab1313c98e51840952faa6d",
  "tests": [
   {
    "horizon": "nominal",
