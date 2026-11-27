@@ -1,5 +1,5 @@
 {
- "ledger_sha256": "1c166c8b1f4404d5a21f69416014ce9bac8fd92ce7e4da9cb262c1477c28fce7",
+ "ledger_sha256": "c79913ed7073f5c0c6773749d437d261c66c43c4154636d296bb495187106c76",
  "predictions": [
   {
    "baselines_json": {
@@ -9169,16 +9169,16 @@
    "prediction_id": "pq:03a80cb322bbc6110cb6",
    "realized": 0.07269182990922121,
    "resolution_id": "pr:135d647e6ebbdce8ced2",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
-    "categorical_brier": 1.0,
     "hit": false,
     "informative_vs_baselines": true,
     "momentum_hit": true,
     "momentum_predicts": false,
     "persistence_hit": null,
-    "persistence_predicts": null
+    "persistence_predicts": null,
+    "probabilistic_scores": "not applied: categorical claim (no stated probability)"
    },
    "status": "resolved",
    "vintage": "first_publication"
@@ -9191,8 +9191,8 @@
    "prediction_id": "pq:03c8a8b4ecc59c1deabf",
    "realized": 0.06421087730998051,
    "resolution_id": "pr:68d02e8afe2fc7cf74da",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.0012408313487569933,
     "crps_gaussian": 0.00601735892179495,
@@ -9215,8 +9215,8 @@
    "prediction_id": "pq:087fd05f269e3e9d1544",
    "realized": 0.036882132597553414,
    "resolution_id": "pr:d7fbaea6d9acefa5ca54",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.011037266872003564,
     "crps_gaussian": 0.007825509699507327,
@@ -9239,8 +9239,8 @@
    "prediction_id": "pq:09fb9fa596ad6d205cee",
    "realized": null,
    "resolution_id": "pr:ba10c92cbc9b32883c03",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {},
    "status": "pending",
    "vintage": "none"
@@ -9253,8 +9253,8 @@
    "prediction_id": "pq:0ac8ed166719bbee5dfc",
    "realized": 0.02336932632584806,
    "resolution_id": "pr:369ba10714c9bda4a0d2",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.05289549399493296,
     "crps_gaussian": 0.042474944096897324,
@@ -9277,8 +9277,8 @@
    "prediction_id": "pq:0c28dc2a7aa0383be693",
    "realized": 0.06016485195630725,
    "resolution_id": "pr:385ba25a0a4ee3ded384",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.015222755769991006,
     "crps_gaussian": 0.009325390884079502,
@@ -9301,16 +9301,16 @@
    "prediction_id": "pq:0ccdffc36ac941cfce5b",
    "realized": 0.019727326816007276,
    "resolution_id": "pr:80b115f53d76a163097a",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
-    "categorical_brier": 0.0,
     "hit": true,
     "informative_vs_baselines": false,
     "momentum_hit": true,
     "momentum_predicts": true,
     "persistence_hit": null,
-    "persistence_predicts": null
+    "persistence_predicts": null,
+    "probabilistic_scores": "not applied: categorical claim (no stated probability)"
    },
    "status": "resolved",
    "vintage": "first_publication"
@@ -9323,8 +9323,8 @@
    "prediction_id": "pq:0dd22ff381be75df8345",
    "realized": null,
    "resolution_id": "pr:8f00f7dca741895a4ed2",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {},
    "status": "pending",
    "vintage": "none"
@@ -9337,8 +9337,8 @@
    "prediction_id": "pq:0ed6021f37498b485a81",
    "realized": null,
    "resolution_id": "pr:66e883a73f48f66f5b19",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {},
    "status": "pending",
    "vintage": "none"
@@ -9351,16 +9351,16 @@
    "prediction_id": "pq:112a1c9ac430d9719277",
    "realized": 0.071881346368123,
    "resolution_id": "pr:07d0fc351747f8c317fb",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
-    "categorical_brier": 1.0,
     "hit": false,
     "informative_vs_baselines": true,
     "momentum_hit": true,
     "momentum_predicts": false,
     "persistence_hit": null,
-    "persistence_predicts": null
+    "persistence_predicts": null,
+    "probabilistic_scores": "not applied: categorical claim (no stated probability)"
    },
    "status": "resolved",
    "vintage": "first_publication"
@@ -9373,8 +9373,8 @@
    "prediction_id": "pq:1194dba7f2f76830dc9c",
    "realized": null,
    "resolution_id": "pr:d790a3b5a2420819bc75",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {},
    "status": "pending",
    "vintage": "none"
@@ -9387,16 +9387,16 @@
    "prediction_id": "pq:14000237328362185fdb",
    "realized": 0.02336932632584806,
    "resolution_id": "pr:4238e22bf4b237eb0574",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
-    "categorical_brier": 0.0,
     "hit": true,
     "informative_vs_baselines": true,
     "momentum_hit": false,
     "momentum_predicts": false,
     "persistence_hit": false,
-    "persistence_predicts": false
+    "persistence_predicts": false,
+    "probabilistic_scores": "not applied: categorical claim (no stated probability)"
    },
    "status": "resolved",
    "vintage": "first_publication"
@@ -9409,16 +9409,16 @@
    "prediction_id": "pq:158e2ee29a41d1a45d34",
    "realized": 0.5723049556432301,
    "resolution_id": "pr:471f26e8cc4803c06f04",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
-    "categorical_brier": 0.0,
     "hit": true,
     "informative_vs_baselines": false,
     "momentum_hit": true,
     "momentum_predicts": true,
     "persistence_hit": null,
-    "persistence_predicts": null
+    "persistence_predicts": null,
+    "probabilistic_scores": "not applied: categorical claim (no stated probability)"
    },
    "status": "resolved",
    "vintage": "first_publication"
@@ -9431,16 +9431,16 @@
    "prediction_id": "pq:16a6937f57249f541804",
    "realized": 0.4843141926773092,
    "resolution_id": "pr:2cf35833eb997dd5d82e",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
-    "categorical_brier": 0.0,
     "hit": true,
     "informative_vs_baselines": false,
     "momentum_hit": true,
     "momentum_predicts": true,
     "persistence_hit": null,
-    "persistence_predicts": null
+    "persistence_predicts": null,
+    "probabilistic_scores": "not applied: categorical claim (no stated probability)"
    },
    "status": "resolved",
    "vintage": "first_publication"
@@ -9453,8 +9453,8 @@
    "prediction_id": "pq:16efb3863babc3654873",
    "realized": null,
    "resolution_id": "pr:2f4eebf17e6c83eaa0f5",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {},
    "status": "pending",
    "vintage": "none"
@@ -9467,8 +9467,8 @@
    "prediction_id": "pq:1764fb66f01ca76a7834",
    "realized": 0.06016485195630725,
    "resolution_id": "pr:f6f7493cb2a7a4582c6b",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.031287303866955364,
     "crps_gaussian": 0.023636261393784688,
@@ -9491,8 +9491,8 @@
    "prediction_id": "pq:17e703e57958a7c8dd6b",
    "realized": 0.05691613331140812,
    "resolution_id": "pr:154143f5c4ff27bf5e31",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.005010496641486749,
     "crps_gaussian": 0.002995328245769858,
@@ -9515,16 +9515,16 @@
    "prediction_id": "pq:18ff272cd8766fe3ef5c",
    "realized": 0.5343655589123867,
    "resolution_id": "pr:72a660f2de786712800e",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
-    "categorical_brier": 0.0,
     "hit": true,
     "informative_vs_baselines": false,
     "momentum_hit": true,
     "momentum_predicts": true,
     "persistence_hit": null,
-    "persistence_predicts": null
+    "persistence_predicts": null,
+    "probabilistic_scores": "not applied: categorical claim (no stated probability)"
    },
    "status": "resolved",
    "vintage": "first_publication"
@@ -9537,16 +9537,16 @@
    "prediction_id": "pq:1c9eb7c645b150aaa997",
    "realized": 0.5287166698638021,
    "resolution_id": "pr:9454e1bad7311ee42a03",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
-    "categorical_brier": 0.0,
     "hit": true,
     "informative_vs_baselines": false,
     "momentum_hit": true,
     "momentum_predicts": true,
     "persistence_hit": null,
-    "persistence_predicts": null
+    "persistence_predicts": null,
+    "probabilistic_scores": "not applied: categorical claim (no stated probability)"
    },
    "status": "resolved",
    "vintage": "first_publication"
@@ -9559,16 +9559,16 @@
    "prediction_id": "pq:1ca992f8efd9a3563ec3",
    "realized": 0.04826136818530981,
    "resolution_id": "pr:51360afc5a1eb0d74b0b",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
-    "categorical_brier": 0.0,
     "hit": true,
     "informative_vs_baselines": false,
     "momentum_hit": true,
     "momentum_predicts": true,
     "persistence_hit": null,
-    "persistence_predicts": null
+    "persistence_predicts": null,
+    "probabilistic_scores": "not applied: categorical claim (no stated probability)"
    },
    "status": "resolved",
    "vintage": "first_publication"
@@ -9581,8 +9581,8 @@
    "prediction_id": "pq:1cb1028fdc3f64afd766",
    "realized": 0.0769615091724452,
    "resolution_id": "pr:f566502245a93f82bae1",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.022967768677761777,
     "crps_gaussian": 0.014923910175162994,
@@ -9605,16 +9605,16 @@
    "prediction_id": "pq:1cdb600b9c3b7ecb8e9a",
    "realized": -0.04938172589704884,
    "resolution_id": "pr:3e30b2e0434eba5708ad",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
-    "categorical_brier": 0.0,
     "hit": true,
     "informative_vs_baselines": false,
     "momentum_hit": false,
     "momentum_predicts": false,
     "persistence_hit": true,
-    "persistence_predicts": true
+    "persistence_predicts": true,
+    "probabilistic_scores": "not applied: categorical claim (no stated probability)"
    },
    "status": "resolved",
    "vintage": "first_publication"
@@ -9627,16 +9627,16 @@
    "prediction_id": "pq:2379cd574dfe88482a68",
    "realized": 0.5599169094636883,
    "resolution_id": "pr:b6eea9e3859dbce0f076",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
-    "categorical_brier": 0.0,
     "hit": true,
     "informative_vs_baselines": false,
     "momentum_hit": true,
     "momentum_predicts": true,
     "persistence_hit": null,
-    "persistence_predicts": null
+    "persistence_predicts": null,
+    "probabilistic_scores": "not applied: categorical claim (no stated probability)"
    },
    "status": "resolved",
    "vintage": "first_publication"
@@ -9649,8 +9649,8 @@
    "prediction_id": "pq:23c19b64d037a6adeff0",
    "realized": 0.019727326816007276,
    "resolution_id": "pr:2d6fe1dafb23117e652c",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.009150017366062309,
     "crps_gaussian": 0.0058252096302800534,
@@ -9673,8 +9673,8 @@
    "prediction_id": "pq:27d63a1bd8267659a5e1",
    "realized": 0.09199440748784193,
    "resolution_id": "pr:9e2dd013bcc6481f65cd",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.021913377332792652,
     "crps_gaussian": 0.01347148796604332,
@@ -9697,8 +9697,8 @@
    "prediction_id": "pq:27e9d7310befb4b6e563",
    "realized": 0.5723049556432301,
    "resolution_id": "pr:b16850e155ad0fcc5c50",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.12344568455276383,
     "crps_gaussian": 0.0767627863748395,
@@ -9721,8 +9721,8 @@
    "prediction_id": "pq:28f11ef8f9d45488377f",
    "realized": 0.07269182990922121,
    "resolution_id": "pr:7ba93a7a3dfe0585a023",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.02159234983689099,
     "crps_gaussian": 0.012942995171599404,
@@ -9745,8 +9745,8 @@
    "prediction_id": "pq:2aacb1c2260be40b01cd",
    "realized": 0.05691613331140812,
    "resolution_id": "pr:57ab09dd76607bcae0d2",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.0020771787717410103,
     "crps_gaussian": 0.0018240195386971336,
@@ -9769,8 +9769,8 @@
    "prediction_id": "pq:33e9b4d53994b097802a",
    "realized": 0.05862655973043646,
    "resolution_id": "pr:c82e3053c018bc0724fd",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.030883438461070216,
     "crps_gaussian": 0.01941428273069896,
@@ -9793,8 +9793,8 @@
    "prediction_id": "pq:34e0f3fb952bdda9fa9a",
    "realized": null,
    "resolution_id": "pr:8051b06870df9fccb252",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {},
    "status": "pending",
    "vintage": "none"
@@ -9807,8 +9807,8 @@
    "prediction_id": "pq:3534e686a205e3128012",
    "realized": 0.071881346368123,
    "resolution_id": "pr:674280c71d62d044e5ee",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.01746631627471805,
     "crps_gaussian": 0.010629016566542438,
@@ -9831,8 +9831,8 @@
    "prediction_id": "pq:355d8bb4a9d6cbcf821a",
    "realized": -0.006639273769708548,
    "resolution_id": "pr:df6809858882cf019bd0",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.01021675773607586,
     "crps_gaussian": 0.0068792615583685695,
@@ -9855,8 +9855,8 @@
    "prediction_id": "pq:3608a7b2d120aacf19a8",
    "realized": 0.04115186811843496,
    "resolution_id": "pr:4acbe04753a8b746a315",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.015964463976413316,
     "crps_gaussian": 0.010028453692856515,
@@ -9879,8 +9879,8 @@
    "prediction_id": "pq:386b3e0f60579b0db758",
    "realized": 0.071881346368123,
    "resolution_id": "pr:c2d403efd178c349515f",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.017766625911184816,
     "crps_gaussian": 0.010777142046866313,
@@ -9903,16 +9903,16 @@
    "prediction_id": "pq:3873d9f0db913eb19520",
    "realized": 0.07933110367892976,
    "resolution_id": "pr:e40128bbe547daaa7d9e",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
-    "categorical_brier": 1.0,
     "hit": false,
     "informative_vs_baselines": true,
     "momentum_hit": true,
     "momentum_predicts": false,
     "persistence_hit": null,
-    "persistence_predicts": null
+    "persistence_predicts": null,
+    "probabilistic_scores": "not applied: categorical claim (no stated probability)"
    },
    "status": "resolved",
    "vintage": "first_publication"
@@ -9925,8 +9925,8 @@
    "prediction_id": "pq:3f11a764b2cf72af3042",
    "realized": -0.04938172589704884,
    "resolution_id": "pr:d83ba93be9ce7f5089f2",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.010594543514473129,
     "crps_gaussian": 0.013061625665314252,
@@ -9949,8 +9949,8 @@
    "prediction_id": "pq:3fe2773428de5f20eea3",
    "realized": 0.4843141926773092,
    "resolution_id": "pr:ca2ccb1705e4690549c2",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.14913709293927363,
     "crps_gaussian": 0.08969177873346315,
@@ -9973,8 +9973,8 @@
    "prediction_id": "pq:42067e5eca1eadc230a4",
    "realized": 0.5599169094636883,
    "resolution_id": "pr:131d00d92d324e13697c",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.003962689198519054,
     "crps_gaussian": 0.05223044668702349,
@@ -9997,8 +9997,8 @@
    "prediction_id": "pq:447e9693bb374b33f0d5",
    "realized": 0.07269182990922121,
    "resolution_id": "pr:08ac764386efeeb18798",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.004229079298244565,
     "crps_gaussian": 0.005578937909160561,
@@ -10021,8 +10021,8 @@
    "prediction_id": "pq:4a0c6353f4cdafa81a0b",
    "realized": null,
    "resolution_id": "pr:fe187268cb8fe686f8c6",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {},
    "status": "pending",
    "vintage": "none"
@@ -10035,16 +10035,16 @@
    "prediction_id": "pq:4a0e438be82b0442a436",
    "realized": 0.07269182990922121,
    "resolution_id": "pr:7eaebf18f6fc620d819b",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
-    "categorical_brier": 0.0,
     "hit": true,
     "informative_vs_baselines": false,
     "momentum_hit": true,
     "momentum_predicts": true,
     "persistence_hit": null,
-    "persistence_predicts": null
+    "persistence_predicts": null,
+    "probabilistic_scores": "not applied: categorical claim (no stated probability)"
    },
    "status": "resolved",
    "vintage": "first_publication"
@@ -10057,16 +10057,16 @@
    "prediction_id": "pq:4a0eaf126d3d51149fe1",
    "realized": 0.09045087577576658,
    "resolution_id": "pr:23849a1f06ce22c402ff",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
-    "categorical_brier": 0.0,
     "hit": true,
     "informative_vs_baselines": true,
     "momentum_hit": false,
     "momentum_predicts": false,
     "persistence_hit": null,
-    "persistence_predicts": null
+    "persistence_predicts": null,
+    "probabilistic_scores": "not applied: categorical claim (no stated probability)"
    },
    "status": "resolved",
    "vintage": "first_publication"
@@ -10079,15 +10079,14 @@
    "prediction_id": "pq:4a281bde74efd5f76cc1",
    "realized": 0.015502565040983865,
    "resolution_id": "pr:a48e4ca9a126c954c13e",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.012578736768566714,
-    "crps_gaussian": 0.01091428278364235,
     "in_interval80": false,
-    "log_score_gaussian": -4.182636415946878,
     "momentum_abs_error": 0.01038586556425385,
     "persistence_abs_error": 0.012578736768566714,
+    "probabilistic_scores": "not applied: interval is not point +/- z80 x SD (clipped or non-Gaussian): no Gaussian proper score",
     "skill_vs_momentum": -0.21113995658294527,
     "skill_vs_persistence": 0.0,
     "sq_error": 0.0001582246186928922
@@ -10103,16 +10102,16 @@
    "prediction_id": "pq:4d48691657a052a55fbc",
    "realized": 0.035844716814133946,
    "resolution_id": "pr:04a4ec029a54c89eb492",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
-    "categorical_brier": 1.0,
     "hit": false,
     "informative_vs_baselines": false,
     "momentum_hit": false,
     "momentum_predicts": true,
     "persistence_hit": null,
-    "persistence_predicts": null
+    "persistence_predicts": null,
+    "probabilistic_scores": "not applied: categorical claim (no stated probability)"
    },
    "status": "resolved",
    "vintage": "first_publication"
@@ -10125,15 +10124,14 @@
    "prediction_id": "pq:4d61a9eb92cb50bb933a",
    "realized": 0.036882132597553414,
    "resolution_id": "pr:3885b152af93ee4a1feb",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.02050239063603567,
-    "crps_gaussian": 0.012202037386516604,
     "in_interval80": true,
-    "log_score_gaussian": 2.427801956415119,
     "momentum_abs_error": 0.02050239063603567,
     "persistence_abs_error": 0.011037266872003564,
+    "probabilistic_scores": "not applied: interval is not point +/- z80 x SD (clipped or non-Gaussian): no Gaussian proper score",
     "skill_vs_momentum": 0.0,
     "skill_vs_persistence": -0.857560469797169,
     "sq_error": 0.00042034802179260317
@@ -10149,16 +10147,16 @@
    "prediction_id": "pq:4f8a8a2de484582a3497",
    "realized": 0.26156670746634025,
    "resolution_id": "pr:3e3b132cd09737f1802a",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
-    "categorical_brier": 0.0,
     "hit": true,
     "informative_vs_baselines": false,
     "momentum_hit": true,
     "momentum_predicts": true,
     "persistence_hit": null,
-    "persistence_predicts": null
+    "persistence_predicts": null,
+    "probabilistic_scores": "not applied: categorical claim (no stated probability)"
    },
    "status": "resolved",
    "vintage": "first_publication"
@@ -10171,16 +10169,16 @@
    "prediction_id": "pq:5209dd9eda925c82153b",
    "realized": 0.07269182990922121,
    "resolution_id": "pr:c5cb4be3b4f9105cb0af",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
-    "categorical_brier": 1.0,
     "hit": false,
     "informative_vs_baselines": true,
     "momentum_hit": true,
     "momentum_predicts": false,
     "persistence_hit": null,
-    "persistence_predicts": null
+    "persistence_predicts": null,
+    "probabilistic_scores": "not applied: categorical claim (no stated probability)"
    },
    "status": "resolved",
    "vintage": "first_publication"
@@ -10193,8 +10191,8 @@
    "prediction_id": "pq:520ad0d3953a9edd2e26",
    "realized": 0.00605828953655041,
    "resolution_id": "pr:986fc465d27f68eff64c",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.05305475462044259,
     "crps_gaussian": 0.03476601975990496,
@@ -10217,8 +10215,8 @@
    "prediction_id": "pq:5814b4a9fa6e3e56cf85",
    "realized": 0.06016485195630725,
    "resolution_id": "pr:fb4b140a0fe7ddd21cf2",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.031287303866955364,
     "crps_gaussian": 0.023636261393784688,
@@ -10241,16 +10239,16 @@
    "prediction_id": "pq:583ffab46a7dcdba9fbe",
    "realized": 0.05862655973043646,
    "resolution_id": "pr:4ef3908499048152058f",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
-    "categorical_brier": 1.0,
     "hit": false,
     "informative_vs_baselines": false,
     "momentum_hit": false,
     "momentum_predicts": true,
     "persistence_hit": null,
-    "persistence_predicts": null
+    "persistence_predicts": null,
+    "probabilistic_scores": "not applied: categorical claim (no stated probability)"
    },
    "status": "resolved",
    "vintage": "first_publication"
@@ -10263,8 +10261,8 @@
    "prediction_id": "pq:5ab5d7fabbae1f84ee6b",
    "realized": null,
    "resolution_id": "pr:808f905d109b2f085fa7",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {},
    "status": "pending",
    "vintage": "none"
@@ -10277,16 +10275,16 @@
    "prediction_id": "pq:5b776f98d243555f9d45",
    "realized": 0.5343655589123867,
    "resolution_id": "pr:046622de3fdc57bab1f1",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
-    "categorical_brier": 0.0,
     "hit": true,
     "informative_vs_baselines": false,
     "momentum_hit": true,
     "momentum_predicts": true,
     "persistence_hit": null,
-    "persistence_predicts": null
+    "persistence_predicts": null,
+    "probabilistic_scores": "not applied: categorical claim (no stated probability)"
    },
    "status": "resolved",
    "vintage": "first_publication"
@@ -10299,8 +10297,8 @@
    "prediction_id": "pq:5b9536afad6dee72dc1a",
    "realized": null,
    "resolution_id": "pr:a4d863456b7efb0e773a",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {},
    "status": "pending",
    "vintage": "none"
@@ -10313,8 +10311,8 @@
    "prediction_id": "pq:5eee8dc51b430d64bfaa",
    "realized": 0.07269182990922121,
    "resolution_id": "pr:2326ec70c10e210bada0",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.02159234983689099,
     "crps_gaussian": 0.012942995171599404,
@@ -10337,8 +10335,8 @@
    "prediction_id": "pq:5ff3065055c85f99e15d",
    "realized": null,
    "resolution_id": "pr:dd765e38e958c85bd697",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {},
    "status": "pending",
    "vintage": "none"
@@ -10351,8 +10349,8 @@
    "prediction_id": "pq:60da69b9ea8d51d615a2",
    "realized": null,
    "resolution_id": "pr:b3cd3331155e2b116239",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {},
    "status": "pending",
    "vintage": "none"
@@ -10365,16 +10363,16 @@
    "prediction_id": "pq:64b4c2b8b3538c6daf89",
    "realized": 0.07537400932353973,
    "resolution_id": "pr:fd262e97756ed651e894",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
-    "categorical_brier": 0.0,
     "hit": true,
     "informative_vs_baselines": false,
     "momentum_hit": true,
     "momentum_predicts": true,
     "persistence_hit": null,
-    "persistence_predicts": null
+    "persistence_predicts": null,
+    "probabilistic_scores": "not applied: categorical claim (no stated probability)"
    },
    "status": "resolved",
    "vintage": "first_publication"
@@ -10387,8 +10385,8 @@
    "prediction_id": "pq:65725b1a38af03f337c6",
    "realized": -0.006639273769708548,
    "resolution_id": "pr:06782176400d0540ffb4",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.01323820483459488,
     "crps_gaussian": 0.009680631908203816,
@@ -10411,16 +10409,16 @@
    "prediction_id": "pq:65a126de481b4382b537",
    "realized": 0.07524698023871654,
    "resolution_id": "pr:70643d691155a9f881eb",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
-    "categorical_brier": 0.0,
     "hit": true,
     "informative_vs_baselines": false,
     "momentum_hit": true,
     "momentum_predicts": true,
     "persistence_hit": null,
-    "persistence_predicts": null
+    "persistence_predicts": null,
+    "probabilistic_scores": "not applied: categorical claim (no stated probability)"
    },
    "status": "resolved",
    "vintage": "first_publication"
@@ -10433,16 +10431,16 @@
    "prediction_id": "pq:665a315241447a6ef0ef",
    "realized": 0.08538939321548017,
    "resolution_id": "pr:d284ab46b6adba86ea5e",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
-    "categorical_brier": 0.0,
     "hit": true,
     "informative_vs_baselines": false,
     "momentum_hit": true,
     "momentum_predicts": true,
     "persistence_hit": null,
-    "persistence_predicts": null
+    "persistence_predicts": null,
+    "probabilistic_scores": "not applied: categorical claim (no stated probability)"
    },
    "status": "resolved",
    "vintage": "first_publication"
@@ -10455,8 +10453,8 @@
    "prediction_id": "pq:6829c001d18f815bcb80",
    "realized": null,
    "resolution_id": "pr:a852eca22364a0df92dc",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {},
    "status": "pending",
    "vintage": "none"
@@ -10469,8 +10467,8 @@
    "prediction_id": "pq:68ec4a6185aa2e85749d",
    "realized": 0.0559617773530817,
    "resolution_id": "pr:758fa5da809dd3e33a02",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.021086386421966107,
     "crps_gaussian": 0.01308207325946009,
@@ -10493,8 +10491,8 @@
    "prediction_id": "pq:6bc018b34c630e1b3f0a",
    "realized": 0.07933110367892976,
    "resolution_id": "pr:29ac133a79b33e19e75f",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.009009125536350332,
     "crps_gaussian": 0.006303206996753207,
@@ -10517,8 +10515,8 @@
    "prediction_id": "pq:6c838771bc1624f22b9e",
    "realized": 0.07933110367892976,
    "resolution_id": "pr:8fc8162a02e44c0b1509",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.03180910757296685,
     "crps_gaussian": 0.021397010580328,
@@ -10541,8 +10539,8 @@
    "prediction_id": "pq:6e2acf636ef7d8f5d111",
    "realized": 0.5343655589123867,
    "resolution_id": "pr:2b46914af4c2acf62076",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.04840629256872386,
     "crps_gaussian": 0.02983261067041274,
@@ -10565,16 +10563,16 @@
    "prediction_id": "pq:73e7dd3e02042c677a71",
    "realized": 0.5287166698638021,
    "resolution_id": "pr:11a8af77c0f20ae37184",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
-    "categorical_brier": 0.0,
     "hit": true,
     "informative_vs_baselines": false,
     "momentum_hit": true,
     "momentum_predicts": true,
     "persistence_hit": null,
-    "persistence_predicts": null
+    "persistence_predicts": null,
+    "probabilistic_scores": "not applied: categorical claim (no stated probability)"
    },
    "status": "resolved",
    "vintage": "first_publication"
@@ -10587,16 +10585,16 @@
    "prediction_id": "pq:74ab92e34d3c0a17ecac",
    "realized": 0.0559617773530817,
    "resolution_id": "pr:a5c27db4e132fb2f2ff2",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
-    "categorical_brier": 1.0,
     "hit": false,
     "informative_vs_baselines": false,
     "momentum_hit": false,
     "momentum_predicts": true,
     "persistence_hit": null,
-    "persistence_predicts": null
+    "persistence_predicts": null,
+    "probabilistic_scores": "not applied: categorical claim (no stated probability)"
    },
    "status": "resolved",
    "vintage": "first_publication"
@@ -10609,8 +10607,8 @@
    "prediction_id": "pq:77c742454ce6759b9161",
    "realized": 0.07933110367892976,
    "resolution_id": "pr:0f18ea384e4f84b04af9",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.009009125536350332,
     "crps_gaussian": 0.006303206996753207,
@@ -10633,16 +10631,16 @@
    "prediction_id": "pq:78b5f66c08be8b9a57de",
    "realized": 0.015502565040983865,
    "resolution_id": "pr:27dcd9b9d81ff3b3d4a4",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
-    "categorical_brier": 0.0,
     "hit": true,
     "informative_vs_baselines": false,
     "momentum_hit": true,
     "momentum_predicts": true,
     "persistence_hit": null,
-    "persistence_predicts": null
+    "persistence_predicts": null,
+    "probabilistic_scores": "not applied: categorical claim (no stated probability)"
    },
    "status": "resolved",
    "vintage": "first_publication"
@@ -10655,8 +10653,8 @@
    "prediction_id": "pq:7a1cc69eb8c7ddcbc2c5",
    "realized": 0.0769615091724452,
    "resolution_id": "pr:385fd291046932da0a59",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.04094741739393811,
     "crps_gaussian": 0.031775828659605335,
@@ -10679,8 +10677,8 @@
    "prediction_id": "pq:7a30a0571d1f30e2dad9",
    "realized": 0.00605828953655041,
    "resolution_id": "pr:1de58bc027450797fd52",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.010344409171220321,
     "crps_gaussian": 0.009742994245895803,
@@ -10703,8 +10701,8 @@
    "prediction_id": "pq:7b15cfce082db675a7ce",
    "realized": 0.06421087730998051,
    "resolution_id": "pr:cf96847c863616bfcfe0",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.030193983629350288,
     "crps_gaussian": 0.018738675460329184,
@@ -10727,8 +10725,8 @@
    "prediction_id": "pq:7e04ce1bd005be13b38e",
    "realized": 0.08538939321548017,
    "resolution_id": "pr:a921b51403342fecd5e6",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.021245647047475738,
     "crps_gaussian": 0.01334326324950793,
@@ -10751,16 +10749,16 @@
    "prediction_id": "pq:7e21c85a111c9c31872d",
    "realized": 0.09199440748784193,
    "resolution_id": "pr:96a68399d635ff4e2675",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
-    "categorical_brier": 0.0,
     "hit": true,
     "informative_vs_baselines": false,
     "momentum_hit": true,
     "momentum_predicts": true,
     "persistence_hit": null,
-    "persistence_predicts": null
+    "persistence_predicts": null,
+    "probabilistic_scores": "not applied: categorical claim (no stated probability)"
    },
    "status": "resolved",
    "vintage": "first_publication"
@@ -10773,16 +10771,16 @@
    "prediction_id": "pq:807bce25f05d6ab97fc6",
    "realized": 0.06016485195630725,
    "resolution_id": "pr:6a1d5873574b2e8b6fb5",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
-    "categorical_brier": 1.0,
     "hit": false,
     "informative_vs_baselines": true,
     "momentum_hit": true,
     "momentum_predicts": false,
     "persistence_hit": null,
-    "persistence_predicts": null
+    "persistence_predicts": null,
+    "probabilistic_scores": "not applied: categorical claim (no stated probability)"
    },
    "status": "resolved",
    "vintage": "first_publication"
@@ -10795,8 +10793,8 @@
    "prediction_id": "pq:85699e931ff7aeac82b5",
    "realized": 0.5343655589123867,
    "resolution_id": "pr:9524727ccfc1beb4569a",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.03082726251373835,
     "crps_gaussian": 0.02300839386966693,
@@ -10819,8 +10817,8 @@
    "prediction_id": "pq:8588dd86789ea58a3e6f",
    "realized": 0.07933110367892976,
    "resolution_id": "pr:c6008ebfa61536a18d44",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.03180910757296685,
     "crps_gaussian": 0.021397010580328,
@@ -10843,16 +10841,16 @@
    "prediction_id": "pq:86e51516dbb838b3c4eb",
    "realized": 0.0769615091724452,
    "resolution_id": "pr:f9685f10b49b1f1301e5",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
-    "categorical_brier": 0.0,
     "hit": true,
     "informative_vs_baselines": false,
     "momentum_hit": true,
     "momentum_predicts": true,
     "persistence_hit": null,
-    "persistence_predicts": null
+    "persistence_predicts": null,
+    "probabilistic_scores": "not applied: categorical claim (no stated probability)"
    },
    "status": "resolved",
    "vintage": "first_publication"
@@ -10865,16 +10863,16 @@
    "prediction_id": "pq:87f9ce853045b9aaa930",
    "realized": -0.02942761586239847,
    "resolution_id": "pr:3ab318d3287bd9ab18c3",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
-    "categorical_brier": 0.0,
     "hit": true,
     "informative_vs_baselines": false,
     "momentum_hit": false,
     "momentum_predicts": false,
     "persistence_hit": true,
-    "persistence_predicts": true
+    "persistence_predicts": true,
+    "probabilistic_scores": "not applied: categorical claim (no stated probability)"
    },
    "status": "resolved",
    "vintage": "first_publication"
@@ -10887,8 +10885,8 @@
    "prediction_id": "pq:8905f8060bfc236b46bc",
    "realized": 0.26156670746634025,
    "resolution_id": "pr:1226fa6b5fa66c054860",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.08169211330650672,
     "crps_gaussian": 0.05337201257489704,
@@ -10911,16 +10909,16 @@
    "prediction_id": "pq:89db37eb3df52ed326df",
    "realized": -0.006639273769708548,
    "resolution_id": "pr:e18523e29c83e67ef24c",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
-    "categorical_brier": 0.0,
     "hit": true,
     "informative_vs_baselines": true,
     "momentum_hit": false,
     "momentum_predicts": false,
     "persistence_hit": false,
-    "persistence_predicts": false
+    "persistence_predicts": false,
+    "probabilistic_scores": "not applied: categorical claim (no stated probability)"
    },
    "status": "resolved",
    "vintage": "first_publication"
@@ -10933,16 +10931,16 @@
    "prediction_id": "pq:8ac16ec3ec56c8d6bd05",
    "realized": 0.06421087730998051,
    "resolution_id": "pr:e5bac07b8b9db2e28390",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
-    "categorical_brier": 0.0,
     "hit": true,
     "informative_vs_baselines": false,
     "momentum_hit": true,
     "momentum_predicts": true,
     "persistence_hit": null,
-    "persistence_predicts": null
+    "persistence_predicts": null,
+    "probabilistic_scores": "not applied: categorical claim (no stated probability)"
    },
    "status": "resolved",
    "vintage": "first_publication"
@@ -10955,8 +10953,8 @@
    "prediction_id": "pq:8e06d50a842223e7e9fa",
    "realized": 0.07269182990922121,
    "resolution_id": "pr:85a07248f24bce82dcd3",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.004229079298244565,
     "crps_gaussian": 0.005578937909160561,
@@ -10979,8 +10977,8 @@
    "prediction_id": "pq:9000d455b3b5d20b66bb",
    "realized": 0.02336932632584806,
    "resolution_id": "pr:bc210322fc7642f3f554",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.046557157906209,
     "crps_gaussian": 0.03618421064569752,
@@ -11003,8 +11001,8 @@
    "prediction_id": "pq:92f1d8b344f9e5dd8030",
    "realized": -0.04938172589704884,
    "resolution_id": "pr:6d2ad75b8a9d0bc5defe",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.07674632777080759,
     "crps_gaussian": 0.05055835293529987,
@@ -11027,8 +11025,8 @@
    "prediction_id": "pq:9584b3a817775986e72a",
    "realized": 0.26156670746634025,
    "resolution_id": "pr:c6765c8f71b741100c14",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.14859662350387642,
     "crps_gaussian": 0.11651373260843942,
@@ -11051,8 +11049,8 @@
    "prediction_id": "pq:97b5dfd6b097054cf44b",
    "realized": 0.4843141926773092,
    "resolution_id": "pr:09e479f7d888dc34ca01",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.09917905188897241,
     "crps_gaussian": 0.06756217034780981,
@@ -11075,16 +11073,16 @@
    "prediction_id": "pq:99408b98763664ddc81c",
    "realized": 0.055949709200045196,
    "resolution_id": "pr:83e2adf15d011a4d138e",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
-    "categorical_brier": 0.0,
     "hit": true,
     "informative_vs_baselines": false,
     "momentum_hit": true,
     "momentum_predicts": true,
     "persistence_hit": null,
-    "persistence_predicts": null
+    "persistence_predicts": null,
+    "probabilistic_scores": "not applied: categorical claim (no stated probability)"
    },
    "status": "resolved",
    "vintage": "first_publication"
@@ -11097,8 +11095,8 @@
    "prediction_id": "pq:9987e1fd410e18783af5",
    "realized": 0.5343655589123867,
    "resolution_id": "pr:8d7b10f46b0f257e0d8e",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.04840629256872386,
     "crps_gaussian": 0.02983261067041274,
@@ -11121,8 +11119,8 @@
    "prediction_id": "pq:9a8f787f3a789735c2e4",
    "realized": 0.5599169094636883,
    "resolution_id": "pr:11d59cf78a353506403d",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.003962689198519054,
     "crps_gaussian": 0.05223044668702349,
@@ -11145,8 +11143,8 @@
    "prediction_id": "pq:9ad6063affb66184e353",
    "realized": 0.055949709200045196,
    "resolution_id": "pr:26852f6ccb14ef069a7c",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.0013232489722395033,
     "crps_gaussian": 0.0014254834513359514,
@@ -11169,8 +11167,8 @@
    "prediction_id": "pq:9c0c5a547161f4ad96f7",
    "realized": 0.035844716814133946,
    "resolution_id": "pr:3ffafa1ec4eb06e2853e",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.012294278023520129,
     "crps_gaussian": 0.007442502837808238,
@@ -11193,8 +11191,8 @@
    "prediction_id": "pq:9ed56f0bb35f6ab65ffc",
    "realized": 0.09045087577576658,
    "resolution_id": "pr:6c2c2323cba41e738a06",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.0034464559369439124,
     "crps_gaussian": 0.0020788344509699826,
@@ -11217,8 +11215,8 @@
    "prediction_id": "pq:a38dcad0cb417f3303ec",
    "realized": 0.022029705151262093,
    "resolution_id": "pr:d2084ff64bd2ff1f0661",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.003941407229855021,
     "crps_gaussian": 0.002394615044867955,
@@ -11241,8 +11239,8 @@
    "prediction_id": "pq:a3d6f9d36b3e2645b28d",
    "realized": null,
    "resolution_id": "pr:3f1a877023f66ce620ca",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {},
    "status": "pending",
    "vintage": "none"
@@ -11255,16 +11253,16 @@
    "prediction_id": "pq:a42430e9a29a0d00d6a5",
    "realized": 0.5599169094636883,
    "resolution_id": "pr:5972596f630032715bfa",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
-    "categorical_brier": 0.0,
     "hit": true,
     "informative_vs_baselines": false,
     "momentum_hit": true,
     "momentum_predicts": true,
     "persistence_hit": null,
-    "persistence_predicts": null
+    "persistence_predicts": null,
+    "probabilistic_scores": "not applied: categorical claim (no stated probability)"
    },
    "status": "resolved",
    "vintage": "first_publication"
@@ -11277,8 +11275,8 @@
    "prediction_id": "pq:a5391c85f7f33b837e53",
    "realized": null,
    "resolution_id": "pr:55cbe7d47acda1299ab3",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {},
    "status": "pending",
    "vintage": "none"
@@ -11291,8 +11289,8 @@
    "prediction_id": "pq:a94cd7e300088cab297e",
    "realized": -0.02942761586239847,
    "resolution_id": "pr:464d902f842a3d3634ab",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.00015926062550963155,
     "crps_gaussian": 0.007576654901948823,
@@ -11315,15 +11313,14 @@
    "prediction_id": "pq:ac9e2a4c15957f68fd77",
    "realized": 0.5599169094636883,
    "resolution_id": "pr:755f82c0aaf78f65445b",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.31585214768038994,
-    "crps_gaussian": 0.20570831682703605,
     "in_interval80": false,
-    "log_score_gaussian": -0.41971750786729106,
     "momentum_abs_error": 0.31585214768038994,
     "persistence_abs_error": 0.003962689198519054,
+    "probabilistic_scores": "not applied: interval is not point +/- z80 x SD (clipped or non-Gaussian): no Gaussian proper score",
     "skill_vs_momentum": 0.0,
     "skill_vs_persistence": -78.7065154134296,
     "sq_error": 0.09976257919431486
@@ -11339,8 +11336,8 @@
    "prediction_id": "pq:ae9832e644d388898bb8",
    "realized": null,
    "resolution_id": "pr:c1c7590492579dad0832",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {},
    "status": "pending",
    "vintage": "none"
@@ -11353,8 +11350,8 @@
    "prediction_id": "pq:b0a0ecf1c3f2c74a1932",
    "realized": null,
    "resolution_id": "pr:581989776a7be07155af",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {},
    "status": "pending",
    "vintage": "none"
@@ -11367,8 +11364,8 @@
    "prediction_id": "pq:b6cbd1b71ac43b1a8479",
    "realized": 0.07537400932353973,
    "resolution_id": "pr:1500437724a704636664",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.014620914043640361,
     "crps_gaussian": 0.008698748387608453,
@@ -11391,8 +11388,8 @@
    "prediction_id": "pq:bb1502a3e986b0dd35ec",
    "realized": 0.0559617773530817,
    "resolution_id": "pr:530b0a4fa5580f9a699a",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.037548032369858673,
     "crps_gaussian": 0.027664618782453528,
@@ -11415,8 +11412,8 @@
    "prediction_id": "pq:bf1e151d13180ce71a18",
    "realized": 0.07537400932353973,
    "resolution_id": "pr:bd995a157232e21a8ab8",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.03550264570061534,
     "crps_gaussian": 0.025992291945216857,
@@ -11439,15 +11436,14 @@
    "prediction_id": "pq:c5050727acf5f073f8c0",
    "realized": 0.5599169094636883,
    "resolution_id": "pr:9395edaea053ed9f8e9c",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.31585214768038994,
-    "crps_gaussian": 0.20570831682703605,
     "in_interval80": false,
-    "log_score_gaussian": -0.41971750786729106,
     "momentum_abs_error": 0.31585214768038994,
     "persistence_abs_error": 0.003962689198519054,
+    "probabilistic_scores": "not applied: interval is not point +/- z80 x SD (clipped or non-Gaussian): no Gaussian proper score",
     "skill_vs_momentum": 0.0,
     "skill_vs_persistence": -78.7065154134296,
     "sq_error": 0.09976257919431486
@@ -11463,8 +11459,8 @@
    "prediction_id": "pq:c55fbb60de4922964f5f",
    "realized": 0.09199440748784193,
    "resolution_id": "pr:0680f0b14687138235b6",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.0012029468266969434,
     "crps_gaussian": 0.004575086669024914,
@@ -11487,8 +11483,8 @@
    "prediction_id": "pq:c5d6bb629e0dc77ab781",
    "realized": 0.022029705151262093,
    "resolution_id": "pr:d17e0eeab5e21b0c16c7",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.0030924841987230098,
     "crps_gaussian": 0.0018397394066248744,
@@ -11511,16 +11507,16 @@
    "prediction_id": "pq:c66ba56a79b024a1c7d7",
    "realized": 0.5599169094636883,
    "resolution_id": "pr:a45421062e804940b9a2",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
-    "categorical_brier": 0.0,
     "hit": true,
     "informative_vs_baselines": false,
     "momentum_hit": true,
     "momentum_predicts": true,
     "persistence_hit": null,
-    "persistence_predicts": null
+    "persistence_predicts": null,
+    "probabilistic_scores": "not applied: categorical claim (no stated probability)"
    },
    "status": "resolved",
    "vintage": "first_publication"
@@ -11533,15 +11529,14 @@
    "prediction_id": "pq:c87e6421d45cb1ba8ff0",
    "realized": 0.07537400932353973,
    "resolution_id": "pr:171f91d389e9d2597911",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.007065226231189242,
-    "crps_gaussian": 0.0269318327981791,
     "in_interval80": true,
-    "log_score_gaussian": 1.2463422824181347,
     "momentum_abs_error": 0.014620914043640361,
     "persistence_abs_error": 0.03550264570061534,
+    "probabilistic_scores": "not applied: interval is not point +/- z80 x SD (clipped or non-Gaussian): no Gaussian proper score",
     "skill_vs_momentum": 0.5167726032653619,
     "skill_vs_persistence": 0.8009943740314884,
     "sq_error": 4.991742169788454e-05
@@ -11557,16 +11552,16 @@
    "prediction_id": "pq:ce409adb25c4cfb4c1a3",
    "realized": 0.06016485195630725,
    "resolution_id": "pr:8001ee300e39ac9f261c",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
-    "categorical_brier": 0.0,
     "hit": true,
     "informative_vs_baselines": false,
     "momentum_hit": true,
     "momentum_predicts": true,
     "persistence_hit": null,
-    "persistence_predicts": null
+    "persistence_predicts": null,
+    "probabilistic_scores": "not applied: categorical claim (no stated probability)"
    },
    "status": "resolved",
    "vintage": "first_publication"
@@ -11579,16 +11574,16 @@
    "prediction_id": "pq:d0bcc04d3bc486d6914a",
    "realized": 0.07269182990922121,
    "resolution_id": "pr:d914c3ba38d04f1aa26c",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
-    "categorical_brier": 0.0,
     "hit": true,
     "informative_vs_baselines": false,
     "momentum_hit": true,
     "momentum_predicts": true,
     "persistence_hit": null,
-    "persistence_predicts": null
+    "persistence_predicts": null,
+    "probabilistic_scores": "not applied: categorical claim (no stated probability)"
    },
    "status": "resolved",
    "vintage": "first_publication"
@@ -11601,8 +11596,8 @@
    "prediction_id": "pq:d31a226a98ceb4c02234",
    "realized": 0.06016485195630725,
    "resolution_id": "pr:add41b35df53712fe91a",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.015222755769991006,
     "crps_gaussian": 0.009325390884079502,
@@ -11625,8 +11620,8 @@
    "prediction_id": "pq:d9765e410dd25cca8393",
    "realized": 0.08538939321548017,
    "resolution_id": "pr:9b32c70f7db541e3869e",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.0013352836348699965,
     "crps_gaussian": 0.004052423625094901,
@@ -11649,8 +11644,8 @@
    "prediction_id": "pq:dd794018980336a94753",
    "realized": 0.5599169094636883,
    "resolution_id": "pr:3f4e1e44e7ff1cf9c583",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.003962689198519054,
     "crps_gaussian": 0.05223044668702349,
@@ -11673,8 +11668,8 @@
    "prediction_id": "pq:e0bc228330d33f14e648",
    "realized": 0.05862655973043646,
    "resolution_id": "pr:7b36106425721d4c7ab7",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.003067137770752189,
     "crps_gaussian": 0.005959649098292668,
@@ -11697,16 +11692,16 @@
    "prediction_id": "pq:e445ede844a7328b51c6",
    "realized": 0.06016485195630725,
    "resolution_id": "pr:fa0761d0331b81ad35fa",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
-    "categorical_brier": 1.0,
     "hit": false,
     "informative_vs_baselines": true,
     "momentum_hit": true,
     "momentum_predicts": false,
     "persistence_hit": null,
-    "persistence_predicts": null
+    "persistence_predicts": null,
+    "probabilistic_scores": "not applied: categorical claim (no stated probability)"
    },
    "status": "resolved",
    "vintage": "first_publication"
@@ -11719,8 +11714,8 @@
    "prediction_id": "pq:e631ecb9877b95a7194f",
    "realized": 0.04115186811843496,
    "resolution_id": "pr:4f877ecce5f73b75ce88",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.019077203953978474,
     "crps_gaussian": 0.011507172449826525,
@@ -11743,8 +11738,8 @@
    "prediction_id": "pq:e8694e2e91f628ba562a",
    "realized": 0.09045087577576658,
    "resolution_id": "pr:cf4dd1285343efd282e5",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.004040096557049913,
     "crps_gaussian": 0.0024040686071853993,
@@ -11767,8 +11762,8 @@
    "prediction_id": "pq:e8a0dd327a6fdca3247d",
    "realized": 0.07524698023871654,
    "resolution_id": "pr:48b21dcb2f7cc9d03ab6",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.007545133019019781,
     "crps_gaussian": 0.006719473492802047,
@@ -11791,8 +11786,8 @@
    "prediction_id": "pq:eca100551bee7cc917a1",
    "realized": null,
    "resolution_id": "pr:def3047f2ee2cb6e32c0",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {},
    "status": "pending",
    "vintage": "none"
@@ -11805,16 +11800,16 @@
    "prediction_id": "pq:f0045616e03b92425a60",
    "realized": 0.022029705151262093,
    "resolution_id": "pr:6c0ff4b8c8abb860a189",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
-    "categorical_brier": 1.0,
     "hit": false,
     "informative_vs_baselines": false,
     "momentum_hit": false,
     "momentum_predicts": true,
     "persistence_hit": null,
-    "persistence_predicts": null
+    "persistence_predicts": null,
+    "probabilistic_scores": "not applied: categorical claim (no stated probability)"
    },
    "status": "resolved",
    "vintage": "first_publication"
@@ -11827,16 +11822,16 @@
    "prediction_id": "pq:f106910889d35ba2c60d",
    "realized": 0.05691613331140812,
    "resolution_id": "pr:61f79dafe77059aa9514",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
-    "categorical_brier": 0.0,
     "hit": true,
     "informative_vs_baselines": false,
     "momentum_hit": true,
     "momentum_predicts": true,
     "persistence_hit": null,
-    "persistence_predicts": null
+    "persistence_predicts": null,
+    "probabilistic_scores": "not applied: categorical claim (no stated probability)"
    },
    "status": "resolved",
    "vintage": "first_publication"
@@ -11849,16 +11844,16 @@
    "prediction_id": "pq:f1503b2f532c5f18cbfe",
    "realized": 0.07933110367892976,
    "resolution_id": "pr:65c0864723edc4ed3ecb",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
-    "categorical_brier": 1.0,
     "hit": false,
     "informative_vs_baselines": true,
     "momentum_hit": true,
     "momentum_predicts": false,
     "persistence_hit": null,
-    "persistence_predicts": null
+    "persistence_predicts": null,
+    "probabilistic_scores": "not applied: categorical claim (no stated probability)"
    },
    "status": "resolved",
    "vintage": "first_publication"
@@ -11871,16 +11866,16 @@
    "prediction_id": "pq:f273ec56aed773058b1c",
    "realized": 0.036882132597553414,
    "resolution_id": "pr:9971bd76eb5ba879b0e8",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
-    "categorical_brier": 0.0,
     "hit": true,
     "informative_vs_baselines": false,
     "momentum_hit": true,
     "momentum_predicts": true,
     "persistence_hit": null,
-    "persistence_predicts": null
+    "persistence_predicts": null,
+    "probabilistic_scores": "not applied: categorical claim (no stated probability)"
    },
    "status": "resolved",
    "vintage": "first_publication"
@@ -11893,16 +11888,16 @@
    "prediction_id": "pq:f67b0ed598ab89c90d44",
    "realized": 0.04115186811843496,
    "resolution_id": "pr:8e4132099b3b7cf28728",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
-    "categorical_brier": 0.0,
     "hit": true,
     "informative_vs_baselines": false,
     "momentum_hit": true,
     "momentum_predicts": true,
     "persistence_hit": true,
-    "persistence_predicts": true
+    "persistence_predicts": true,
+    "probabilistic_scores": "not applied: categorical claim (no stated probability)"
    },
    "status": "resolved",
    "vintage": "first_publication"
@@ -11915,8 +11910,8 @@
    "prediction_id": "pq:f8ae40b6b6005c449e07",
    "realized": 0.04826136818530981,
    "resolution_id": "pr:7d1b9c3051ee106518f1",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.006394592830523231,
     "crps_gaussian": 0.004589856709779144,
@@ -11939,8 +11934,8 @@
    "prediction_id": "pq:f94d28cf357eab425913",
    "realized": null,
    "resolution_id": "pr:e7ac617bd5924e578d9d",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {},
    "status": "pending",
    "vintage": "none"
@@ -11953,8 +11948,8 @@
    "prediction_id": "pq:fa468ed07d6bcd19a354",
    "realized": 0.04826136818530981,
    "resolution_id": "pr:dad8ac4f54f8b5bc3579",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.010983685385193884,
     "crps_gaussian": 0.006581710435373038,
@@ -11977,15 +11972,14 @@
    "prediction_id": "pq:fae7f2beb83b88cbe2da",
    "realized": 0.26156670746634025,
    "resolution_id": "pr:1819221fc79acdec73f0",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
     "abs_error": 0.08398537133762535,
-    "crps_gaussian": 0.05819456316988665,
     "in_interval80": true,
-    "log_score_gaussian": 0.6652387516791035,
     "momentum_abs_error": 0.08169211330650672,
     "persistence_abs_error": 0.14859662350387642,
+    "probabilistic_scores": "not applied: interval is not point +/- z80 x SD (clipped or non-Gaussian): no Gaussian proper score",
     "skill_vs_momentum": -0.028071963599648697,
     "skill_vs_persistence": 0.43480969245957035,
     "sq_error": 0.007053542598718821
@@ -12001,8 +11995,8 @@
    "prediction_id": "pq:fbb8aedfcbc738dabda5",
    "realized": null,
    "resolution_id": "pr:ded6696e0891f1e77b0e",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {},
    "status": "pending",
    "vintage": "none"
@@ -12015,16 +12009,16 @@
    "prediction_id": "pq:fde9f212b534b9385e1e",
    "realized": 0.0559617773530817,
    "resolution_id": "pr:c6ed2551fff85bcf6345",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
-    "categorical_brier": 0.0,
     "hit": true,
     "informative_vs_baselines": true,
     "momentum_hit": false,
     "momentum_predicts": false,
     "persistence_hit": null,
-    "persistence_predicts": null
+    "persistence_predicts": null,
+    "probabilistic_scores": "not applied: categorical claim (no stated probability)"
    },
    "status": "resolved",
    "vintage": "first_publication"
@@ -12037,16 +12031,16 @@
    "prediction_id": "pq:fe1d390ca3784f390ad1",
    "realized": 0.071881346368123,
    "resolution_id": "pr:f4c09c8333f99bbc50c6",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
-    "categorical_brier": 0.0,
     "hit": true,
     "informative_vs_baselines": false,
     "momentum_hit": true,
     "momentum_predicts": true,
     "persistence_hit": null,
-    "persistence_predicts": null
+    "persistence_predicts": null,
+    "probabilistic_scores": "not applied: categorical claim (no stated probability)"
    },
    "status": "resolved",
    "vintage": "first_publication"
@@ -12059,21 +12053,21 @@
    "prediction_id": "pq:ffc9688e2012c680ee4b",
    "realized": 0.00605828953655041,
    "resolution_id": "pr:3f95f79a86b8c6dc9e2b",
-   "resolved_at": "2026-11-27T13:07:42Z",
-   "resolver_version": "prediction_resolver.v1",
+   "resolved_at": "2026-11-27T13:14:59Z",
+   "resolver_version": "prediction_resolver.v2",
    "scores_json": {
-    "categorical_brier": 0.0,
     "hit": true,
     "informative_vs_baselines": false,
     "momentum_hit": true,
     "momentum_predicts": true,
     "persistence_hit": true,
-    "persistence_predicts": true
+    "persistence_predicts": true,
+    "probabilistic_scores": "not applied: categorical claim (no stated probability)"
    },
    "status": "resolved",
    "vintage": "first_publication"
   }
  ],
- "resolver": "prediction_resolver.v1",
+ "resolver": "prediction_resolver.v2",
  "rule": "first_publication.v1"
 }

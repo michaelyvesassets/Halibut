@@ -18,13 +18,32 @@ real-world action. Roadmap item 1 of [MASTER_INTELLIGENCE_ARCHITECTURE_V2.md](MA
 | Idempotent resolution against independently acquired evidence | evidence comes only from the data layer (provider refreshes), never from agents; resolution ids hash the outcome, so reruns add nothing | bitemporal store, as-of retriever |
 | First publication, with revisions separate | resolves on the vintage at the moment the LAST target period was first published; later revisions get their own `revision` rows; the first stands | observation revisions and `available_at` |
 | No unpublished evidence | only observations with `available_at <= now`; the CLI refuses a future `--now` | as-of retriever |
-| Proper scoring | numeric: absolute and squared error, 80% interval hit, Gaussian CRPS and log score; binary: hit, Brier at p = 1 for categorical claims, Brier and log score with a probability | – |
+| Proper scoring | numeric: absolute and squared error, 80% interval hit, and Gaussian CRPS and log score only for a valid stated Gaussian; binary: hit, plus Brier and log score only with a stated probability | – |
 | Baselines | persistence and momentum, computed from the ORIGIN evidence only and stored at registration; scored next to every resolution | registry baselines |
 | Auditable history; cost and execution tracking | every attempt is a row (pending attempts deduplicated); every run is a hash-chained event (counts, seconds, API cost $0); a cost share per prediction from its investigation | event log, spend ledger |
 | Correlated questions | `correlation_group` (a claim's quantity across windows); the summary reports effective resolved groups | – |
 | Durability | `predictions export` writes `registry/predictions/ledger.json` (deterministic, with a sha256) for git | registry/ (R2 closure) |
 
 **Not promoted.** Resolutions never create lessons, validated mechanisms or shared knowledge.
+
+### 1.1 Integrity checks after review (2026-11-27; each confirmed by a test in `tests/test_predictions.py`)
+
+| Property | Mechanism | Test |
+|---|---|---|
+| First-publication evidence is recoverable | content-addressed raw snapshot in `registry/evidence/`; it reproduces the metrics | `test_registered_r2_prospective_tests_are_recoverable_from_git` |
+| A missing original publication is never silently replaced | basis `first_capture_verified` only if the period was absent in our previous snapshot and the release follows within 120 days; otherwise `first_capture_unverified` | `test_a_missed_release_never_passes_as_first_publication` |
+| Estimated history is distinct from verified records | backfilled history stays `estimated_lag`; the summary breaks resolutions down by basis | `test_backfilled_history_stays_estimated_and_groups_do_not_inflate_samples` |
+| Append-only and reproducible | triggers; resolution ids hash the content; two independent copies give identical ids | `test_registration_and_resolution_are_reproducible`, immutability assertions |
+| Related predictions do not inflate samples | a claim group (the same claim across windows) and an **outcome group** (the same realised value); the effective sample is the number of distinct outcome groups | `test_backfilled_history…`, `test_sync…` |
+| Probabilistic scores only where valid | Brier and log score only with a stated probability; Gaussian CRPS and log score only if the 80% interval equals point ± z80·SD (not clipped) | `test_scores_are_proper` |
+| The 12 R2 tests are recoverable and classified | committed registry (6 future; 6 unpublished-historical and nowcast; hashes; registration times) | `test_registered_r2_prospective_tests_are_recoverable_from_git` |
+| Frozen R2 results are unchanged | criteria hash pinned; R2 documents untouched | `test_preregistered_criteria_are_frozen` |
+
+Resolver version `prediction_resolver.v2`. The local ledger was rebuilt from the pre-milestone backup with v2, so no
+v1 categorical-Brier rows remain.
+
+On the real store, effective independent outcomes are lower than the prediction counts. For example, loop.v1's 28
+resolved numeric forecasts are 15 independent outcomes, because several models forecast the same quantity.
 
 ## 2. Usage (offline; no API calls)
 

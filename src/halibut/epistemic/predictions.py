@@ -50,7 +50,7 @@ from pathlib import Path
 from ..data.store import utc_now
 
 RULE = "first_publication.v1"
-RESOLVER_VERSION = "prediction_resolver.v1"
+RESOLVER_VERSION = "prediction_resolver.v2"  # v2: verified/unverified first capture; probabilistic scores only where valid
 SCRIPTED = ("mock", "reference")
 TIE = 1e-12
 
@@ -95,19 +95,54 @@ class _Panels:
         return self.cache[k]
 
 
+MAX_RELEASE_GAP_DAYS = 120  # one quarterly cycle plus slippage: a longer gap may hide an unseen intermediate release
+
+
 def first_publication(store, panel_now, periods) -> dict:
-    """{period: earliest available_at} for the periods the panel (built at 'now') contains; missing periods are absent."""
+    """{period: (earliest available_at, basis)} for the periods the panel (built at 'now') contains.
+
+    basis (never upgraded silently):
+      estimated_lag             history backfilled at our FIRST retrieval: the original publication was not observed;
+                                the value is the earliest CAPTURED vintage and its date an estimate
+      first_capture_verified    the period was ABSENT in our previous snapshot and the release that added it follows
+                                that snapshot's release within MAX_RELEASE_GAP_DAYS: an observed first publication
+      first_capture_unverified  first captured in a later snapshot, but an unseen intermediate release (and so an
+                                unseen original value) cannot be excluded
+      published / retrieval     non-DfT panels: the availability carried by the rows"""
+    from datetime import datetime  # noqa: PLC0415
     out = {}
     for p in periods:
         if p not in panel_now.periods:
             continue
-        if panel_now.source == "dft":
-            row = store.conn.execute("""SELECT MIN(o.available_at), MIN(o.availability_basis) FROM observations o
-                JOIN series s USING(series_id) WHERE s.universe_key=? AND o.period=?""", (panel_now.universe, p)).fetchone()
-            out[p] = (row[0], row[1])
-        else:  # csv_panel: the availability carried by the panel cells (rows are not revisioned)
+        if panel_now.source != "dft":
             out[p] = (panel_now.cells[(panel_now.MARKET, "all")][p][2], "published")
+            continue
+        row = store.conn.execute("""SELECT o.available_at, o.availability_basis, o.snapshot_id FROM observations o
+            JOIN series s USING(series_id) WHERE s.universe_key=? AND o.period=? ORDER BY o.available_at, o.snapshot_id
+            LIMIT 1""", (panel_now.universe, p)).fetchone()
+        t, basis, sid = row
+        if basis == "estimated_lag":
+            out[p] = (t, "estimated_lag")
+            continue
+        snap = store.conn.execute("SELECT dataset_id, publisher_updated, retrieved_at FROM snapshots WHERE snapshot_id=?",
+                                  (sid,)).fetchone()
+        prev = store.conn.execute("""SELECT snapshot_id, publisher_updated, retrieved_at FROM snapshots WHERE dataset_id=?
+            AND snapshot_id<? ORDER BY snapshot_id DESC LIMIT 1""", (snap[0], sid)).fetchone()
+        verified = False
+        if prev is not None and prev[1] and snap[1]:
+            absent = store.conn.execute("""SELECT COUNT(*) FROM observations o JOIN series s USING(series_id)
+                WHERE s.universe_key=? AND o.period=? AND o.snapshot_id<=?""", (panel_now.universe, p, prev[0])).fetchone()[0] == 0
+            gap = (datetime.fromisoformat(snap[1].replace("Z", "+00:00"))
+                   - datetime.fromisoformat(prev[1].replace("Z", "+00:00"))).days
+            verified = absent and 0 < gap <= MAX_RELEASE_GAP_DAYS
+        out[p] = (t, "first_capture_verified" if verified else "first_capture_unverified")
     return out
+
+
+def combined_basis(fp: dict, periods) -> str:
+    """The weakest basis over the target periods (a question is only as verified as its least verified period)."""
+    order = ["estimated_lag", "first_capture_unverified", "retrieval", "published", "first_capture_verified"]
+    return min((fp[p][1] for p in periods), key=lambda b: order.index(b) if b in order else 0)
 
 
 # ------------------------------------------------------------------------------------------------------- baselines
@@ -219,17 +254,37 @@ def _Phi(z):
     return 0.5 * (1 + math.erf(z / math.sqrt(2)))
 
 
+Z80 = 1.2815515655446004
+
+
+def gaussian_valid(q: dict) -> tuple[bool, str]:
+    """A Gaussian predictive distribution is scored only if it is the distribution actually stated: SD > 0 and the 80%
+    interval equals point +/- z80 x SD (an interval clipped to [0, 1] is no longer that distribution)."""
+    sd, iv = q.get("sd"), q.get("interval80")
+    if not sd or sd <= 0:
+        return False, "no predictive SD"
+    if not iv:
+        return False, "no interval to check the stated distribution"
+    lo, hi = iv
+    if abs(lo - (q["point"] - Z80 * sd)) > 1e-9 or abs(hi - (q["point"] + Z80 * sd)) > 1e-9:
+        return False, "interval is not point +/- z80 x SD (clipped or non-Gaussian): no Gaussian proper score"
+    return True, ""
+
+
 def score_numeric(q: dict, y: float, baselines: dict) -> dict:
     pt = q["point"]
     s = {"abs_error": abs(pt - y), "sq_error": (pt - y) ** 2}
     if q.get("interval80"):
         lo, hi = q["interval80"]
         s["in_interval80"] = lo <= y <= hi
-    sd = q.get("sd")
-    if sd and sd > 0:
+    ok, why = gaussian_valid(q)
+    if ok:
+        sd = q["sd"]
         z = (y - pt) / sd
         s["crps_gaussian"] = sd * (z * (2 * _Phi(z) - 1) + 2 * _phi(z) - 1 / math.sqrt(math.pi))
         s["log_score_gaussian"] = math.log(_phi(z) / sd)
+    else:
+        s["probabilistic_scores"] = f"not applied: {why}"
     for name, b in baselines.items():
         if isinstance(b, dict) and b.get("point") is not None:
             e = abs(b["point"] - y)
@@ -239,11 +294,12 @@ def score_numeric(q: dict, y: float, baselines: dict) -> dict:
 
 
 def score_binary(q: dict, hit: bool, baselines: dict) -> dict:
+    """Proper probabilistic scores (Brier, log) ONLY for a stated probability; a categorical claim gets its hit only."""
     o = 1.0 if hit else 0.0
     p = q.get("probability")
     s = {"hit": hit}
     if p is None:
-        s["categorical_brier"] = (1 - o) ** 2  # a categorical claim scored as p = 1 (no stated probability)
+        s["probabilistic_scores"] = "not applied: categorical claim (no stated probability)"
     else:
         s["brier"] = (p - o) ** 2
         s["log_score"] = math.log(max(p if hit else 1 - p, 1e-12))
@@ -254,6 +310,12 @@ def score_binary(q: dict, hit: bool, baselines: dict) -> dict:
     s["informative_vs_baselines"] = all(isinstance(b, dict) and b.get("predicts") is not True
                                         for b in baselines.values() if isinstance(b, dict) and "predicts" in b)
     return s
+
+
+def outcome_group(market_id: str, q: dict) -> str:
+    """Predictions resolved by the SAME realised value (same market, quantity and target periods) share an outcome
+    group: they are not independent observations, whatever their claims or windows."""
+    return "og:" + _h([market_id, q["template"], q["entity"], q.get("entity_b") or "", sorted(q["target_periods"])])[:16]
 
 
 # ------------------------------------------------------------------------------------------------------- resolve
@@ -285,7 +347,7 @@ def _resolve_one(store, r, markets, panels, now) -> list[tuple]:
     if missing:
         return [("pending", "none", None, None, None, None, {}, f"not yet published: {missing}")]
     t_first = max(fp[p][0] for p in q["target_periods"])
-    basis = "estimated_lag" if any(fp[p][1] == "estimated_lag" for p in q["target_periods"]) else fp[q["target_periods"][-1]][1]
+    basis = combined_basis(fp, q["target_periods"])
     if r["temporal_class"] == "prospective" and t_first <= r["registered_at"]:
         return [("invalid", "first_publication", t_first, basis, None, None, {},
                  "prospective question whose evidence predates its registration")]
@@ -363,6 +425,7 @@ def current(store) -> list[dict]:
                     "outcome": state["outcome"] if state else None, "realized": state["realized"] if state else None,
                     "scores": json.loads(state["scores_json"]) if state else {},
                     "availability_basis": state["availability_basis"] if state else None,
+                    "outcome_group": outcome_group(r["market_id"], json.loads(r["question_json"])),
                     "revisions": sum(1 for x in res if x["vintage"] == "revision"), "history": len(res)})
     return out
 
@@ -372,12 +435,14 @@ def summary(store) -> dict:
     by = {}
     for x in rows:
         k = (x["provenance"].get("prompt_version"), x["temporal_class"], x["kind"])
-        g = by.setdefault(k, {"n": 0, "status": {}, "groups": set(), "hits": 0, "resolved_binary": 0, "baseline_hits": {},
-                              "abs_error": [], "cost_usd": 0.0})
+        g = by.setdefault(k, {"n": 0, "status": {}, "groups": set(), "ogroups": set(), "basis": {}, "hits": 0,
+                              "resolved_binary": 0, "baseline_hits": {}, "abs_error": [], "cost_usd": 0.0})
         g["n"] += 1
         g["status"][x["status"]] = g["status"].get(x["status"], 0) + 1
         if x["status"] == "resolved":
             g["groups"].add(x["correlation_group"])
+            g["ogroups"].add(x["outcome_group"])
+            g["basis"][x["availability_basis"]] = g["basis"].get(x["availability_basis"], 0) + 1
             if x["kind"] == "binary":
                 g["resolved_binary"] += 1
                 g["hits"] += bool(x["scores"].get("hit"))
@@ -392,7 +457,9 @@ def summary(store) -> dict:
     out = []
     for (pv, tc, kind), g in sorted(by.items(), key=lambda kv: tuple(str(x) for x in kv[0])):
         out.append({"contract": pv, "temporal_class": tc, "kind": kind, "predictions": g["n"], "status": g["status"],
-                    "effective_resolved_groups": len(g["groups"]),
+                    "resolved_claim_groups": len(g["groups"]),
+                    "effective_independent_outcomes": len(g["ogroups"]),
+                    "resolution_basis": g["basis"],
                     "hit_rate": (g["hits"] / g["resolved_binary"]) if g["resolved_binary"] else None,
                     "baseline_hit_rates": {b: (v[0] / v[1]) for b, v in g["baseline_hits"].items() if v[1]},
                     "mean_abs_error": (sum(g["abs_error"]) / len(g["abs_error"])) if g["abs_error"] else None})
