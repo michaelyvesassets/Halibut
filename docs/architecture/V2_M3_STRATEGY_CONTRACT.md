@@ -97,3 +97,22 @@ rejected with `loop.v1`.
 Then freeze both contracts and use the sealed holdout. The baseline-aware generation experiment
 ([FUTURE_EXPERIMENT_BASELINE_AWARE_GENERATION.md](FUTURE_EXPERIMENT_BASELINE_AWARE_GENERATION.md)) follows as its own
 versioned experiment.
+
+## 5. Future efficiency optimization (recorded 2026-11-27; not implemented)
+
+**Selective quantity retrieval.** Today the whole catalogue is sent to the strategist: about 200 quantities, which
+accounts for the +51% input. A later version could send a compact core:
+- the objective's entities;
+- the cited hypotheses' evidence;
+- the official baselines;
+- an index of the other quantity ids.
+
+The strategist would request any further quantity by id or by `calculation_requests`, and the engine would compute or
+retrieve it. Integrity is unchanged: every number still comes from the engine, unknown references are still rejected,
+and nothing is estimated by the model.
+
+Measure it as a separately versioned variant against full-catalogue `strategy.v3` on the same inputs:
+- tokens;
+- rejected-reference rate;
+- option validity;
+- latency, including any extra round trip.
