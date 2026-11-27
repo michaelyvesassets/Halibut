@@ -1,0 +1,495 @@
+{
+ "criteria_hash": "223362694f7d254f225808caecee081eeccb0444be4d582035eb667b43e3d91d",
+ "evidence_snapshots": [
+  {
+   "dataset_id": "dft_veh0160_models",
+   "publisher_updated": "2026-09-23T08:30:04Z",
+   "retrieved_at": "2026-11-23T13:00:29Z",
+   "sha256": "204fb505266ddc565b3585260ed7bc4f231958ae71fb9422015ea55a085a87a5"
+  },
+  {
+   "dataset_id": "dft_veh0160_makes",
+   "publisher_updated": "2026-09-23T08:30:04Z",
+   "retrieved_at": "2026-11-23T13:00:26Z",
+   "sha256": "204fb505266ddc565b3585260ed7bc4f231958ae71fb9422015ea55a085a87a5"
+  }
+ ],
+ "experiment_id": "r2s2b-33f66362ef91",
+ "investigations": {
+  "inv:47285b8cd8dfd9c1.1": {
+   "as_of": "2026-11-27T23:59:59Z",
+   "content_hash": "b5482b251b6f963eedeccd5610cf085e43b2a7c9ce9e0a6484dbd0d9a48a28f3",
+   "contract": "loop.v1",
+   "panel_fingerprint": "3568da110bc27d2204bfb0d5db1c21d4b86431d9695082838c58862879f6dfd2"
+  },
+  "inv:65137a22117dcca7.1": {
+   "as_of": "2026-11-27T23:59:59Z",
+   "content_hash": "8a728cbddaf31acc42dbe59ce4a782822c51d4da06892690e9acade28fdb23c0",
+   "contract": "loop.v2:extended",
+   "panel_fingerprint": "3568da110bc27d2204bfb0d5db1c21d4b86431d9695082838c58862879f6dfd2"
+  }
+ },
+ "prospective_protocol": {
+  "no_tuning": "prompts, contracts, schemas, thresholds and this protocol are frozen by CRITERIA_HASH; nothing is rerun or re-scored after outcomes are seen",
+  "publication_check": "DfT VEH0160 retrieved <= 7 days before registration (snapshots.retrieved_at), else refused",
+  "registration": "at the real call time (utc_now), never backdated; evidence as of the registration date",
+  "resolution": "each test resolves once on the FIRST published vintage containing all its target periods (compiler.resolve on a panel as of that publication); later revisions are ignored",
+  "scoring": "informative confirmations and refutations by window class, reported separately; already_published periods are never prospective; predictive support is not causal proof",
+  "windows": "nominal (next two quarters after the last published one), each period labelled already_published, unpublished_historical, partially_elapsed (nowcast) or future; PLUS the agent's implication on the first two quarters starting after registration (engine horizon extension, identical for every arm)"
+ },
+ "publication_check": {
+  "checked_at": "2026-11-27T12:17:21Z",
+  "fresh": true,
+  "latest_published_quarter": "2026-Q2",
+  "max_age_days": 7,
+  "publisher_updated": "2026-09-23T08:30:04Z",
+  "retrieved_at": "2026-11-23T13:00:29Z"
+ },
+ "registry_sha256": "fbf12b1d768173f26712b68a39fdb22d6e6c98770dfcc87288e962b47b28f70e",
+ "tests": [
+  {
+   "horizon": "nominal",
+   "hypothesis": "H1",
+   "hypothesis_statement": "Ford's electric-mix increase is driven by a deliberate shift of its electrified line-up toward battery electric models, so that Ford's electric segment share grows faster than its overall share in the next two quarters.",
+   "implication_ref": "I1",
+   "investigation_id": "inv:47285b8cd8dfd9c1.1",
+   "registered_at": "2026-11-27T12:17:49Z",
+   "spec": {
+    "as_of": "2026-11-27T23:59:59Z",
+    "comparator": "above_reference",
+    "entity": "ford",
+    "entity_b": null,
+    "expected_resolvable_after": "2027-04-30",
+    "market_id": "uk_cars_first_registrations",
+    "panel_source": "dft",
+    "reference_source": "metric:segment_mix:L4:ford",
+    "reference_value": 0.3003214397788087,
+    "spec_version": "hypothesis_test.v1",
+    "target_periods": [
+     "2026-Q3",
+     "2026-Q4"
+    ],
+    "template": "segment_mix",
+    "trend_check": {
+     "momentum_point": 0.41095385352154734,
+     "note": "trend_consistent = simple extrapolation already predicts this outcome",
+     "trend_consistent": true
+    },
+    "would_refute_if": "Ford's segment mix falls back toward its P4 level of 15.28%"
+   },
+   "spec_sha256": "452fcf91299787b438143937e0c2cbcf7b7fbe64a45a5c279cd1ace0781044d8",
+   "test_id": "t:7a10990e1cf32bd5f5cc",
+   "window_classes": {
+    "2026-Q3": "unpublished_historical",
+    "2026-Q4": "partially_elapsed"
+   }
+  },
+  {
+   "horizon": "future_window",
+   "hypothesis": "H1",
+   "hypothesis_statement": "Ford's electric-mix increase is driven by a deliberate shift of its electrified line-up toward battery electric models, so that Ford's electric segment share grows faster than its overall share in the next two quarters.",
+   "implication_ref": "I1@future",
+   "investigation_id": "inv:47285b8cd8dfd9c1.1",
+   "registered_at": "2026-11-27T12:17:49Z",
+   "spec": {
+    "as_of": "2026-11-27T23:59:59Z",
+    "comparator": "above_reference",
+    "entity": "ford",
+    "entity_b": null,
+    "expected_resolvable_after": "2027-10-28",
+    "market_id": "uk_cars_first_registrations",
+    "panel_source": "dft",
+    "reference_source": "metric:segment_mix:L4:ford",
+    "reference_value": 0.3003214397788087,
+    "spec_version": "hypothesis_test.v1",
+    "target_periods": [
+     "2027-Q1",
+     "2027-Q2"
+    ],
+    "template": "segment_mix",
+    "trend_check": {
+     "momentum_point": 0.41095385352154734,
+     "note": "trend_consistent = simple extrapolation already predicts this outcome",
+     "trend_consistent": true
+    },
+    "would_refute_if": "Ford's segment mix falls back toward its P4 level of 15.28%"
+   },
+   "spec_sha256": "dda1490c78f13848d60fd5b992498651c5af33075370195d115f82bcf40104fb",
+   "test_id": "t:579c125d6b1a67e17016",
+   "window_classes": {
+    "2027-Q1": "future",
+    "2027-Q2": "future"
+   }
+  },
+  {
+   "horizon": "nominal",
+   "hypothesis": "H2",
+   "hypothesis_statement": "BYD's growth in battery electric volume is constrained by a shift of its own sales toward hybrid or petrol models, so that its segment mix continues to drift down even as the segment grows.",
+   "implication_ref": "I2",
+   "investigation_id": "inv:47285b8cd8dfd9c1.1",
+   "registered_at": "2026-11-27T12:17:49Z",
+   "spec": {
+    "as_of": "2026-11-27T23:59:59Z",
+    "comparator": "below_reference",
+    "entity": "byd",
+    "entity_b": null,
+    "expected_resolvable_after": "2027-04-30",
+    "market_id": "uk_cars_first_registrations",
+    "panel_source": "dft",
+    "reference_source": "metric:segment_mix:L4:byd",
+    "reference_value": 0.5384526775043557,
+    "spec_version": "hypothesis_test.v1",
+    "target_periods": [
+     "2026-Q3",
+     "2026-Q4"
+    ],
+    "template": "segment_mix",
+    "trend_check": {
+     "momentum_point": 0.472540979240723,
+     "note": "trend_consistent = simple extrapolation already predicts this outcome",
+     "trend_consistent": true
+    },
+    "would_refute_if": "BYD's segment mix rises back above 53.85%"
+   },
+   "spec_sha256": "27a799b0d058994a17300eeb01b60a67e925320a3eba6d13b47a6247fca9cb73",
+   "test_id": "t:a40752db42ec9d12503a",
+   "window_classes": {
+    "2026-Q3": "unpublished_historical",
+    "2026-Q4": "partially_elapsed"
+   }
+  },
+  {
+   "horizon": "future_window",
+   "hypothesis": "H2",
+   "hypothesis_statement": "BYD's growth in battery electric volume is constrained by a shift of its own sales toward hybrid or petrol models, so that its segment mix continues to drift down even as the segment grows.",
+   "implication_ref": "I2@future",
+   "investigation_id": "inv:47285b8cd8dfd9c1.1",
+   "registered_at": "2026-11-27T12:17:49Z",
+   "spec": {
+    "as_of": "2026-11-27T23:59:59Z",
+    "comparator": "below_reference",
+    "entity": "byd",
+    "entity_b": null,
+    "expected_resolvable_after": "2027-10-28",
+    "market_id": "uk_cars_first_registrations",
+    "panel_source": "dft",
+    "reference_source": "metric:segment_mix:L4:byd",
+    "reference_value": 0.5384526775043557,
+    "spec_version": "hypothesis_test.v1",
+    "target_periods": [
+     "2027-Q1",
+     "2027-Q2"
+    ],
+    "template": "segment_mix",
+    "trend_check": {
+     "momentum_point": 0.472540979240723,
+     "note": "trend_consistent = simple extrapolation already predicts this outcome",
+     "trend_consistent": true
+    },
+    "would_refute_if": "BYD's segment mix rises back above 53.85%"
+   },
+   "spec_sha256": "2725f4b16414260f349ed935323fa2099870dcfe006709f0150d9ee2f916aeae",
+   "test_id": "t:1a7ec5ad536e5a70e010",
+   "window_classes": {
+    "2027-Q1": "future",
+    "2027-Q2": "future"
+   }
+  },
+  {
+   "horizon": "nominal",
+   "hypothesis": "H3",
+   "hypothesis_statement": "Kia's electric segment is gaining ground through within-segment competition, while its total share is pressured by weakness in its non-electric models, so Kia's total share will remain below its P4 level over the test window.",
+   "implication_ref": "I3",
+   "investigation_id": "inv:47285b8cd8dfd9c1.1",
+   "registered_at": "2026-11-27T12:17:49Z",
+   "spec": {
+    "as_of": "2026-11-27T23:59:59Z",
+    "comparator": "below_reference",
+    "entity": "kia",
+    "entity_b": null,
+    "expected_resolvable_after": "2027-04-30",
+    "market_id": "uk_cars_first_registrations",
+    "panel_source": "dft",
+    "reference_source": "metric:share:P4:kia",
+    "reference_value": 0.05587596902272964,
+    "spec_version": "hypothesis_test.v1",
+    "target_periods": [
+     "2026-Q3",
+     "2026-Q4"
+    ],
+    "template": "share",
+    "trend_check": {
+     "momentum_point": 0.04991186637009955,
+     "note": "trend_consistent = simple extrapolation already predicts this outcome",
+     "trend_consistent": true
+    },
+    "would_refute_if": "Kia's total share recovers above 5.59%"
+   },
+   "spec_sha256": "ab5f934d1b48fc9242fa502371f0201a711a791734fd2a15a5dfee44e9b6cab1",
+   "test_id": "t:7ce30f2ead033055c7be",
+   "window_classes": {
+    "2026-Q3": "unpublished_historical",
+    "2026-Q4": "partially_elapsed"
+   }
+  },
+  {
+   "horizon": "future_window",
+   "hypothesis": "H3",
+   "hypothesis_statement": "Kia's electric segment is gaining ground through within-segment competition, while its total share is pressured by weakness in its non-electric models, so Kia's total share will remain below its P4 level over the test window.",
+   "implication_ref": "I3@future",
+   "investigation_id": "inv:47285b8cd8dfd9c1.1",
+   "registered_at": "2026-11-27T12:17:49Z",
+   "spec": {
+    "as_of": "2026-11-27T23:59:59Z",
+    "comparator": "below_reference",
+    "entity": "kia",
+    "entity_b": null,
+    "expected_resolvable_after": "2027-10-28",
+    "market_id": "uk_cars_first_registrations",
+    "panel_source": "dft",
+    "reference_source": "metric:share:P4:kia",
+    "reference_value": 0.05587596902272964,
+    "spec_version": "hypothesis_test.v1",
+    "target_periods": [
+     "2027-Q1",
+     "2027-Q2"
+    ],
+    "template": "share",
+    "trend_check": {
+     "momentum_point": 0.04991186637009955,
+     "note": "trend_consistent = simple extrapolation already predicts this outcome",
+     "trend_consistent": true
+    },
+    "would_refute_if": "Kia's total share recovers above 5.59%"
+   },
+   "spec_sha256": "d7861142b6ee74e20da24702925f274cbd81847c8cfbf874e94590e090d146db",
+   "test_id": "t:3df09077eebc934d4b8d",
+   "window_classes": {
+    "2027-Q1": "future",
+    "2027-Q2": "future"
+   }
+  },
+  {
+   "horizon": "nominal",
+   "hypothesis": "H1",
+   "hypothesis_statement": "BYD is gaining BEV share through a dedicated BEV push, with BEV volume growth outpacing its hybrid/petrol volume, which raises BYD's segment share while diluting its BEV mix.",
+   "implication_ref": "I1",
+   "investigation_id": "inv:65137a22117dcca7.1",
+   "registered_at": "2026-11-27T12:18:24Z",
+   "spec": {
+    "as_of": "2026-11-27T23:59:59Z",
+    "comparator": "above_reference",
+    "entity": "byd",
+    "entity_b": null,
+    "expected_resolvable_after": "2027-04-30",
+    "market_id": "uk_cars_first_registrations",
+    "panel_source": "dft",
+    "reference_source": "metric:segment_share:L4:byd",
+    "reference_value": 0.07014710351270133,
+    "spec_version": "hypothesis_test.v1",
+    "target_periods": [
+     "2026-Q3",
+     "2026-Q4"
+    ],
+    "template": "segment_share",
+    "trend_check": {
+     "momentum_point": 0.095746862313347,
+     "note": "trend_consistent = simple extrapolation already predicts this outcome",
+     "trend_consistent": true
+    },
+    "would_refute_if": "BYD segment share falls back below 7.01% in both next quarters"
+   },
+   "spec_sha256": "3dded2528e8795ab81a6dd4bda27d4e9fc7fcede11494933dc7b2f9d04444185",
+   "test_id": "t:06599bd8fe93c7326a9d",
+   "window_classes": {
+    "2026-Q3": "unpublished_historical",
+    "2026-Q4": "partially_elapsed"
+   }
+  },
+  {
+   "horizon": "future_window",
+   "hypothesis": "H1",
+   "hypothesis_statement": "BYD is gaining BEV share through a dedicated BEV push, with BEV volume growth outpacing its hybrid/petrol volume, which raises BYD's segment share while diluting its BEV mix.",
+   "implication_ref": "I1@future",
+   "investigation_id": "inv:65137a22117dcca7.1",
+   "registered_at": "2026-11-27T12:18:24Z",
+   "spec": {
+    "as_of": "2026-11-27T23:59:59Z",
+    "comparator": "above_reference",
+    "entity": "byd",
+    "entity_b": null,
+    "expected_resolvable_after": "2027-10-28",
+    "market_id": "uk_cars_first_registrations",
+    "panel_source": "dft",
+    "reference_source": "metric:segment_share:L4:byd",
+    "reference_value": 0.07014710351270133,
+    "spec_version": "hypothesis_test.v1",
+    "target_periods": [
+     "2027-Q1",
+     "2027-Q2"
+    ],
+    "template": "segment_share",
+    "trend_check": {
+     "momentum_point": 0.095746862313347,
+     "note": "trend_consistent = simple extrapolation already predicts this outcome",
+     "trend_consistent": true
+    },
+    "would_refute_if": "BYD segment share falls back below 7.01% in both next quarters"
+   },
+   "spec_sha256": "0c771f5d7426805a7134ef2eff4fb89c432cf10e7ece0a5812b1843f7e0065c0",
+   "test_id": "t:001c0b8ed4b216bee3d5",
+   "window_classes": {
+    "2027-Q1": "future",
+    "2027-Q2": "future"
+   }
+  },
+  {
+   "horizon": "nominal",
+   "hypothesis": "H2",
+   "hypothesis_statement": "BYD's BEV share gain reflects a temporary market-wide surge in BEV demand that BYD captured proportionally, and will fade as the segment normalises.",
+   "implication_ref": "I3",
+   "investigation_id": "inv:65137a22117dcca7.1",
+   "registered_at": "2026-11-27T12:18:24Z",
+   "spec": {
+    "as_of": "2026-11-27T23:59:59Z",
+    "comparator": "above_reference",
+    "entity": "market",
+    "entity_b": null,
+    "expected_resolvable_after": "2027-04-30",
+    "market_id": "uk_cars_first_registrations",
+    "panel_source": "dft",
+    "reference_source": "metric:market_segment_share:L4",
+    "reference_value": 0.24497769395779223,
+    "spec_version": "hypothesis_test.v1",
+    "target_periods": [
+     "2026-Q3",
+     "2026-Q4"
+    ],
+    "template": "market_segment_share",
+    "trend_check": {
+     "momentum_point": 0.2666255085652078,
+     "note": "trend_consistent = simple extrapolation already predicts this outcome",
+     "trend_consistent": true
+    },
+    "would_refute_if": "Market BEV share falls below 24.50% in the next two quarters"
+   },
+   "spec_sha256": "3dc60de70a8a61fd95075c83ca88ec2bb516e0752d5b11ef4812e68f71f63c9b",
+   "test_id": "t:cf4fb0de2ab22c9d2e0f",
+   "window_classes": {
+    "2026-Q3": "unpublished_historical",
+    "2026-Q4": "partially_elapsed"
+   }
+  },
+  {
+   "horizon": "future_window",
+   "hypothesis": "H2",
+   "hypothesis_statement": "BYD's BEV share gain reflects a temporary market-wide surge in BEV demand that BYD captured proportionally, and will fade as the segment normalises.",
+   "implication_ref": "I3@future",
+   "investigation_id": "inv:65137a22117dcca7.1",
+   "registered_at": "2026-11-27T12:18:24Z",
+   "spec": {
+    "as_of": "2026-11-27T23:59:59Z",
+    "comparator": "above_reference",
+    "entity": "market",
+    "entity_b": null,
+    "expected_resolvable_after": "2027-10-28",
+    "market_id": "uk_cars_first_registrations",
+    "panel_source": "dft",
+    "reference_source": "metric:market_segment_share:L4",
+    "reference_value": 0.24497769395779223,
+    "spec_version": "hypothesis_test.v1",
+    "target_periods": [
+     "2027-Q1",
+     "2027-Q2"
+    ],
+    "template": "market_segment_share",
+    "trend_check": {
+     "momentum_point": 0.2666255085652078,
+     "note": "trend_consistent = simple extrapolation already predicts this outcome",
+     "trend_consistent": true
+    },
+    "would_refute_if": "Market BEV share falls below 24.50% in the next two quarters"
+   },
+   "spec_sha256": "2c5d975f6ce52518172993ac4c2524f253e8f3ab31c7835919ae835a0062dfb2",
+   "test_id": "t:30e32d7d2146fe9556f4",
+   "window_classes": {
+    "2027-Q1": "future",
+    "2027-Q2": "future"
+   }
+  },
+  {
+   "horizon": "nominal",
+   "hypothesis": "H2",
+   "hypothesis_statement": "BYD's BEV share gain reflects a temporary market-wide surge in BEV demand that BYD captured proportionally, and will fade as the segment normalises.",
+   "implication_ref": "I1",
+   "investigation_id": "inv:65137a22117dcca7.1",
+   "registered_at": "2026-11-27T12:18:24Z",
+   "spec": {
+    "as_of": "2026-11-27T23:59:59Z",
+    "comparator": "below_reference",
+    "entity": "byd",
+    "entity_b": null,
+    "expected_resolvable_after": "2027-04-30",
+    "market_id": "uk_cars_first_registrations",
+    "panel_source": "dft",
+    "reference_source": "metric:segment_share:L4:byd",
+    "reference_value": 0.07014710351270133,
+    "spec_version": "hypothesis_test.v1",
+    "target_periods": [
+     "2026-Q3",
+     "2026-Q4"
+    ],
+    "template": "segment_share",
+    "trend_check": {
+     "momentum_point": 0.095746862313347,
+     "note": "trend_consistent = simple extrapolation already predicts this outcome",
+     "trend_consistent": false
+    },
+    "would_refute_if": "BYD segment share stays above 7.01% in both quarters"
+   },
+   "spec_sha256": "28ad2b797ba52f34ee1006738c46ebfe673a4fe94cba40feacc846a13a7f6d1d",
+   "test_id": "t:5cf6281882bd770e6c40",
+   "window_classes": {
+    "2026-Q3": "unpublished_historical",
+    "2026-Q4": "partially_elapsed"
+   }
+  },
+  {
+   "horizon": "future_window",
+   "hypothesis": "H2",
+   "hypothesis_statement": "BYD's BEV share gain reflects a temporary market-wide surge in BEV demand that BYD captured proportionally, and will fade as the segment normalises.",
+   "implication_ref": "I1@future",
+   "investigation_id": "inv:65137a22117dcca7.1",
+   "registered_at": "2026-11-27T12:18:24Z",
+   "spec": {
+    "as_of": "2026-11-27T23:59:59Z",
+    "comparator": "below_reference",
+    "entity": "byd",
+    "entity_b": null,
+    "expected_resolvable_after": "2027-10-28",
+    "market_id": "uk_cars_first_registrations",
+    "panel_source": "dft",
+    "reference_source": "metric:segment_share:L4:byd",
+    "reference_value": 0.07014710351270133,
+    "spec_version": "hypothesis_test.v1",
+    "target_periods": [
+     "2027-Q1",
+     "2027-Q2"
+    ],
+    "template": "segment_share",
+    "trend_check": {
+     "momentum_point": 0.095746862313347,
+     "note": "trend_consistent = simple extrapolation already predicts this outcome",
+     "trend_consistent": false
+    },
+    "would_refute_if": "BYD segment share stays above 7.01% in both quarters"
+   },
+   "spec_sha256": "0d835ef8089285a26caf9ad0a3199133d69704f13591e1706b3390e62ea6300c",
+   "test_id": "t:9792c0a3576e16548e2b",
+   "window_classes": {
+    "2027-Q1": "future",
+    "2027-Q2": "future"
+   }
+  }
+ ]
+}
