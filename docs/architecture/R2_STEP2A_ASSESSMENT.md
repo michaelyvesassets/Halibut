@@ -206,12 +206,17 @@ table at proposal time):
 Allocation follows measured per-role performance and cost per validated result, not token quotas. The router
 fingerprint keeps every model mix's results separate.
 
-## 7. Proposed follow-ups (not implemented; need approval)
+## 7. Follow-up requirements (accepted by the founder on 2026-11-27; to implement AFTER Step 2b, never in the frozen benchmark)
 
-1. **Secondary evaluation readout v2.1** (versioned; the frozen primary is unchanged):
-   - no dispute credit when the losing rival was contradicted at the origin;
-   - flag "useful" results carrying an evidence-cited factual contradiction, once the critic's numbers are verified
-     deterministically.
-2. **Make every enforced schema limit visible** to the model (contract version bump).
-3. **Strategy contract v3** (quantity catalogue).
-4. **The post-hoc diagnostic for 2b** described in §5.
+**Accepted conclusion:** none of the three useful retrospective results is a validated mechanism discovery.
+
+| # | Requirement | Notes |
+|---|---|---|
+| F1 | **A separately versioned strategist contract** with deterministic calculations and numerical references | The engine publishes a verified quantity catalogue; the strategist cites quantity ids; any digit in free text is rejected; assumed magnitudes only in the low/high fields; eligibility rules unchanged |
+| F2 | **Every enforced schema limit communicated to the models** | `maxLength` and `maxItems` are stripped from the API schema, so they must be stated in the prompt or the schema descriptions. Contract version bump |
+| F3 | **A secondary, versioned evaluation readout** | No dispute credit when the losing rival was already contradicted by the evidence available at the origin. The frozen primary readout is unchanged |
+| F4 | **A separately labelled offline critic diagnostic** | Scores critiques rejected only for invisible limits next to the frozen C1–C4; never replaces them |
+| F5 | **Stronger evaluation of mechanism quality, predictive accuracy and causal validity** | Mechanisms consistent with the origin evidence; critic claims verified deterministically before use; predictive support (accuracy, calibration, against-trend success) kept separate from causal evidence (which needs designs such as a regional rollout, not national aggregates) |
+
+These follow the Step 2b execution and the consolidation into **Master Intelligence Architecture V2** (recommendations
+from the founder to follow). They need separate approval, and none of them changes the Step 2a or 2b results.
