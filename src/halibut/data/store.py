@@ -517,6 +517,51 @@ CREATE TABLE approval_uses (
 CREATE TRIGGER uses_no_update BEFORE UPDATE ON approval_uses BEGIN SELECT RAISE(ABORT, 'approval uses are append-only'); END;
 CREATE TRIGGER uses_no_delete BEFORE DELETE ON approval_uses BEGIN SELECT RAISE(ABORT, 'approval uses are append-only'); END;
 """),
+    # 9: unified prediction ledger (Architecture V2, milestone 1). Every registered prediction (hypothesis tests,
+    # official forecasts, estimates) under one immutable question record, and an append-only resolution history.
+    (9, """
+CREATE TABLE predictions (
+    prediction_id TEXT PRIMARY KEY,          -- stable: hash of kind, source id and spec hash
+    kind TEXT NOT NULL CHECK (kind IN ('binary', 'numeric')),
+    source TEXT NOT NULL,                    -- hypothesis_test | forecast | estimate
+    source_id TEXT NOT NULL,                 -- test_id or claim id
+    investigation_id TEXT NOT NULL,
+    market_id TEXT NOT NULL,
+    question_json TEXT NOT NULL,             -- quantity, target periods, comparator/reference or point/interval/sd, probability
+    question_sha256 TEXT NOT NULL,
+    resolution_rule TEXT NOT NULL,           -- e.g. first_publication.v1
+    horizon TEXT NOT NULL,                   -- nominal | future_window | standard
+    temporal_class TEXT NOT NULL,            -- prospective | retrospective
+    correlation_group TEXT NOT NULL,         -- same claim and quantity in other windows share a group
+    registered_at TEXT NOT NULL,             -- the REAL registration time (never backdated)
+    evidence_as_of TEXT NOT NULL,            -- the evidence date the prediction was made on
+    evidence_available_at TEXT,              -- latest availability of the evidence it used
+    baselines_json TEXT NOT NULL,            -- persistence and momentum, computed from the origin evidence only
+    provenance_json TEXT NOT NULL,           -- model, prompt/contract, investigation, panel fingerprint, market spec sha
+    cost_json TEXT NOT NULL,
+    synced_at TEXT NOT NULL,
+    UNIQUE (source, source_id)
+);
+CREATE TABLE prediction_resolutions (
+    resolution_id TEXT PRIMARY KEY,          -- hash of prediction, vintage, evidence time and outcome (idempotent)
+    prediction_id TEXT NOT NULL REFERENCES predictions(prediction_id),
+    status TEXT NOT NULL CHECK (status IN ('pending', 'resolved', 'invalid', 'ambiguous', 'unavailable')),
+    vintage TEXT NOT NULL CHECK (vintage IN ('first_publication', 'revision', 'none')),
+    evidence_as_of TEXT,                     -- the vintage used (as-of time of the evidence)
+    availability_basis TEXT,                 -- published | estimated_lag | retrieval
+    realized REAL,
+    outcome TEXT,                            -- binary: passed | failed; numeric: null
+    scores_json TEXT NOT NULL,
+    detail TEXT NOT NULL,
+    resolver_version TEXT NOT NULL,
+    resolved_at TEXT NOT NULL
+);
+CREATE INDEX pres_prediction ON prediction_resolutions(prediction_id);
+CREATE TRIGGER pred_no_update BEFORE UPDATE ON predictions BEGIN SELECT RAISE(ABORT, 'predictions are immutable'); END;
+CREATE TRIGGER pred_no_delete BEFORE DELETE ON predictions BEGIN SELECT RAISE(ABORT, 'predictions are immutable'); END;
+CREATE TRIGGER pres_no_update BEFORE UPDATE ON prediction_resolutions BEGIN SELECT RAISE(ABORT, 'resolutions are append-only'); END;
+CREATE TRIGGER pres_no_delete BEFORE DELETE ON prediction_resolutions BEGIN SELECT RAISE(ABORT, 'resolutions are append-only'); END;
+"""),
 ]
 
 

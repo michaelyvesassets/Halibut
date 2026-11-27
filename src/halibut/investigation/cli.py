@@ -72,6 +72,25 @@ def add_investigation_commands(sub) -> None:
     sh.add_argument("--json", action="store_true")
     s.add_parser("schema", help="print the JSON Schema of the result document")
     p.set_defaults(handler=_inv)
+    pr = sub.add_parser("predictions", help="unified prediction ledger and automatic outcome resolution (no API calls)")
+    pr.add_argument("--db", default="data/halibut.sqlite")
+    pr.add_argument("--markets", default="configs/intel/markets", help="directory of market specs (matched by sha256)")
+    ps = pr.add_subparsers(dest="pred_command", required=True)
+    sy = ps.add_parser("sync", help="register every prediction of every stored investigation (idempotent)")
+    sy.add_argument("--include-scripted", action="store_true", help="also register mock/reference (not intelligence)")
+    rs = ps.add_parser("resolve", help="resolve what first publication allows at the current time (idempotent)")
+    rs.add_argument("--dry-run", action="store_true")
+    rs.add_argument("--now", help="resolution time (default: now; never in the future)")
+    ls_ = ps.add_parser("list", help="predictions with their current state")
+    ls_.add_argument("--status")
+    ls_.add_argument("--temporal", choices=("prospective", "retrospective"))
+    ls_.add_argument("--json", action="store_true")
+    sh_ = ps.add_parser("show", help="one prediction with its full resolution history")
+    sh_.add_argument("prediction_id")
+    ps.add_parser("summary", help="counts, effective sample sizes, hit rates against baselines, errors")
+    ex_ = ps.add_parser("export", help="write the ledger and resolution history to registry/predictions/ (for git)")
+    ex_.add_argument("--out", default="registry/predictions")
+    pr.set_defaults(handler=_pred)
     a = sub.add_parser("approvals", help="approval records (control plane)")
     a.add_argument("--db", default="data/halibut.sqlite")
     asub = a.add_subparsers(dest="ap_command", required=True)
@@ -245,6 +264,48 @@ def _count(items) -> dict:
     for it in items:
         out[it["status"]] = out.get(it["status"], 0) + 1
     return out
+
+
+def _pred(args) -> int:
+    from ..data.store import Store, utc_now  # noqa: PLC0415
+    from ..epistemic import predictions as P  # noqa: PLC0415
+    store = Store(args.db)
+    try:
+        if args.pred_command == "sync":
+            print(json.dumps(P.sync(store, args.markets, include_scripted=args.include_scripted)))
+        elif args.pred_command == "resolve":
+            if args.now and args.now > utc_now():
+                print("refused: --now may not be in the future (no unpublished evidence)", file=sys.stderr)
+                return 2
+            print(json.dumps(P.resolve(store, args.markets, now=args.now, dry_run=args.dry_run)))
+        elif args.pred_command == "list":
+            rows = [x for x in P.current(store) if (not args.status or x["status"] == args.status)
+                    and (not args.temporal or x["temporal_class"] == args.temporal)]
+            if args.json:
+                print(json.dumps(rows, indent=1, default=str))
+            else:
+                for x in rows:
+                    q = x["question"]
+                    what = (f"{q['template']} {q['entity']}{'-' + q['entity_b'] if q.get('entity_b') else ''} "
+                            + (f"{q['comparator']} {100 * q['reference_value']:.2f}%" if x["kind"] == "binary"
+                               else f"= {100 * q['point']:.2f}%"))
+                    print(f"{x['prediction_id']}  {x['temporal_class'][:5]}  {x['horizon']:<13} {x['status']:<11} "
+                          f"{(x['outcome'] or ''):<6} {what} over {','.join(q['target_periods'])}  [{x['provenance'].get('prompt_version')}]")
+        elif args.pred_command == "show":
+            r = store.conn.execute("SELECT * FROM predictions WHERE prediction_id=?", (args.prediction_id,)).fetchone()
+            if r is None:
+                print("not found", file=sys.stderr)
+                return 2
+            hist = [dict(x) for x in store.conn.execute("SELECT * FROM prediction_resolutions WHERE prediction_id=? "
+                                                        "ORDER BY resolved_at, resolution_id", (args.prediction_id,))]
+            print(json.dumps({"prediction": dict(r), "history": hist}, indent=1, default=str))
+        elif args.pred_command == "export":
+            print(json.dumps(P.export(store, args.out)))
+        else:
+            print(json.dumps(P.summary(store), indent=1, default=str))
+        return 0
+    finally:
+        store.close()
 
 
 def _ap(args) -> int:
