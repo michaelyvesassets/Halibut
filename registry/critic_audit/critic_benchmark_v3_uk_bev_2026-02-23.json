@@ -9,8 +9,16 @@
    "each defective item differs from its canonical by exactly one change",
    "absolute volume, segment share, total share and segment mix are not confused (except the planted confusion)"
   ],
+  "reviews": [
+   {
+    "date": "2026-11-27",
+    "independent_human_audit": false,
+    "result": "all 7 planted defects substantively valid; all 5 clean-control entries consistent with the evidence; accepted for initial development use with minor scoring and documentation requirements (applied)",
+    "type": "AI-assisted review relayed by the founder"
+   }
+  ],
   "rule": "an independent person, blind to critic outputs, confirms every item before scores are 'audited'",
-  "status": "proposed"
+  "status": "ai_review_accepted_pending_founder_signoff"
  },
  "key": {
   "S1:H1": {
@@ -27,6 +35,7 @@
     "unsupported_detail",
     "causal_identification"
    ],
+   "counts_as_defects": 1,
    "deterministic_issues": [
     "causal_claim",
     "external_fact"
@@ -42,6 +51,7 @@
     "numerical_accuracy",
     "factual_contradiction"
    ],
+   "counts_as_defects": 1,
    "deterministic_issues": [
     "number_mismatch"
    ],
@@ -57,6 +67,7 @@
    "accept": [
     "factual_contradiction"
    ],
+   "counts_as_defects": 1,
    "deterministic_issues": [
     "contradicted_assumption"
    ],
@@ -76,6 +87,7 @@
     "numerical_accuracy",
     "factual_contradiction"
    ],
+   "counts_as_defects": 1,
    "deterministic_issues": [
     "quantity_confusion"
    ],
@@ -110,6 +122,7 @@
    "accept": [
     "test_validity"
    ],
+   "counts_as_defects": 1,
    "deterministic_issues": [
     "misencoded_test"
    ],
@@ -125,6 +138,7 @@
     "factual_contradiction",
     "numerical_accuracy"
    ],
+   "counts_as_defects": 1,
    "deterministic_issues": [
     "impossible_prediction"
    ],
@@ -160,6 +174,7 @@
     "test_validity",
     "unsupported_detail"
    ],
+   "counts_as_defects": 1,
    "deterministic_issues": [
     "causal_claim"
    ],
@@ -170,7 +185,7 @@
    "min_severity": "medium"
   }
  },
- "key_sha256": "7e94d61d2b84c383de1e3807476ac5751728760d5195cd8bc8967034aaf0c4fe",
+ "key_sha256": "3708ca52ea1c01b372382e50ef57b1d19314130a4c8d0ebeb4f7cab5a2c369a7",
  "payload_sha256": "99c3eda0ab0f5685a871ac00d1a1e061d298c8ef9d099d02b07837efe1c509e0",
  "seed": 0,
  "sets": [

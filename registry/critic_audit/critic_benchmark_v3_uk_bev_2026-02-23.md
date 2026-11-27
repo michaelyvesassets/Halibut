@@ -1,6 +1,6 @@
 # Critic benchmark v3: human audit package (uk_cars_first_registrations, evidence as of 2026-02-23)
 
-Benchmark `critic_benchmark.v3`; key sha256 `7e94d61d2b84c383…`; payload sha256 `99c3eda0ab0f5685…`. **Audit status: PROPOSED.**
+Benchmark `critic_benchmark.v3`; key sha256 `3708ca52ea1c01b3…`; payload sha256 `99c3eda0ab0f5685…`. **Audit status: AI_REVIEW_ACCEPTED_PENDING_FOUNDER_SIGNOFF.**
 
 **For the auditor only; never shown to the critic.** The critic receives the blinded sets, without this key. Audit each item blind to any critic output. Scores are labelled AUDITED only after every item is confirmed.
 
@@ -9,13 +9,15 @@ Benchmark `critic_benchmark.v3`; key sha256 `7e94d61d2b84c383…`; payload sha25
 - canonical clean items first, one per brand: a continuation claim about segment share only, with correct numbers, no causal claim, and the same direction in the mechanism and the test;
 - each defective item is ONE isolated mutation of a canonical item;
 - a deterministic checker (`check_item`) must find no issue in a canonical item and exactly the intended issue in each mutation;
-- within a set, at most one item per brand, so no variant can be compared with its own canonical.
+- within a set, at most one item per brand, so no variant can be compared with its own canonical;
+- 5 clean-control ENTRIES repeat 3 unique clean hypotheses across sets: they are not independent samples;
+- the critic input (`payload_v3`) states the L4 and P4 quarters, that every implication refers to the next two quarters after L4, and that the data are first registrations in the dataset, not company sales.
 
 ## Severity rubric
 
 - **high**: the claim is contradicted by the evidence, mathematically impossible, rests on a wrong central number, or its test cannot measure what it claims
-- **medium**: the claim relies on facts or causal inferences the evidence does not establish, or confuses two quantities in a way that does not by itself contradict the evidence
 - **low**: a weakness worth noting that does not undermine the claim (e.g. limited power, a plausible alternative)
+- **medium**: the claim relies on facts or causal inferences the evidence does not establish, or confuses two quantities in a way that does not by itself contradict the evidence
 
 ## Audit checklist (every item)
 
@@ -52,7 +54,7 @@ Benchmark `critic_benchmark.v3`; key sha256 `7e94d61d2b84c383…`; payload sha25
 - **Supporting evidence:** `metric:segment_share:L4:tesla`, `metric:segment_share:P4:tesla`
 - **Implications:** segment_share tesla decrease_vs_L4
 - **Deterministic check:** no issue
-- **Expected:** no factual or numerical claim, and nothing at high severity. Methodological comments (for example that continuation is a weak test) are allowed and not penalised.
+- **Expected:** no ERRONEOUS factual or numerical criticism (correct factual comments are allowed). Methodological comments, including high-severity ones, are assessed on their merits, not counted as false automatically.
 - **Auditor verdict:** [ ] confirmed  [ ] not confirmed (notes: ____ )
 
 ### S1:H2: PLANTED DEFECT: unsupported_detail
@@ -63,6 +65,7 @@ Benchmark `critic_benchmark.v3`; key sha256 `7e94d61d2b84c383…`; payload sha25
 - **Supporting evidence:** `metric:segment_share:L4:volkswagen`, `metric:segment_share:P4:volkswagen`
 - **Implications:** segment_share volkswagen increase_vs_L4
 - **Deterministic check:** ['causal_claim', 'external_fact']
+- **One defect:** this single mutation shows 2 deterministic issues; any accepted classification counts, and it is scored once
 - **Accepted classifications:** unsupported_detail or causal_identification; minimum severity **medium** (ideal medium)
 - **Auditor verdict:** [ ] confirmed  [ ] not confirmed (notes: ____ )
 
@@ -109,7 +112,7 @@ Benchmark `critic_benchmark.v3`; key sha256 `7e94d61d2b84c383…`; payload sha25
 - **Supporting evidence:** `metric:segment_share:L4:byd`, `metric:segment_share:P4:byd`
 - **Implications:** segment_share byd increase_vs_L4
 - **Deterministic check:** no issue
-- **Expected:** no factual or numerical claim, and nothing at high severity. Methodological comments (for example that continuation is a weak test) are allowed and not penalised.
+- **Expected:** no ERRONEOUS factual or numerical criticism (correct factual comments are allowed). Methodological comments, including high-severity ones, are assessed on their merits, not counted as false automatically.
 - **Auditor verdict:** [ ] confirmed  [ ] not confirmed (notes: ____ )
 
 ## Set S3
@@ -122,7 +125,7 @@ Benchmark `critic_benchmark.v3`; key sha256 `7e94d61d2b84c383…`; payload sha25
 - **Supporting evidence:** `metric:segment_share:L4:volkswagen`, `metric:segment_share:P4:volkswagen`
 - **Implications:** segment_share volkswagen increase_vs_L4
 - **Deterministic check:** no issue
-- **Expected:** no factual or numerical claim, and nothing at high severity. Methodological comments (for example that continuation is a weak test) are allowed and not penalised.
+- **Expected:** no ERRONEOUS factual or numerical criticism (correct factual comments are allowed). Methodological comments, including high-severity ones, are assessed on their merits, not counted as false automatically.
 - **Auditor verdict:** [ ] confirmed  [ ] not confirmed (notes: ____ )
 
 ### S3:H2: PLANTED DEFECT: misencoded_test
@@ -157,7 +160,7 @@ Benchmark `critic_benchmark.v3`; key sha256 `7e94d61d2b84c383…`; payload sha25
 - **Supporting evidence:** `metric:segment_share:L4:tesla`, `metric:segment_share:P4:tesla`
 - **Implications:** segment_share tesla decrease_vs_L4
 - **Deterministic check:** no issue
-- **Expected:** no factual or numerical claim, and nothing at high severity. Methodological comments (for example that continuation is a weak test) are allowed and not penalised.
+- **Expected:** no ERRONEOUS factual or numerical criticism (correct factual comments are allowed). Methodological comments, including high-severity ones, are assessed on their merits, not counted as false automatically.
 - **Auditor verdict:** [ ] confirmed  [ ] not confirmed (notes: ____ )
 
 ### S4:H2: CLEAN CONTROL
@@ -168,7 +171,7 @@ Benchmark `critic_benchmark.v3`; key sha256 `7e94d61d2b84c383…`; payload sha25
 - **Supporting evidence:** `metric:segment_share:L4:byd`, `metric:segment_share:P4:byd`
 - **Implications:** segment_share byd increase_vs_L4
 - **Deterministic check:** no issue
-- **Expected:** no factual or numerical claim, and nothing at high severity. Methodological comments (for example that continuation is a weak test) are allowed and not penalised.
+- **Expected:** no ERRONEOUS factual or numerical criticism (correct factual comments are allowed). Methodological comments, including high-severity ones, are assessed on their merits, not counted as false automatically.
 - **Auditor verdict:** [ ] confirmed  [ ] not confirmed (notes: ____ )
 
 ### S4:H3: PLANTED DEFECT: causal_overclaim
@@ -182,7 +185,11 @@ Benchmark `critic_benchmark.v3`; key sha256 `7e94d61d2b84c383…`; payload sha25
 - **Accepted classifications:** causal_identification or test_validity or unsupported_detail; minimum severity **medium** (ideal medium)
 - **Auditor verdict:** [ ] confirmed  [ ] not confirmed (notes: ____ )
 
-## Sign-off
+## Review record
 
-- Auditor: ____  Date: ____  All items confirmed: [ ] yes
-- After sign-off only: set `audit.status` to `audited` (and the auditor) in the JSON.
+- 2026-11-27: AI-assisted review relayed by the founder: all 7 planted defects substantively valid; all 5 clean-control entries consistent with the evidence; accepted for initial development use with minor scoring and documentation requirements (applied) (independent human audit: no)
+
+## Founder sign-off
+
+- Signed off by: ____  Date: ____
+- Only after this sign-off is recorded is `audit.status` set to `audited`. The record above is an AI-assisted review, not an independently conducted human audit.

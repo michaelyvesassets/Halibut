@@ -514,31 +514,48 @@ def build_v3(panel, metrics: dict, seed: int = 0) -> dict:
 
 
 def score_v3(critiques_by_set: dict, bench: dict, schema_failures: int = 0) -> dict:
-    """Detection, classification, severity and evidence are scored SEPARATELY; any accepted dimension or evidence id
-    counts; extra critiques never add credit and are never penalised on planted items; on clean items only checkable
-    false claims (factual or numerical, medium+) and high-severity claims are false positives; other comments are
-    methodological and neither credited nor penalised."""
+    """Detection, classification, severity and evidence are scored SEPARATELY on planted defects (one mutation = one
+    defect, even when it shows several issues or allows several classifications). Any accepted dimension or evidence id
+    counts.
+
+    Every OTHER critique is recorded rather than scored as false:
+    - on planted items, additional critiques are kept with a category for review;
+    - on clean controls, factual/numerical claims at medium or higher are 'presumed_erroneous' (the item passed every
+      deterministic check) but still listed for review, because a correct factual comment is not an error;
+    - high-severity methodological critiques are listed for review on their merits, never auto-classified as false.
+
+    The planted-only rates are NOT comprehensive precision: additional critiques are excluded until reviewed."""
     per = {k: [] for k in bench["key"]}
     for sid, crits in critiques_by_set.items():
         for c in crits:
             k = f"{sid}:{c['hypothesis_ref']}"
             if k in per:
                 per[k].append(c)
-    det = cls = sev = ev = ev_n = fp = meth = 0
-    by_kind = {}
+    det = cls = sev = ev = ev_n = presumed = 0
+    by_kind, review = {}, []
     planted = [k for k, v in bench["key"].items() if v["kind"] != "clean"]
+    clean_keys = [k for k, v in bench["key"].items() if v["kind"] == "clean"]
     for k, v in bench["key"].items():
         cs = per[k]
         if v["kind"] == "clean":
-            bad = [c for c in cs if (c["dimension"] in CHECKABLE_FACTS and SEV[c["severity"]] >= 1) or c["severity"] == "high"]
-            fp += len(bad)
-            meth += len(cs) - len(bad)
+            for c in cs:
+                if c["dimension"] in CHECKABLE_FACTS and SEV[c["severity"]] >= 1:
+                    presumed += 1
+                    review.append({"item": k, "category": "presumed_erroneous_factual_on_clean", **c})
+                elif c["severity"] == "high":
+                    review.append({"item": k, "category": "high_methodological_on_clean_assess_on_merits", **c})
+                else:
+                    review.append({"item": k, "category": "methodological_comment_on_clean", **c})
             continue
         t = by_kind.setdefault(v["kind"], {"detected": 0, "classified": 0, "severity_ok": 0, "evidence_ok": None})
         if any(c["dimension"] in DEFECT_CLAIM_DIMS for c in cs):
             det += 1
             t["detected"] += 1
         right = [c for c in cs if c["dimension"] in v["accept"]]
+        for c in cs:
+            if c not in right:
+                review.append({"item": k, "category": "additional_on_defective_item"
+                               + ("_factual_needs_verification" if c["dimension"] in CHECKABLE_FACTS else "_methodological"), **c})
         if right:
             cls += 1
             t["classified"] += 1
@@ -550,13 +567,19 @@ def score_v3(critiques_by_set: dict, bench: dict, schema_failures: int = 0) -> d
                 hit = any(set(c.get("evidence", [])) & set(v["evidence"]) for c in right)
                 ev += hit
                 t["evidence_ok"] = hit
-    n, nc = len(planted), sum(1 for v in bench["key"].values() if v["kind"] == "clean")
+    n = len(planted)
+    uniq_clean = len({_h(next(h for s in bench["sets"] for h in s["hypotheses"] if f"{s['set_id']}:{h['ref']}" == k
+                          ) | {"ref": ""}) for k in clean_keys}) if bench.get("sets") else None
     audited = (bench.get("audit") or {}).get("status") == "audited"
     return {"version": VERSION_V3, "audited": audited, "label": "AUDITED" if audited else "UNAUDITED (diagnostic only)",
-            "planted": n, "clean_controls": nc, "detection_rate": det / n if n else None,
-            "classification_rate": cls / n if n else None, "severity_accuracy": sev / cls if cls else None,
-            "evidence_reference_accuracy": ev / ev_n if ev_n else None, "false_positives_on_clean": fp,
-            "methodological_comments_on_clean": meth, "schema_failures": schema_failures, "by_kind": by_kind}
+            "planted_defects": n, "clean_control_entries": len(clean_keys), "unique_clean_hypotheses": uniq_clean,
+            "note": "clean-control entries repeat hypotheses across sets: they are NOT independent samples; one mutation "
+                    "is one defect even when it shows several issues",
+            "detection_rate": det / n if n else None, "classification_rate": cls / n if n else None,
+            "severity_accuracy": sev / cls if cls else None, "evidence_reference_accuracy": ev / ev_n if ev_n else None,
+            "presumed_erroneous_on_clean": presumed, "critiques_for_review": review,
+            "precision_note": "planted-only rates exclude additional critiques: not a comprehensive precision",
+            "schema_failures": schema_failures, "by_kind": by_kind}
 
 
 def audit_markdown(b: dict, metrics: dict, title: str) -> str:
@@ -569,7 +592,10 @@ def audit_markdown(b: dict, metrics: dict, title: str) -> str:
          "- each defective item is ONE isolated mutation of a canonical item;",
          "- a deterministic checker (`check_item`) must find no issue in a canonical item and exactly the intended issue in "
          "each mutation;",
-         "- within a set, at most one item per brand, so no variant can be compared with its own canonical.", "",
+         "- within a set, at most one item per brand, so no variant can be compared with its own canonical;",
+         "- 5 clean-control ENTRIES repeat 3 unique clean hypotheses across sets: they are not independent samples;",
+         "- the critic input (`payload_v3`) states the L4 and P4 quarters, that every implication refers to the next two "
+         "quarters after L4, and that the data are first registrations in the dataset, not company sales.", "",
          "## Severity rubric", ""] + [f"- **{k}**: {v}" for k, v in b["severity_rubric"].items()] + [
          "", "## Audit checklist (every item)", ""] + [f"- [ ] {c}" for c in b["audit"]["checklist"]]
     cited = sorted({e for s in b["sets"] for h in s["hypotheses"] for e in h["supporting_evidence"]} |
@@ -593,13 +619,36 @@ def audit_markdown(b: dict, metrics: dict, title: str) -> str:
                       + (f" vs `{i['reference_metric']}`" if i["reference_metric"] else "") for i in h["observable_implications"]),
                   f"- **Deterministic check:** {k['deterministic_issues'] or 'no issue'}"]
             if k["kind"] == "clean":
-                L += ["- **Expected:** no factual or numerical claim, and nothing at high severity. Methodological comments "
-                      "(for example that continuation is a weak test) are allowed and not penalised."]
+                L += ["- **Expected:** no ERRONEOUS factual or numerical criticism (correct factual comments are allowed). "
+                      "Methodological comments, including high-severity ones, are assessed on their merits, not counted "
+                      "as false automatically."]
             else:
+                L += ([f"- **One defect:** this single mutation shows {len(k['deterministic_issues'])} deterministic issues; "
+                       "any accepted classification counts, and it is scored once"] if len(k["deterministic_issues"]) > 1 else [])
                 L += [f"- **Accepted classifications:** {' or '.join(k['accept'])}; minimum severity **{k['min_severity']}** "
                       f"(ideal {k['ideal_severity']})" + (f"; accepted evidence: {', '.join('`' + e + '`' for e in k['evidence'])}"
                                                           if k["evidence"] else "")]
             L += ["- **Auditor verdict:** [ ] confirmed  [ ] not confirmed (notes: ____ )"]
-    L += ["", "## Sign-off", "", "- Auditor: ____  Date: ____  All items confirmed: [ ] yes",
-          "- After sign-off only: set `audit.status` to `audited` (and the auditor) in the JSON.", ""]
+    L += ["", "## Review record", ""] + [f"- {r['date']}: {r['type']}: {r['result']} (independent human audit: "
+                                           f"{'yes' if r.get('independent_human_audit') else 'no'})" for r in (b["audit"].get("reviews") or [])]
+    L += ["", "## Founder sign-off", "", "- Signed off by: ____  Date: ____",
+          "- Only after this sign-off is recorded is `audit.status` set to `audited`. The record above is an AI-assisted review, "
+          "not an independently conducted human audit.", ""]
     return "\n".join(L)
+
+
+def payload_v3(bench_set: dict, agent_slice: dict) -> dict:
+    """The v3 critic bundle (blinded; no key). Unlike the frozen v1/v2 bundle, it states the windows and the horizon:
+    L4 and P4 are the actual quarters, the test window is the next two quarters after L4, and the data are first
+    registrations in the defined dataset, not company sales."""
+    w = agent_slice.get("windows") or {}
+    return {"contract": "critic_benchmark.v3",
+            "slice": {**{k: agent_slice[k] for k in ("market", "metrics", "metric_id_format", "templates")},
+                      "windows": {"L4": w.get("L4"), "P4": w.get("P4"),
+                                  "definition": "L4 = the latest four quarters with data; P4 = the four quarters before them; "
+                                                "values are pooled over each window",
+                                  "test_window": "every implication refers to the next TWO quarters after L4 (pooled), "
+                                                 "compared with the L4 value unless another reference is named"},
+                      "measure": "first registrations in the market's dataset (see market.universe), not company sales or "
+                                 "deliveries; shares are shares of those registrations"},
+            "hypotheses": bench_set["hypotheses"]}

@@ -263,9 +263,30 @@ def test_v3_scorer_separates_dimensions_and_does_not_penalise_legitimate_extra_c
                    {"hypothesis_ref": "H2", "dimension": "test_validity", "severity": "low", "evidence": []}]}
     s = cb.score_v3(good, b)
     assert s["detection_rate"] == s["classification_rate"] == s["severity_accuracy"] == s["evidence_reference_accuracy"] == 1
-    assert s["false_positives_on_clean"] == 0 and s["methodological_comments_on_clean"] == 1 and s["label"].startswith("UNAUDITED")
+    assert s["presumed_erroneous_on_clean"] == 0 and s["label"].startswith("UNAUDITED")
+    cats = sorted(r["category"] for r in s["critiques_for_review"])
+    assert cats == ["additional_on_defective_item_methodological", "methodological_comment_on_clean"]  # recorded, not penalised
+    assert "not a comprehensive precision" in s["precision_note"]
     weak = {"S1": [{"hypothesis_ref": "H1", "dimension": "numerical_accuracy", "severity": "low", "evidence": []},
                    {"hypothesis_ref": "H2", "dimension": "numerical_accuracy", "severity": "medium", "evidence": []}]}
     w = cb.score_v3(weak, b)
     assert w["detection_rate"] == 1 and w["classification_rate"] == 1 and w["severity_accuracy"] == 0
-    assert w["evidence_reference_accuracy"] == 0 and w["false_positives_on_clean"] == 1
+    assert w["evidence_reference_accuracy"] == 0 and w["presumed_erroneous_on_clean"] == 1
+    high = cb.score_v3({"S1": [{"hypothesis_ref": "H2", "dimension": "causal_identification", "severity": "high", "evidence": []}]}, b)
+    assert high["presumed_erroneous_on_clean"] == 0  # high methodological criticism is assessed on merits, not auto-false
+    assert high["critiques_for_review"][0]["category"] == "high_methodological_on_clean_assess_on_merits"
+
+
+def test_v3_committed_package_counts_and_critic_inputs():
+    from pathlib import Path
+    b = json.loads((Path(__file__).resolve().parents[1] / "registry" / "critic_audit" /
+                    "critic_benchmark_v3_uk_bev_2026-02-23.json").read_text())
+    assert b["audit"]["status"] != "audited" and b["audit"]["reviews"][0]["independent_human_audit"] is False
+    s = cb.score_v3({}, b)
+    assert s["planted_defects"] == 7 and s["clean_control_entries"] == 5 and s["unique_clean_hypotheses"] == 3
+    assert all(v["counts_as_defects"] == 1 for v in b["key"].values() if v["kind"] != "clean")
+    assert cb._h(b["key"]) == b["key_sha256"] and cb._h(b["sets"]) == b["payload_sha256"]
+    sl = {"market": {}, "metrics": [], "metric_id_format": "x", "templates": {}, "windows": {"L4": ["2025-Q3"], "P4": ["2024-Q3"]}}
+    pl = cb.payload_v3(b["sets"][0], sl)
+    assert pl["slice"]["windows"]["L4"] == ["2025-Q3"] and "next TWO quarters after L4" in pl["slice"]["windows"]["test_window"]
+    assert "not company sales" in pl["slice"]["measure"] and "key" not in json.dumps(pl)
