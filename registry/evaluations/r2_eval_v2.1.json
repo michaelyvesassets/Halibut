@@ -5,9 +5,8 @@
     "by_temporal_and_basis": {
      "future|pending": {
       "baseline_hit_rates": {},
-      "effective_independent_outcomes": 0,
       "hit_rate": null,
-      "hit_rate_wilson95": null,
+      "hit_rate_wilson95_nominal": null,
       "informative": 0,
       "informative_and_weakly_assessed": 0,
       "leakage_risk": {
@@ -16,13 +15,13 @@
       "pending": 3,
       "registered": 3,
       "resolved": 0,
-      "skill_tiers": {}
+      "skill_tiers": {},
+      "unique_realised_outcomes": 0
      },
      "nowcast|pending": {
       "baseline_hit_rates": {},
-      "effective_independent_outcomes": 0,
       "hit_rate": null,
-      "hit_rate_wilson95": null,
+      "hit_rate_wilson95_nominal": null,
       "informative": 0,
       "informative_and_weakly_assessed": 0,
       "leakage_risk": {
@@ -31,7 +30,8 @@
       "pending": 3,
       "registered": 3,
       "resolved": 0,
-      "skill_tiers": {}
+      "skill_tiers": {},
+      "unique_realised_outcomes": 0
      },
      "retrospective|estimated_lag": {
       "baseline_hit_rates": {
@@ -48,9 +48,8 @@
         "n": 16
        }
       },
-      "effective_independent_outcomes": 16,
       "hit_rate": 0.8125,
-      "hit_rate_wilson95": [
+      "hit_rate_wilson95_nominal": [
        0.5699111903802586,
        0.9340840092857187
       ],
@@ -65,7 +64,8 @@
       "skill_tiers": {
        "beats_some": 7,
        "consensus": 6
-      }
+      },
+      "unique_realised_outcomes": 16
      }
     },
     "cost_per_useful_v21_usd": null,
@@ -73,12 +73,14 @@
     "discriminating_resolutions": 0,
     "evidence_contradicted_hypotheses": 0,
     "investigations": 6,
+    "mechanism_validated": false,
     "originality": {
      "accepted": 20,
      "original": 4
     },
     "pairs": {},
-    "useful_v21": 0
+    "useful_v21": 0,
+    "useful_v21_meaning": "a correct prediction under v2.1 rules (predictive support); NOT a validated mechanism"
    },
    "loop.v2:base": {
     "by_temporal_and_basis": {
@@ -101,9 +103,8 @@
         "n": 6
        }
       },
-      "effective_independent_outcomes": 7,
       "hit_rate": 0.6428571428571429,
-      "hit_rate_wilson95": [
+      "hit_rate_wilson95_nominal": [
        0.30256002981392766,
        0.8819169887384475
       ],
@@ -118,7 +119,8 @@
       "skill_tiers": {
        "beats_some": 2,
        "consensus": 3
-      }
+      },
+      "unique_realised_outcomes": 7
      }
     },
     "cost_per_useful_v21_usd": null,
@@ -126,6 +128,7 @@
     "discriminating_resolutions": 0,
     "evidence_contradicted_hypotheses": 3,
     "investigations": 2,
+    "mechanism_validated": false,
     "originality": {
      "accepted": 8,
      "original": 4
@@ -134,15 +137,15 @@
      "no_opposition": 2,
      "pure_negation": 1
     },
-    "useful_v21": 0
+    "useful_v21": 0,
+    "useful_v21_meaning": "a correct prediction under v2.1 rules (predictive support); NOT a validated mechanism"
    },
    "loop.v2:extended": {
     "by_temporal_and_basis": {
      "future|pending": {
       "baseline_hit_rates": {},
-      "effective_independent_outcomes": 0,
       "hit_rate": null,
-      "hit_rate_wilson95": null,
+      "hit_rate_wilson95_nominal": null,
       "informative": 0,
       "informative_and_weakly_assessed": 0,
       "leakage_risk": {
@@ -151,13 +154,13 @@
       "pending": 3,
       "registered": 3,
       "resolved": 0,
-      "skill_tiers": {}
+      "skill_tiers": {},
+      "unique_realised_outcomes": 0
      },
      "nowcast|pending": {
       "baseline_hit_rates": {},
-      "effective_independent_outcomes": 0,
       "hit_rate": null,
-      "hit_rate_wilson95": null,
+      "hit_rate_wilson95_nominal": null,
       "informative": 0,
       "informative_and_weakly_assessed": 0,
       "leakage_risk": {
@@ -166,7 +169,8 @@
       "pending": 3,
       "registered": 3,
       "resolved": 0,
-      "skill_tiers": {}
+      "skill_tiers": {},
+      "unique_realised_outcomes": 0
      },
      "retrospective|estimated_lag": {
       "baseline_hit_rates": {
@@ -187,9 +191,8 @@
         "n": 17
        }
       },
-      "effective_independent_outcomes": 17,
       "hit_rate": 0.8235294117647058,
-      "hit_rate_wilson95": [
+      "hit_rate_wilson95_nominal": [
        0.5897054143116588,
        0.9380887336237901
       ],
@@ -205,28 +208,31 @@
        "beats_all": 3,
        "beats_some": 8,
        "consensus": 5
-      }
+      },
+      "unique_realised_outcomes": 17
      }
     },
     "cost_per_useful_v21_usd": 0.028971700000000003,
     "cost_usd": 0.028971700000000003,
-    "discriminating_resolutions": 1,
-    "evidence_contradicted_hypotheses": 5,
+    "discriminating_resolutions": 0,
+    "evidence_contradicted_hypotheses": 6,
     "investigations": 4,
+    "mechanism_validated": false,
     "originality": {
      "accepted": 16,
      "original": 11
     },
     "pairs": {
-     "contradicted_at_registration": 2,
-     "genuine": 2,
+     "contradicted_at_registration": 3,
+     "genuine": 1,
      "no_opposition": 3,
      "pure_negation": 1
     },
-    "useful_v21": 1
+    "useful_v21": 1,
+    "useful_v21_meaning": "a correct prediction under v2.1 rules (predictive support); NOT a validated mechanism"
    }
   },
-  "note": "secondary readout; the frozen R2 scores are unchanged; pending tests are never scored; small samples",
+  "note": "secondary readout; the frozen R2 scores are unchanged; pending tests are never scored; small samples. unique_realised_outcomes counts distinct realised values, NOT independent observations (same market and quarters share shocks); the Wilson intervals are NOMINAL (they assume independence) and so understate the true uncertainty",
   "version": "r2_eval.v2.1"
  },
  "by_experiment": {
@@ -248,9 +254,8 @@
         "n": 6
        }
       },
-      "effective_independent_outcomes": 6,
       "hit_rate": 0.8333333333333334,
-      "hit_rate_wilson95": [
+      "hit_rate_wilson95_nominal": [
        0.43649717781352987,
        0.9699466302516935
       ],
@@ -265,7 +270,8 @@
       "skill_tiers": {
        "beats_some": 2,
        "consensus": 3
-      }
+      },
+      "unique_realised_outcomes": 6
      }
     },
     "cost_per_useful_v21_usd": null,
@@ -273,12 +279,14 @@
     "discriminating_resolutions": 0,
     "evidence_contradicted_hypotheses": 0,
     "investigations": 2,
+    "mechanism_validated": false,
     "originality": {
      "accepted": 7,
      "original": 2
     },
     "pairs": {},
-    "useful_v21": 0
+    "useful_v21": 0,
+    "useful_v21_meaning": "a correct prediction under v2.1 rules (predictive support); NOT a validated mechanism"
    },
    "r2s2a-c6fea6716c9a|loop.v1": {
     "by_temporal_and_basis": {
@@ -297,9 +305,8 @@
         "n": 6
        }
       },
-      "effective_independent_outcomes": 6,
       "hit_rate": 0.8333333333333334,
-      "hit_rate_wilson95": [
+      "hit_rate_wilson95_nominal": [
        0.43649717781352987,
        0.9699466302516935
       ],
@@ -314,7 +321,8 @@
       "skill_tiers": {
        "beats_some": 4,
        "consensus": 1
-      }
+      },
+      "unique_realised_outcomes": 6
      }
     },
     "cost_per_useful_v21_usd": null,
@@ -322,12 +330,14 @@
     "discriminating_resolutions": 0,
     "evidence_contradicted_hypotheses": 0,
     "investigations": 2,
+    "mechanism_validated": false,
     "originality": {
      "accepted": 6,
      "original": 1
     },
     "pairs": {},
-    "useful_v21": 0
+    "useful_v21": 0,
+    "useful_v21_meaning": "a correct prediction under v2.1 rules (predictive support); NOT a validated mechanism"
    },
    "r2s2a-c6fea6716c9a|loop.v2:base": {
     "by_temporal_and_basis": {
@@ -350,9 +360,8 @@
         "n": 6
        }
       },
-      "effective_independent_outcomes": 7,
       "hit_rate": 0.6428571428571429,
-      "hit_rate_wilson95": [
+      "hit_rate_wilson95_nominal": [
        0.30256002981392766,
        0.8819169887384475
       ],
@@ -367,7 +376,8 @@
       "skill_tiers": {
        "beats_some": 2,
        "consensus": 3
-      }
+      },
+      "unique_realised_outcomes": 7
      }
     },
     "cost_per_useful_v21_usd": null,
@@ -375,6 +385,7 @@
     "discriminating_resolutions": 0,
     "evidence_contradicted_hypotheses": 3,
     "investigations": 2,
+    "mechanism_validated": false,
     "originality": {
      "accepted": 8,
      "original": 4
@@ -383,7 +394,8 @@
      "no_opposition": 2,
      "pure_negation": 1
     },
-    "useful_v21": 0
+    "useful_v21": 0,
+    "useful_v21_meaning": "a correct prediction under v2.1 rules (predictive support); NOT a validated mechanism"
    },
    "r2s2a-c6fea6716c9a|loop.v2:extended": {
     "by_temporal_and_basis": {
@@ -406,9 +418,8 @@
         "n": 12
        }
       },
-      "effective_independent_outcomes": 12,
       "hit_rate": 0.7916666666666666,
-      "hit_rate_wilson95": [
+      "hit_rate_wilson95_nominal": [
        0.5088141930100764,
        0.9330643031076998
       ],
@@ -424,32 +435,33 @@
        "beats_all": 3,
        "beats_some": 4,
        "consensus": 4
-      }
+      },
+      "unique_realised_outcomes": 12
      }
     },
     "cost_per_useful_v21_usd": 0.015405600000000002,
     "cost_usd": 0.015405600000000002,
-    "discriminating_resolutions": 1,
-    "evidence_contradicted_hypotheses": 3,
+    "discriminating_resolutions": 0,
+    "evidence_contradicted_hypotheses": 4,
     "investigations": 2,
+    "mechanism_validated": false,
     "originality": {
      "accepted": 8,
      "original": 7
     },
     "pairs": {
-     "contradicted_at_registration": 2,
-     "genuine": 1,
+     "contradicted_at_registration": 3,
      "no_opposition": 1
     },
-    "useful_v21": 1
+    "useful_v21": 1,
+    "useful_v21_meaning": "a correct prediction under v2.1 rules (predictive support); NOT a validated mechanism"
    },
    "r2s2b-33f66362ef91|loop.v1": {
     "by_temporal_and_basis": {
      "future|pending": {
       "baseline_hit_rates": {},
-      "effective_independent_outcomes": 0,
       "hit_rate": null,
-      "hit_rate_wilson95": null,
+      "hit_rate_wilson95_nominal": null,
       "informative": 0,
       "informative_and_weakly_assessed": 0,
       "leakage_risk": {
@@ -458,13 +470,13 @@
       "pending": 3,
       "registered": 3,
       "resolved": 0,
-      "skill_tiers": {}
+      "skill_tiers": {},
+      "unique_realised_outcomes": 0
      },
      "nowcast|pending": {
       "baseline_hit_rates": {},
-      "effective_independent_outcomes": 0,
       "hit_rate": null,
-      "hit_rate_wilson95": null,
+      "hit_rate_wilson95_nominal": null,
       "informative": 0,
       "informative_and_weakly_assessed": 0,
       "leakage_risk": {
@@ -473,7 +485,8 @@
       "pending": 3,
       "registered": 3,
       "resolved": 0,
-      "skill_tiers": {}
+      "skill_tiers": {},
+      "unique_realised_outcomes": 0
      },
      "retrospective|estimated_lag": {
       "baseline_hit_rates": {
@@ -490,9 +503,8 @@
         "n": 4
        }
       },
-      "effective_independent_outcomes": 4,
       "hit_rate": 0.75,
-      "hit_rate_wilson95": [
+      "hit_rate_wilson95_nominal": [
        0.30064184258240184,
        0.9544127391902995
       ],
@@ -507,7 +519,8 @@
       "skill_tiers": {
        "beats_some": 1,
        "consensus": 2
-      }
+      },
+      "unique_realised_outcomes": 4
      }
     },
     "cost_per_useful_v21_usd": null,
@@ -515,20 +528,21 @@
     "discriminating_resolutions": 0,
     "evidence_contradicted_hypotheses": 0,
     "investigations": 2,
+    "mechanism_validated": false,
     "originality": {
      "accepted": 7,
      "original": 1
     },
     "pairs": {},
-    "useful_v21": 0
+    "useful_v21": 0,
+    "useful_v21_meaning": "a correct prediction under v2.1 rules (predictive support); NOT a validated mechanism"
    },
    "r2s2b-33f66362ef91|loop.v2:extended": {
     "by_temporal_and_basis": {
      "future|pending": {
       "baseline_hit_rates": {},
-      "effective_independent_outcomes": 0,
       "hit_rate": null,
-      "hit_rate_wilson95": null,
+      "hit_rate_wilson95_nominal": null,
       "informative": 0,
       "informative_and_weakly_assessed": 0,
       "leakage_risk": {
@@ -537,13 +551,13 @@
       "pending": 3,
       "registered": 3,
       "resolved": 0,
-      "skill_tiers": {}
+      "skill_tiers": {},
+      "unique_realised_outcomes": 0
      },
      "nowcast|pending": {
       "baseline_hit_rates": {},
-      "effective_independent_outcomes": 0,
       "hit_rate": null,
-      "hit_rate_wilson95": null,
+      "hit_rate_wilson95_nominal": null,
       "informative": 0,
       "informative_and_weakly_assessed": 0,
       "leakage_risk": {
@@ -552,7 +566,8 @@
       "pending": 3,
       "registered": 3,
       "resolved": 0,
-      "skill_tiers": {}
+      "skill_tiers": {},
+      "unique_realised_outcomes": 0
      },
      "retrospective|estimated_lag": {
       "baseline_hit_rates": {
@@ -573,9 +588,8 @@
         "n": 5
        }
       },
-      "effective_independent_outcomes": 5,
       "hit_rate": 0.9,
-      "hit_rate_wilson95": [
+      "hit_rate_wilson95_nominal": [
        0.46294398253247676,
        0.9894700456409833
       ],
@@ -590,7 +604,8 @@
       "skill_tiers": {
        "beats_some": 4,
        "consensus": 1
-      }
+      },
+      "unique_realised_outcomes": 5
      }
     },
     "cost_per_useful_v21_usd": null,
@@ -598,6 +613,7 @@
     "discriminating_resolutions": 0,
     "evidence_contradicted_hypotheses": 2,
     "investigations": 2,
+    "mechanism_validated": false,
     "originality": {
      "accepted": 8,
      "original": 4
@@ -607,10 +623,11 @@
      "no_opposition": 2,
      "pure_negation": 1
     },
-    "useful_v21": 0
+    "useful_v21": 0,
+    "useful_v21_meaning": "a correct prediction under v2.1 rules (predictive support); NOT a validated mechanism"
    }
   },
-  "note": "secondary readout; the frozen R2 scores are unchanged; pending tests are never scored; small samples",
+  "note": "secondary readout; the frozen R2 scores are unchanged; pending tests are never scored; small samples. unique_realised_outcomes counts distinct realised values, NOT independent observations (same market and quarters share shocks); the Wilson intervals are NOMINAL (they assume independence) and so understate the true uncertainty",
   "version": "r2_eval.v2.1"
  },
  "evaluations": [
@@ -654,7 +671,9 @@
     }
    },
    "investigation_id": "inv:17c67d43133d0841.1",
+   "manual_overlay": [],
    "market_id": "uk_cars_first_registrations",
+   "mechanism_validated": false,
    "originality": {
     "accepted": 4,
     "original": 0
@@ -815,6 +834,8 @@
     }
    ],
    "useful_v21": [],
+   "useful_v21_engine_only": [],
+   "useful_v21_meaning": "a correct prediction under v2.1 rules (predictive support); NOT a validated mechanism",
    "version": "r2_eval.v2.1"
   },
   {
@@ -856,7 +877,9 @@
     }
    },
    "investigation_id": "inv:7c4b36e6c2a5817e.1",
+   "manual_overlay": [],
    "market_id": "uk_cars_first_registrations",
+   "mechanism_validated": false,
    "originality": {
     "accepted": 3,
     "original": 2
@@ -989,6 +1012,8 @@
     }
    ],
    "useful_v21": [],
+   "useful_v21_engine_only": [],
+   "useful_v21_meaning": "a correct prediction under v2.1 rules (predictive support); NOT a validated mechanism",
    "version": "r2_eval.v2.1"
   },
   {
@@ -1023,7 +1048,9 @@
     }
    },
    "investigation_id": "inv:81792570d9ec039c.1",
+   "manual_overlay": [],
    "market_id": "uk_cars_first_registrations",
+   "mechanism_validated": false,
    "originality": {
     "accepted": 2,
     "original": 2
@@ -1170,6 +1197,8 @@
     }
    ],
    "useful_v21": [],
+   "useful_v21_engine_only": [],
+   "useful_v21_meaning": "a correct prediction under v2.1 rules (predictive support); NOT a validated mechanism",
    "version": "r2_eval.v2.1"
   },
   {
@@ -1202,7 +1231,9 @@
     }
    },
    "investigation_id": "inv:b8a71e8c9255196a.1",
+   "manual_overlay": [],
    "market_id": "uk_cars_first_registrations",
+   "mechanism_validated": false,
    "originality": {
     "accepted": 2,
     "original": 1
@@ -1287,6 +1318,8 @@
     }
    ],
    "useful_v21": [],
+   "useful_v21_engine_only": [],
+   "useful_v21_meaning": "a correct prediction under v2.1 rules (predictive support); NOT a validated mechanism",
    "version": "r2_eval.v2.1"
   },
   {
@@ -1334,7 +1367,9 @@
     }
    },
    "investigation_id": "inv:4928c4681d1dba92.1",
+   "manual_overlay": [],
    "market_id": "uk_cars_first_registrations",
+   "mechanism_validated": false,
    "originality": {
     "accepted": 5,
     "original": 2
@@ -1566,6 +1601,8 @@
     }
    ],
    "useful_v21": [],
+   "useful_v21_engine_only": [],
+   "useful_v21_meaning": "a correct prediction under v2.1 rules (predictive support); NOT a validated mechanism",
    "version": "r2_eval.v2.1"
   },
   {
@@ -1578,21 +1615,7 @@
     "options_accepted": 0,
     "options_simulated": 0
    },
-   "discriminating_resolutions": [
-    {
-     "pair": [
-      "H5",
-      "H6"
-     ],
-     "quantity": [
-      "segment_share",
-      "ford",
-      ""
-     ],
-     "winner": "H6",
-     "winner_id": "c:d9aa5dfd7361fe524b66f0da"
-    }
-   ],
+   "discriminating_resolutions": [],
    "efficiency": {
     "cost_usd": 0.009177200000000002,
     "input_tokens": 31042,
@@ -1626,8 +1649,12 @@
     },
     "H5": {
      "critic_flags_unverified": [],
-     "reason": "segment_mix ford increase as claimed",
-     "status": "consistent"
+     "engine": {
+      "reason": "segment_mix ford increase as claimed",
+      "status": "consistent"
+     },
+     "reason": "manual review: H5 states the Ford mix gain is 'not by BEV expansion', but Ford's BEV segment share rose from 1.67% (P4) to 5.11% (L4) at the origin: BEV expansion is observed. The engine check misses this because it only compares the mechanism's direction on the explained metric (segment mix), which H5 gets right.",
+     "status": "contradicted"
     },
     "H6": {
      "critic_flags_unverified": [],
@@ -1636,7 +1663,16 @@
     }
    },
    "investigation_id": "inv:68420c5a72806169.1",
+   "manual_overlay": [
+    {
+     "reason": "H5 states the Ford mix gain is 'not by BEV expansion', but Ford's BEV segment share rose from 1.67% (P4) to 5.11% (L4) at the origin: BEV expansion is observed. The engine check misses this because it only compares the mechanism's direction on the explained metric (segment mix), which H5 gets right.",
+     "ref": "H5",
+     "source": "docs/architecture/R2_STEP2A_ASSESSMENT.md section 1 (H6), accepted by the founder on 2026-11-27",
+     "status": "contradicted"
+    }
+   ],
    "market_id": "uk_cars_first_registrations",
+   "mechanism_validated": false,
    "originality": {
     "accepted": 6,
     "original": 5
@@ -1683,8 +1719,10 @@
      "plausibility": "not machine-assessable (needs audited judgement)"
     },
     {
-     "class": "genuine",
-     "contradicted": [],
+     "class": "contradicted_at_registration",
+     "contradicted": [
+      "H5"
+     ],
      "declared_rivals": true,
      "disputed_quantities": [
       [
@@ -2141,6 +2179,10 @@
    "useful_v21": [
     "H6"
    ],
+   "useful_v21_engine_only": [
+    "H6"
+   ],
+   "useful_v21_meaning": "a correct prediction under v2.1 rules (predictive support); NOT a validated mechanism",
    "version": "r2_eval.v2.1"
   },
   {
@@ -2178,7 +2220,9 @@
     }
    },
    "investigation_id": "inv:47285b8cd8dfd9c1.1",
+   "manual_overlay": [],
    "market_id": "uk_cars_first_registrations",
+   "mechanism_validated": false,
    "originality": {
     "accepted": 3,
     "original": 1
@@ -2407,6 +2451,8 @@
     }
    ],
    "useful_v21": [],
+   "useful_v21_engine_only": [],
+   "useful_v21_meaning": "a correct prediction under v2.1 rules (predictive support); NOT a validated mechanism",
    "version": "r2_eval.v2.1"
   },
   {
@@ -2439,7 +2485,9 @@
     }
    },
    "investigation_id": "inv:65137a22117dcca7.1",
+   "manual_overlay": [],
    "market_id": "uk_cars_first_registrations",
+   "mechanism_validated": false,
    "originality": {
     "accepted": 2,
     "original": 1
@@ -2698,6 +2746,8 @@
     }
    ],
    "useful_v21": [],
+   "useful_v21_engine_only": [],
+   "useful_v21_meaning": "a correct prediction under v2.1 rules (predictive support); NOT a validated mechanism",
    "version": "r2_eval.v2.1"
   },
   {
@@ -2740,7 +2790,9 @@
     }
    },
    "investigation_id": "inv:23d4a423e7c3faa7.1",
+   "manual_overlay": [],
    "market_id": "uk_cars_hev_first_registrations",
+   "mechanism_validated": false,
    "originality": {
     "accepted": 4,
     "original": 0
@@ -2901,6 +2953,8 @@
     }
    ],
    "useful_v21": [],
+   "useful_v21_engine_only": [],
+   "useful_v21_meaning": "a correct prediction under v2.1 rules (predictive support); NOT a validated mechanism",
    "version": "r2_eval.v2.1"
   },
   {
@@ -2957,7 +3011,9 @@
     }
    },
    "investigation_id": "inv:c9603a0c84807713.1",
+   "manual_overlay": [],
    "market_id": "uk_cars_hev_first_registrations",
+   "mechanism_validated": false,
    "originality": {
     "accepted": 6,
     "original": 3
@@ -3242,6 +3298,8 @@
     }
    ],
    "useful_v21": [],
+   "useful_v21_engine_only": [],
+   "useful_v21_meaning": "a correct prediction under v2.1 rules (predictive support); NOT a validated mechanism",
    "version": "r2_eval.v2.1"
   },
   {
@@ -3284,7 +3342,9 @@
     }
    },
    "investigation_id": "inv:d580ddb8686ed831.2",
+   "manual_overlay": [],
    "market_id": "uk_cars_first_registrations",
+   "mechanism_validated": false,
    "originality": {
     "accepted": 4,
     "original": 1
@@ -3407,6 +3467,8 @@
     }
    ],
    "useful_v21": [],
+   "useful_v21_engine_only": [],
+   "useful_v21_meaning": "a correct prediction under v2.1 rules (predictive support); NOT a validated mechanism",
    "version": "r2_eval.v2.1"
   },
   {
@@ -3444,7 +3506,9 @@
     }
    },
    "investigation_id": "inv:0dd69e68ada720cb.2",
+   "manual_overlay": [],
    "market_id": "uk_cars_first_registrations",
+   "mechanism_validated": false,
    "originality": {
     "accepted": 3,
     "original": 1
@@ -3567,6 +3631,8 @@
     }
    ],
    "useful_v21": [],
+   "useful_v21_engine_only": [],
+   "useful_v21_meaning": "a correct prediction under v2.1 rules (predictive support); NOT a validated mechanism",
    "version": "r2_eval.v2.1"
   }
  ]

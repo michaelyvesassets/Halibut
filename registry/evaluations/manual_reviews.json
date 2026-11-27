@@ -1,0 +1,11 @@
+{
+ "version": "manual_reviews.v1",
+ "note": "Human judgements accepted by the founder, applied as a separately labelled overlay to r2_eval.v2.1. They never change frozen scores. The engine-only readout is always reported alongside.",
+ "reviews": [
+  {"claim_id": "c:e3de5bea80a54089049f3a4c", "investigation_id": "inv:68420c5a72806169.1", "ref": "H5",
+   "status": "contradicted",
+   "reason": "H5 states the Ford mix gain is 'not by BEV expansion', but Ford's BEV segment share rose from 1.67% (P4) to 5.11% (L4) at the origin: BEV expansion is observed. The engine check misses this because it only compares the mechanism's direction on the explained metric (segment mix), which H5 gets right.",
+   "source": "docs/architecture/R2_STEP2A_ASSESSMENT.md section 1 (H6), accepted by the founder on 2026-11-27",
+   "reviewer": "assessment accepted by the founder"}
+ ]
+}

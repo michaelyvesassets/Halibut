@@ -169,8 +169,21 @@ def _ledger(store, test_ids):
     return by
 
 
-def evaluate(doc: dict, store, panel=None) -> dict:
-    """The v2.1 readout of ONE investigation document (frozen scores untouched)."""
+def evaluate(doc: dict, store, panel=None, manual: dict | None = None) -> dict:
+    """The v2.1 readout of ONE investigation document (frozen scores untouched). ``manual``: {claim_id: review} from
+    registry/evaluations/manual_reviews.json, a separately labelled human overlay. The readout reports the ENGINE-ONLY
+    result and the result WITH the overlay; neither changes the frozen scores."""
+    engine = _evaluate(doc, store, panel, {})
+    if not manual or not any(h["id"] in manual for h in doc["stages"]["hypotheses"]):
+        return {**engine, "useful_v21_engine_only": engine["useful_v21"], "manual_overlay": []}
+    combined = _evaluate(doc, store, panel, manual)
+    return {**combined, "useful_v21_engine_only": engine["useful_v21"],
+            "manual_overlay": [{"ref": manual[h["id"]]["ref"], "status": manual[h["id"]]["status"],
+                                "reason": manual[h["id"]]["reason"], "source": manual[h["id"]]["source"]}
+                               for h in doc["stages"]["hypotheses"] if h["id"] in manual]}
+
+
+def _evaluate(doc: dict, store, panel, manual: dict) -> dict:
     from ..epistemic.predictions import outcome_group  # noqa: PLC0415
     st = doc["stages"]
     metrics = {m["id"]: m["data"]["value"] for m in doc["evidence"]["metrics"]}
@@ -181,6 +194,9 @@ def evaluate(doc: dict, store, panel=None) -> dict:
     model = (doc["agents"]["routing"].get("roles") or {}).get("hypothesis_generator", {}).get("model")
     cutoff = TRAINING_CUTOFF.get(model)
     cons = {h["id"]: evidence_consistency(h, metrics) for h in hyps}
+    for hid, rv in manual.items():  # human overlay: only ever adds a contradiction, with its reason and source
+        if hid in cons and rv["status"] == "contradicted":
+            cons[hid] = {"status": "contradicted", "reason": f"manual review: {rv['reason']}", "engine": cons[hid]}
     rows = {}
     for t in reg_tests:
         spec, x = t["data"]["spec"], led.get(t["id"])
@@ -254,6 +270,8 @@ def evaluate(doc: dict, store, panel=None) -> dict:
                                    for h in hyps},
             "tests": list(rows.values()), "pairs": pairs, "discriminating_resolutions": disc,
             "useful_v21": useful,
+            "useful_v21_meaning": "a correct prediction under v2.1 rules (predictive support); NOT a validated mechanism",
+            "mechanism_validated": False,
             "causal_validity": "not assessed: no identification design (predictive support is not causal evidence)",
             "calibration": "not assessable: categorical claims (no stated probabilities)",
             "decision_relevance": {"options_accepted": len(st["strategic_options"]),
@@ -282,24 +300,30 @@ def aggregate(evals: list[dict], by_experiment: bool = False) -> dict:
             n_eff, succ = len(og), sum(sum(v) / len(v) for v in og.values())
             cell[f"{temporal}|{basis}"] = {
                 "registered": len(ts), "resolved": len(res), "pending": sum(1 for t in ts if t["status"] == "pending"),
-                "effective_independent_outcomes": n_eff,
-                "hit_rate": (succ / n_eff) if n_eff else None, "hit_rate_wilson95": wilson(succ, n_eff),
+                "unique_realised_outcomes": n_eff,
+                "hit_rate": (succ / n_eff) if n_eff else None, "hit_rate_wilson95_nominal": wilson(succ, n_eff),
                 "informative": sum(1 for t in ts if t["informative"]),
                 "informative_and_weakly_assessed": sum(1 for t in ts if t["informative"] and t["weakly_assessed"]),
                 "skill_tiers": dict(Counter(t["skill_tier"] for t in res if t["skill_tier"])),
                 "baseline_hit_rates": _baseline_rates(res), "leakage_risk": dict(Counter(t["leakage_risk"] for t in ts))}
         cost = sum(e["efficiency"]["cost_usd"] for e in E)
         useful = sum(len(e["useful_v21"]) for e in E)
+        useful_engine = sum(len(e.get("useful_v21_engine_only", e["useful_v21"])) for e in E)
         out[contract] = {"investigations": len(E), "originality": {
             "original": sum(e["originality"]["original"] for e in E), "accepted": sum(e["originality"]["accepted"] for e in E)},
             "evidence_contradicted_hypotheses": sum(1 for e in E for v in e["hypothesis_quality"].values()
                                                     if v["status"] == "contradicted"),
             "pairs": dict(Counter(p["class"] for e in E for p in e["pairs"])),
             "discriminating_resolutions": sum(len(e["discriminating_resolutions"]) for e in E),
-            "useful_v21": useful, "cost_usd": cost, "cost_per_useful_v21_usd": (cost / useful) if useful else None,
+            "useful_v21": useful,
+            "useful_v21_meaning": "a correct prediction under v2.1 rules (predictive support); NOT a validated mechanism",
+            "mechanism_validated": False, "cost_usd": cost, "cost_per_useful_v21_usd": (cost / useful) if useful else None,
             "by_temporal_and_basis": cell}
     return {"version": VERSION, "by_contract": out,
-            "note": "secondary readout; the frozen R2 scores are unchanged; pending tests are never scored; small samples"}
+            "note": "secondary readout; the frozen R2 scores are unchanged; pending tests are never scored; small samples. "
+                    "unique_realised_outcomes counts distinct realised values, NOT independent observations (same market "
+                    "and quarters share shocks); the Wilson intervals are NOMINAL (they assume independence) and so "
+                    "understate the true uncertainty"}
 
 
 def _group(items, key):
@@ -328,6 +352,8 @@ def evaluate_dirs(store, experiment_dirs, markets_dir="configs/intel/markets") -
     from ..intel.market import load_market  # noqa: PLC0415
     from ..world.panel import build_panel  # noqa: PLC0415
     markets, panels, evals = market_paths(markets_dir), {}, []
+    mr = Path(__file__).resolve().parents[3] / "registry" / "evaluations" / "manual_reviews.json"
+    manual = {r["claim_id"]: r for r in json.loads(mr.read_text())["reviews"]} if mr.exists() else {}
     for d in experiment_dirs:
         for f in sorted(Path(d).glob("investigations/*.json")):
             doc = json.loads(f.read_text())
@@ -336,5 +362,5 @@ def evaluate_dirs(store, experiment_dirs, markets_dir="configs/intel/markets") -
             if mp and k not in panels:
                 m = dataclasses.replace(load_market(mp), as_of=doc["objective"]["as_of"][:10])
                 panels[k] = build_panel(store, m, doc["objective"]["as_of"])
-            evals.append({**evaluate(doc, store, panels.get(k)), "file": f"{Path(d).name}/{f.name}"})
+            evals.append({**evaluate(doc, store, panels.get(k), manual), "file": f"{Path(d).name}/{f.name}"})
     return {"evaluations": evals, "aggregate": aggregate(evals), "by_experiment": aggregate(evals, by_experiment=True)}

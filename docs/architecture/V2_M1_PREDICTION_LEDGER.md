@@ -31,10 +31,10 @@ real-world action. Roadmap item 1 of [MASTER_INTELLIGENCE_ARCHITECTURE_V2.md](MA
 | Property | Mechanism | Test |
 |---|---|---|
 | First-publication evidence is recoverable | content-addressed raw snapshot in `registry/evidence/`; it reproduces the metrics | `test_registered_r2_prospective_tests_are_recoverable_from_git` |
-| A missing original publication is never silently replaced | basis `first_capture_verified` only if the period was absent in our previous snapshot and the release follows within 120 days; otherwise `first_capture_unverified` | `test_a_missed_release_never_passes_as_first_publication` |
+| A missing original publication is never silently replaced | basis `first_capture_inferred` (a heuristic; **not verified publication**, which would need the publisher's release archive) only if the period was absent in our previous snapshot and the release follows within 120 days; otherwise `first_capture_unverified` | `test_a_missed_release_never_passes_as_first_publication` |
 | Estimated history is distinct from verified records | backfilled history stays `estimated_lag`; the summary breaks resolutions down by basis | `test_backfilled_history_stays_estimated_and_groups_do_not_inflate_samples` |
 | Append-only and reproducible | triggers; resolution ids hash the content; two independent copies give identical ids | `test_registration_and_resolution_are_reproducible`, immutability assertions |
-| Related predictions do not inflate samples | a claim group (the same claim across windows) and an **outcome group** (the same realised value); the effective sample is the number of distinct outcome groups | `test_backfilled_history…`, `test_sync…` |
+| Related predictions do not inflate samples | a claim group (the same claim across windows) and an **outcome group** (the same realised value); **unique realised outcomes** = distinct outcome groups (not statistically independent: the same market and quarters share shocks) | `test_backfilled_history…`, `test_sync…` |
 | Probabilistic scores only where valid | Brier and log score only with a stated probability; Gaussian CRPS and log score only if the 80% interval equals point ± z80·SD (not clipped) | `test_scores_are_proper` |
 | The 12 R2 tests are recoverable and classified | committed registry (6 future; 6 unpublished-historical and nowcast; hashes; registration times) | `test_registered_r2_prospective_tests_are_recoverable_from_git` |
 | Frozen R2 results are unchanged | criteria hash pinned; R2 documents untouched | `test_preregistered_criteria_are_frozen` |

@@ -11,7 +11,7 @@ criteria (hash `223362694f7d254f…`) and contracts are unchanged. Readout file:
 | A. Baselines | **persistence** and **momentum**, stored in the prediction ledger at registration; **Holt** (share-like quantities); a **reference-class base rate**: across all entities and all past 2-quarter windows inside the origin panel, how often the quantity rose against its own L4 (n ≥ 20 windows). **All baselines use origin evidence only.** Skill tiers for correct resolved predictions: `consensus` (every committed baseline also right), `beats_some`, `beats_all` (at least 2 committed baselines, all wrong). A test committed against by fewer than 2 baselines is "weakly assessed" |
 | B. Dimensions | reported separately with no composite score: originality; informativeness (no committed baseline predicts it); hypothesis quality (an engine check of the mechanism's claimed direction against the observed change; critic flags reported as unverified); predictive accuracy; calibration ("not assessable": categorical claims); mechanism discrimination; causal validity ("not assessed: no identification design"); decision relevance; computational efficiency |
 | C. Competing mechanisms | each candidate pair is classified as `genuine`, `contradicted_at_registration`, `pure_negation`, `near_duplicate`, `not_same_observation`, `not_interpretable` or `no_opposition`. **Only genuine pairs** whose disputed tests resolved one way earn credit. Plausibility is flagged "not machine-assessable" (uncertainty preserved) |
-| D. Integrity | outcome groups (the same realised value counts once) give effective sample sizes; Wilson 95% intervals; separate cells for retrospective, unpublished-historical, nowcast and future, and for each verification basis (`estimated_lag`, `first_capture_verified`, `first_capture_unverified`); per-test leakage risk against the model's training cutoff; pending tests are never scored |
+| D. Integrity | outcome groups (the same realised value counts once) give unique realised outcomes, which are not independent observations; nominal Wilson 95% intervals; separate cells for retrospective, unpublished-historical, nowcast and future, and for each provenance basis: `estimated_lag`; `first_capture_inferred` (a heuristic, not verified publication); `first_capture_unverified`; per-test leakage risk against the model's training cutoff; pending tests are never scored |
 | E. Critic foundations | `critic_benchmark.build_v2` (purified: one defect per item, clean controls grounded only in evidence, audit checklist, status `proposed`); `score_v2` separates detection, classification, severity accuracy, evidence-reference accuracy, false positives on clean items, misdirected high-severity claims, generic caveats (neither credited nor penalised) and schema failures. The best critique per item counts, so **extra critiques never add credit**; results are labelled UNAUDITED until a person audits the items |
 | Sealed holdout | `investigation/holdout.py` with `registry/holdout/seal.json`: 16 unused (market, origin) entries (UK BEV and UK hybrid, 2023-08-23 to 2025-05-23), salted hashes only. `run_investigation` refuses a sealed entry unless the freeze-time evaluation token matches; none exists yet |
 
@@ -39,18 +39,19 @@ halibut predictions sync && halibut predictions resolve   # the ledger the reado
 |---|---|---|---|
 | 2a H1 (BYD dilution, 2025-08-23) | useful | **no** | rival H2 contradicted at registration (claims BYD BEV decline; BYD BEV share rose from 0.75% to 2.89%), so no discrimination credit; its own tests are trend-consistent (`consensus` or `beats_some`) |
 | 2a H4 (VW denominator, 2026-02-23) | useful | **no** | its mechanism is contradicted by the evidence (the engine check; the critic also flagged it). Its against-trend tests were right (`beats_all` on non-segment share), but a correct prediction from a contradicted mechanism is not a useful mechanism result |
-| 2a H6 (Ford expansion, 2026-02-23) | useful | **yes** | genuine pair with H5 (neither contradicted by the engine check); the disputed Ford segment-share test resolved for H6; its BYD-overtakes-Ford gap call beat both committed baselines (`beats_all`) |
+| 2a H6 (Ford expansion, 2026-02-23) | useful | **yes, as a predictive result only** | **reconciled 2026-11-27.** Engine-only: a genuine pair with H5 plus a discrimination win. With the accepted manual review (`registry/evaluations/manual_reviews.json`): H5 is contradicted (it says "not BEV expansion" while Ford's BEV share tripled), so the pair is `contradicted_at_registration` and **no discrimination credit** is given. H6 still qualifies because its BYD-overtakes-Ford gap call beat both committed baselines (`beats_all`). That is a correct prediction, **not a validated mechanism** |
 | 2b H3 (BMW hybrid substitution) | useful | **no** | persistence and Holt already predicted the "BMW stays below Toyota" outcome (the H3 artefact) |
 
-**1 of 4 survives (H6).** Caveats:
-- H5's plausibility is not machine-assessable. The manual review judged H5 weak (it predicted a fall after a tripling).
+**1 of 4 survives (H6), as a correct predictive result, not as mechanism or discrimination evidence.** Caveats:
+- The engine check missed H5's contradiction, because it compares only the mechanism's direction on the explained
+  metric. The human overlay is reported separately (`useful_v21_engine_only` against `useful_v21`).
 - Leakage risk is high (the window predates the model's cutoff).
 - The resolution basis is `estimated_lag` (backfilled history).
 - It is predictive support only, not causal evidence.
 
 ### 2.2 Resolved retrospective predictions against baselines
 
-All bases are `estimated_lag`. Hit rates are over effective independent outcomes, with Wilson 95% intervals.
+All bases are `estimated_lag`. Hit rates are over **unique realised outcomes**. These are NOT statistically independent: quantities in the same market and quarters share shocks. The Wilson 95% intervals are therefore **nominal and understate the uncertainty**.
 
 | Experiment, contract | Resolved (independent) | Hit rate (95% CI) | Holt | Momentum | Reference class | Skill tiers |
 |---|---|---|---|---|---|---|
@@ -71,7 +72,7 @@ All bases are `estimated_lag`. Hit rates are over effective independent outcomes
    from hypotheses excluded as useful (refuted or contradicted), so they are **predictive signals, not mechanism
    evidence**.
 3. Arm B's informative tests were all refutations (as in the frozen readout).
-4. Every interval is wide: n of 4 to 12 independent outcomes. **No statistical superiority can be claimed.**
+4. Every interval is wide: 4 to 12 unique, correlated outcomes. **No statistical superiority can be claimed.**
 
 ### 2.3 Competing mechanisms
 
@@ -111,8 +112,9 @@ those from real errors.
 - **Calibration cannot be assessed** until contracts state probabilities.
 - **The critic benchmark v2 is unaudited.** A person must audit its items (a candidate can be built with
   `critic-audit-build`).
-- **The holdout seal is a procedural and code barrier, not cryptographic secrecy.** The candidate rule is public, and
-  16 entries can be enumerated.
+- **The holdout seal is a procedural and code barrier, not a secret or leakage-resistant dataset.** The candidate
+  rule is public, the 16 entries can be enumerated, and the outcome windows predate the model's training cutoff.
+  Prospective questions registered after the freeze are the leakage-resistant holdout.
 
 ## 3. Sealed holdout protocol (final; not to be executed until strategist v3 and the critic improvements are frozen)
 

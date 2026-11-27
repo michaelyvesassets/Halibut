@@ -87,7 +87,7 @@ def test_secondary_eval_end_to_end_preserves_frozen_scores(uk_store, tmp_path):
     agg = E.aggregate([ev])
     cell = next(iter(agg["by_contract"].values()))["by_temporal_and_basis"]
     for c in cell.values():
-        assert c["effective_independent_outcomes"] <= c["resolved"] and (c["hit_rate"] is None) == (c["resolved"] == 0)
+        assert c["unique_realised_outcomes"] <= c["resolved"] and (c["hit_rate"] is None) == (c["resolved"] == 0)
     assert json.dumps(evaluate_document(doc), sort_keys=True, default=str) == frozen  # the frozen readout is untouched
     store.close()
 
@@ -103,7 +103,7 @@ def test_pending_predictions_are_never_scored(uk_store, tmp_path):
     assert {t["temporal"] for t in ev["tests"]} <= {"future", "nowcast", "unpublished_historical"}
     assert {t["leakage_risk"] for t in ev["tests"] if t["temporal"] == "future"} == {"low"}
     cells = E.aggregate([ev])["by_contract"]["loop.v2:base"]["by_temporal_and_basis"]
-    assert all(c["hit_rate"] is None and c["effective_independent_outcomes"] == 0 for c in cells.values())
+    assert all(c["hit_rate"] is None and c["unique_realised_outcomes"] == 0 for c in cells.values())
     store.close()
 
 
@@ -185,3 +185,15 @@ def test_the_committed_seal_blocks_holdout_origins_in_the_loop(uk_store, tmp_pat
     assert committed["n"] == len(committed["entries"]) and committed["eval_token_sha256"] is None
     assert hashlib.sha256(json.dumps({k: v for k, v in committed.items() if k != "seal_sha256"},
                                      sort_keys=True).encode()).hexdigest() == committed["seal_sha256"]
+
+
+def test_manual_overlay_only_adds_labelled_contradictions():
+    a = _h("H1", UP, ["H2"], A)
+    b = _h("H2", DOWN1, [], B)
+    cons = {a["id"]: {"status": "consistent"}, b["id"]: {"status": "consistent"}}
+    assert E.classify_pairs([a, b], cons)[0]["class"] == "genuine"
+    cons[b["id"]] = {"status": "contradicted", "reason": "manual review: ..."}
+    assert E.classify_pairs([a, b], cons)[0]["class"] == "contradicted_at_registration"
+    from pathlib import Path
+    mr = json.loads((Path(__file__).resolve().parents[1] / "registry" / "evaluations" / "manual_reviews.json").read_text())
+    assert all(r["status"] == "contradicted" and r["source"] and r["reason"] for r in mr["reviews"])

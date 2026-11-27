@@ -136,7 +136,7 @@ def test_resolution_waits_for_first_publication_then_records_revisions(world, tm
     assert nom and all(x["status"] in ("resolved", "ambiguous", "unavailable") for x in nom)
     assert fut and all(x["status"] == "pending" for x in fut)  # 2027-Q1/Q2: genuinely future, untouched
     res = [x for x in nom if x["status"] == "resolved"]
-    assert res and all(x["availability_basis"] == "first_capture_verified" for x in res)  # absent before, timely release
+    assert res and all(x["availability_basis"] == "first_capture_inferred" for x in res)  # absent before, timely release
     for x in res:
         if x["kind"] == "binary":
             assert x["outcome"] in ("passed", "failed") and "brier" not in x["scores"] and "categorical_brier" not in x["scores"]
@@ -160,7 +160,7 @@ def test_resolution_waits_for_first_publication_then_records_revisions(world, tm
     ev = store.conn.execute("SELECT COUNT(*) FROM events_log WHERE event_type='predictions.resolution_run'").fetchone()[0]
     assert ev >= 5  # every run is audited
     s = P.summary(store)
-    assert any(g["temporal_class"] == "prospective" and g["effective_independent_outcomes"] for g in s["groups"])
+    assert any(g["temporal_class"] == "prospective" and g["unique_realised_outcomes"] for g in s["groups"])
     store.close()
 
 
@@ -262,7 +262,7 @@ def test_backfilled_history_stays_estimated_and_groups_do_not_inflate_samples(wo
     groups = {x["outcome_group"] for x in retro}
     assert len(groups) < len(retro)  # e.g. rival hypotheses tested on the same quantity and window
     g = next(g for g in P.summary(store)["groups"] if g["temporal_class"] == "retrospective" and g["kind"] == "binary")
-    assert g["effective_independent_outcomes"] <= g["resolved_claim_groups"] <= g["predictions"]
+    assert g["unique_realised_outcomes"] <= g["resolved_claim_groups"] <= g["predictions"]
     store.close()
 
 

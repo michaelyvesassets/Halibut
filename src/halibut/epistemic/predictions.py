@@ -50,7 +50,7 @@ from pathlib import Path
 from ..data.store import utc_now
 
 RULE = "first_publication.v1"
-RESOLVER_VERSION = "prediction_resolver.v2"  # v2: verified/unverified first capture; probabilistic scores only where valid
+RESOLVER_VERSION = "prediction_resolver.v3"  # v3: inferred (not "verified") first capture; v2 rows in the store used only estimated_lag
 SCRIPTED = ("mock", "reference")
 TIE = 1e-12
 
@@ -101,13 +101,15 @@ MAX_RELEASE_GAP_DAYS = 120  # one quarterly cycle plus slippage: a longer gap ma
 def first_publication(store, panel_now, periods) -> dict:
     """{period: (earliest available_at, basis)} for the periods the panel (built at 'now') contains.
 
-    basis (never upgraded silently):
+    Provenance basis (never upgraded silently; nothing here is VERIFIED publication, which would need the publisher's
+    own release archive or calendar):
       estimated_lag             history backfilled at our FIRST retrieval: the original publication was not observed;
                                 the value is the earliest CAPTURED vintage and its date an estimate
-      first_capture_verified    the period was ABSENT in our previous snapshot and the release that added it follows
-                                that snapshot's release within MAX_RELEASE_GAP_DAYS: an observed first publication
-      first_capture_unverified  first captured in a later snapshot, but an unseen intermediate release (and so an
-                                unseen original value) cannot be excluded
+      first_capture_inferred    INFERRED (heuristic): the period was absent in our previous snapshot, and the release that
+                                added it follows that snapshot's release within MAX_RELEASE_GAP_DAYS, so no unseen
+                                intermediate release is likely. Useful, not definitive
+      first_capture_unverified  first captured in a later snapshot; an unseen intermediate release (and so an unseen
+                                original value) cannot be excluded
       published / retrieval     non-DfT panels: the availability carried by the rows"""
     from datetime import datetime  # noqa: PLC0415
     out = {}
@@ -135,13 +137,13 @@ def first_publication(store, panel_now, periods) -> dict:
             gap = (datetime.fromisoformat(snap[1].replace("Z", "+00:00"))
                    - datetime.fromisoformat(prev[1].replace("Z", "+00:00"))).days
             verified = absent and 0 < gap <= MAX_RELEASE_GAP_DAYS
-        out[p] = (t, "first_capture_verified" if verified else "first_capture_unverified")
+        out[p] = (t, "first_capture_inferred" if verified else "first_capture_unverified")
     return out
 
 
 def combined_basis(fp: dict, periods) -> str:
     """The weakest basis over the target periods (a question is only as verified as its least verified period)."""
-    order = ["estimated_lag", "first_capture_unverified", "retrieval", "published", "first_capture_verified"]
+    order = ["estimated_lag", "first_capture_unverified", "retrieval", "published", "first_capture_inferred"]
     return min((fp[p][1] for p in periods), key=lambda b: order.index(b) if b in order else 0)
 
 
@@ -314,7 +316,8 @@ def score_binary(q: dict, hit: bool, baselines: dict) -> dict:
 
 def outcome_group(market_id: str, q: dict) -> str:
     """Predictions resolved by the SAME realised value (same market, quantity and target periods) share an outcome
-    group: they are not independent observations, whatever their claims or windows."""
+    group. Counting groups removes exact duplicates of one outcome; it does NOT make outcomes statistically independent
+    (quantities in the same market and quarters share demand, supply and reporting shocks)."""
     return "og:" + _h([market_id, q["template"], q["entity"], q.get("entity_b") or "", sorted(q["target_periods"])])[:16]
 
 
@@ -458,14 +461,15 @@ def summary(store) -> dict:
     for (pv, tc, kind), g in sorted(by.items(), key=lambda kv: tuple(str(x) for x in kv[0])):
         out.append({"contract": pv, "temporal_class": tc, "kind": kind, "predictions": g["n"], "status": g["status"],
                     "resolved_claim_groups": len(g["groups"]),
-                    "effective_independent_outcomes": len(g["ogroups"]),
+                    "unique_realised_outcomes": len(g["ogroups"]),
                     "resolution_basis": g["basis"],
                     "hit_rate": (g["hits"] / g["resolved_binary"]) if g["resolved_binary"] else None,
                     "baseline_hit_rates": {b: (v[0] / v[1]) for b, v in g["baseline_hits"].items() if v[1]},
                     "mean_abs_error": (sum(g["abs_error"]) / len(g["abs_error"])) if g["abs_error"] else None})
     return {"resolver": RESOLVER_VERSION, "rule": RULE, "groups": out,
             "note": "retrospective = target periods published before registration (leakage-prone); predictive support "
-                    "is not causal validation; correlated windows share a correlation group (effective sample size)"}
+                    "is not causal validation; unique_realised_outcomes removes duplicates of one realised value but "
+                    "outcomes in the same market and quarters remain correlated (not independent observations)"}
 
 
 def export(store, out_dir="registry/predictions") -> dict:

@@ -21,7 +21,8 @@ evaluation per frozen contract version, after the strategist v3 and critic impro
   - a used holdout entry becomes development data and is retired in the next seal version, so it is never reused;
   - a leak (any development run on a sealed entry) invalidates the entry.
 
-Retrospective holdout windows predate the model's training cutoff and remain leakage-prone, so they are secondary.
+This is a PROCEDURAL and code barrier, not a secret or leakage-resistant dataset. The candidate rule is public, the
+entries can be enumerated, and the retrospective windows predate the model's training cutoff, so they are secondary.
 The primary evidence is prospective questions registered after the freeze.
 """
 
