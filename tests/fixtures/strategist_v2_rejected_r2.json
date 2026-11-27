@@ -1,0 +1,2893 @@
+{
+ "investigations": [
+  {
+   "entities": [
+    "byd",
+    "volkswagen",
+    "tesla",
+    "kia",
+    "mg",
+    "toyota",
+    "ford",
+    "bmw"
+   ],
+   "file": "claude_uk_cars_bev_v1_2025-08-23_B_v2_base.json",
+   "focal": "byd",
+   "investigation_id": "inv:7c4b36e6c2a5817e.1",
+   "metrics": {
+    "metric:market_segment_share:L4": 0.20537642972109071,
+    "metric:market_segment_share:P4": 0.16110065581125105,
+    "metric:segment_mix:L4:bmw": 0.2803002765705255,
+    "metric:segment_mix:L4:byd": 0.718522930315664,
+    "metric:segment_mix:L4:ford": 0.11297008396246384,
+    "metric:segment_mix:L4:kia": 0.15529125320768267,
+    "metric:segment_mix:L4:mg": 0.2425369517809547,
+    "metric:segment_mix:L4:tesla": 1.0,
+    "metric:segment_mix:L4:toyota": 0.056059498731782814,
+    "metric:segment_mix:L4:volkswagen": 0.1580124827753911,
+    "metric:segment_mix:P4:bmw": 0.2619752670310005,
+    "metric:segment_mix:P4:byd": 1.0,
+    "metric:segment_mix:P4:ford": 0.023764070365970925,
+    "metric:segment_mix:P4:kia": 0.15579366322403515,
+    "metric:segment_mix:P4:mg": 0.34758179487486673,
+    "metric:segment_mix:P4:tesla": 1.0,
+    "metric:segment_mix:P4:toyota": 0.03048955640362756,
+    "metric:segment_mix:P4:volkswagen": 0.12471433815258191,
+    "metric:segment_share:L4:bmw": 0.08490918317518982,
+    "metric:segment_share:L4:byd": 0.028877548089351883,
+    "metric:segment_share:L4:ford": 0.03066085158127555,
+    "metric:segment_share:L4:kia": 0.042442623107783344,
+    "metric:segment_share:L4:mg": 0.04791939946955698,
+    "metric:segment_share:L4:tesla": 0.12232265106615219,
+    "metric:segment_share:L4:toyota": 0.015606897674285003,
+    "metric:segment_share:L4:volkswagen": 0.06999406363401346,
+    "metric:segment_share:P4:bmw": 0.10123547908926833,
+    "metric:segment_share:P4:byd": 0.0074581506267327406,
+    "metric:segment_share:P4:ford": 0.010422804264635651,
+    "metric:segment_share:P4:kia": 0.05243963704700651,
+    "metric:segment_share:P4:mg": 0.08997227614694263,
+    "metric:segment_share:P4:tesla": 0.14891492436411902,
+    "metric:segment_share:P4:toyota": 0.011520594419256604,
+    "metric:segment_share:P4:volkswagen": 0.06532471640421006,
+    "metric:share:L4:bmw": 0.06221308485461655,
+    "metric:share:L4:byd": 0.008254110586400727,
+    "metric:share:L4:ford": 0.05574056430782966,
+    "metric:share:L4:kia": 0.05613139324863898,
+    "metric:share:L4:mg": 0.04057738462188898,
+    "metric:share:L4:tesla": 0.025122189349985103,
+    "metric:share:L4:toyota": 0.057176553409847314,
+    "metric:share:L4:volkswagen": 0.09097465363706887,
+    "metric:share:P4:bmw": 0.06225435804486614,
+    "metric:share:P4:byd": 0.0012015129571057376,
+    "metric:share:P4:ford": 0.07065795449038614,
+    "metric:share:P4:kia": 0.054225953379298905,
+    "metric:share:P4:mg": 0.041701242429344296,
+    "metric:share:P4:tesla": 0.023990291975142422,
+    "metric:share:P4:toyota": 0.060872493246797756,
+    "metric:share:P4:volkswagen": 0.08438367880785934
+   },
+   "rejected": [
+    {
+     "option": {
+      "assumptions": [
+       {
+        "kind": "competitive",
+        "statement": "Volkswagen's BEV segment share gain (6.53% to 7.00%) is partly at MG's expense"
+       },
+       {
+        "kind": "behavioural",
+        "statement": "BEV buyers respond to financing and price offers within two quarters"
+       }
+      ],
+      "competitor_responses": [
+       {
+        "competitor": "mg",
+        "effect_on_option": "offsets_partly",
+        "likelihood": "medium",
+        "response": "match_price"
+       },
+       {
+        "competitor": "tesla",
+        "effect_on_option": "offsets_partly",
+        "likelihood": "medium",
+        "response": "match_price"
+       }
+      ],
+      "cost": {
+       "basis": "Cost of price and financing concessions is not present in the bundle and is not estimated.",
+       "currency": "unknown",
+       "high": 0,
+       "known": false,
+       "low": 0
+      },
+      "intended_effect": {
+       "basis": "assumed scenario magnitude; not derived from data",
+       "direction": "increase",
+       "entity": "volkswagen",
+       "entity_b": "",
+       "magnitude_high_pp": 1.5,
+       "magnitude_low_pp": 0.5,
+       "template": "segment_share"
+      },
+      "levers": [
+       "price",
+       "financing_terms"
+      ],
+      "linked_hypotheses": [
+       "H3"
+      ],
+      "mode": "continuation",
+      "numeric_claims": [
+       {
+        "decimals": 2,
+        "kind": "observed",
+        "metric_ids": [
+         "metric:segment_share:L4:volkswagen"
+        ],
+        "operation": "value",
+        "text": "Volkswagen BEV segment share rose from 6.53% to 7.00%",
+        "unit": "percent",
+        "value": 7.0
+       },
+       {
+        "decimals": 1,
+        "kind": "assumed",
+        "metric_ids": [],
+        "operation": "none",
+        "text": "assumed segment share uplift of 0.5 to 1.5 percentage points",
+        "unit": "pp",
+        "value": 0.5
+       }
+      ],
+      "ref": "O1",
+      "risks": [
+       "Margin erosion from price concessions",
+       "Price matching by competitors neutralises the gain"
+      ],
+      "success_criteria": [
+       {
+        "comparator": "increase_vs_L4",
+        "entity": "volkswagen",
+        "entity_b": "",
+        "horizon_quarters": 2,
+        "reference_metric": "metric:segment_share:L4:volkswagen",
+        "template": "segment_share"
+       }
+      ],
+      "supporting_evidence": [
+       "metric:segment_share:L4:volkswagen",
+       "metric:segment_share:P4:volkswagen",
+       "metric:segment_share:L4:mg",
+       "metric:segment_share:P4:mg"
+      ],
+      "title": "Price-led BEV re-entry to defend and recover VW BEV segment share",
+      "uncertainty": "high"
+     },
+     "v2_problems": [
+      "$.options[0].numeric_claims[0].text: longer than 24 characters (53)",
+      "$.options[0].numeric_claims[1].text: longer than 24 characters (60)"
+     ]
+    },
+    {
+     "option": {
+      "assumptions": [
+       {
+        "kind": "market_structure",
+        "statement": "BYD's BEV registrations are contracting in absolute terms"
+       },
+       {
+        "kind": "behavioural",
+        "statement": "Infrastructure and service improve BEV conversion for existing BYD customers"
+       }
+      ],
+      "competitor_responses": [
+       {
+        "competitor": "tesla",
+        "effect_on_option": "unknown",
+        "likelihood": "medium",
+        "response": "hold"
+       },
+       {
+        "competitor": "volkswagen",
+        "effect_on_option": "unknown",
+        "likelihood": "low",
+        "response": "expand_range"
+       }
+      ],
+      "cost": {
+       "basis": "Infrastructure and service costs are not provided in the bundle.",
+       "currency": "unknown",
+       "high": 0,
+       "known": false,
+       "low": 0
+      },
+      "intended_effect": {
+       "basis": "assumed scenario magnitude; not derived from data",
+       "direction": "increase",
+       "entity": "byd",
+       "entity_b": "",
+       "magnitude_high_pp": 1.0,
+       "magnitude_low_pp": 0.3,
+       "template": "segment_share"
+      },
+      "levers": [
+       "charging_or_support_infrastructure",
+       "service",
+       "availability"
+      ],
+      "linked_hypotheses": [
+       "H1",
+       "H2"
+      ],
+      "mode": "enforcement",
+      "numeric_claims": [
+       {
+        "decimals": 2,
+        "kind": "observed",
+        "metric_ids": [
+         "metric:segment_share:L4:byd"
+        ],
+        "operation": "value",
+        "text": "BYD BEV segment share is 2.89% in the last four quarters",
+        "unit": "percent",
+        "value": 2.89
+       },
+       {
+        "decimals": 1,
+        "kind": "assumed",
+        "metric_ids": [],
+        "operation": "none",
+        "text": "assumed segment share uplift of 0.3 to 1.0 percentage points",
+        "unit": "pp",
+        "value": 0.3
+       }
+      ],
+      "ref": "O2",
+      "risks": [
+       "Infrastructure may not be controllable by BYD in the UK",
+       "Demand decline may be market-wide rather than brand-specific"
+      ],
+      "success_criteria": [
+       {
+        "comparator": "increase_vs_L4",
+        "entity": "byd",
+        "entity_b": "",
+        "horizon_quarters": 2,
+        "reference_metric": "metric:segment_share:L4:byd",
+        "template": "segment_share"
+       }
+      ],
+      "supporting_evidence": [
+       "metric:segment_share:L4:byd",
+       "metric:segment_share:P4:byd",
+       "metric:segment_mix:L4:byd"
+      ],
+      "title": "Charging and service infrastructure bundle to protect BYD BEV segment position",
+      "uncertainty": "high"
+     },
+     "v2_problems": [
+      "$.options[1].numeric_claims[0].text: longer than 24 characters (56)",
+      "$.options[1].numeric_claims[1].text: longer than 24 characters (60)"
+     ]
+    },
+    {
+     "option": {
+      "assumptions": [
+       {
+        "kind": "behavioural",
+        "statement": "BYD's non-BEV registrations grew in the last four quarters"
+       },
+       {
+        "kind": "market_structure",
+        "statement": "BYD's total share increase reflects non-BEV volume"
+       }
+      ],
+      "competitor_responses": [
+       {
+        "competitor": "toyota",
+        "effect_on_option": "unknown",
+        "likelihood": "medium",
+        "response": "hold"
+       }
+      ],
+      "cost": {
+       "basis": "Range and advertising costs are not in the bundle.",
+       "currency": "unknown",
+       "high": 0,
+       "known": false,
+       "low": 0
+      },
+      "intended_effect": {
+       "basis": "assumed scenario magnitude; not derived from data",
+       "direction": "decrease",
+       "entity": "byd",
+       "entity_b": "",
+       "magnitude_high_pp": 5.0,
+       "magnitude_low_pp": 2.0,
+       "template": "segment_mix"
+      },
+      "levers": [
+       "product_range",
+       "disclosed_advertising"
+      ],
+      "linked_hypotheses": [
+       "H1"
+      ],
+      "mode": "continuation",
+      "numeric_claims": [
+       {
+        "decimals": 2,
+        "kind": "observed",
+        "metric_ids": [
+         "metric:segment_mix:L4:byd"
+        ],
+        "operation": "value",
+        "text": "BYD BEV mix is 71.85% of its registrations in the last four quarters, down from 100.0% in the prior period",
+        "unit": "percent",
+        "value": 71.85
+       },
+       {
+        "decimals": 1,
+        "kind": "assumed",
+        "metric_ids": [],
+        "operation": "none",
+        "text": "assumed mix reduction of 2.0 to 5.0 percentage points",
+        "unit": "pp",
+        "value": 2.0
+       }
+      ],
+      "ref": "O3",
+      "risks": [
+       "Reducing hybrid volume may lower total share",
+       "Mix shift may reflect demand, not strategy"
+      ],
+      "success_criteria": [
+       {
+        "comparator": "decrease_vs_L4",
+        "entity": "byd",
+        "entity_b": "",
+        "horizon_quarters": 2,
+        "reference_metric": "metric:segment_mix:L4:byd",
+        "template": "segment_mix"
+       }
+      ],
+      "supporting_evidence": [
+       "metric:segment_mix:L4:byd",
+       "metric:segment_mix:P4:byd",
+       "metric:share:L4:byd",
+       "metric:share:P4:byd"
+      ],
+      "title": "Targeted hybrid and petrol range rationalisation to reduce BYD BEV mix dilution",
+      "uncertainty": "medium"
+     },
+     "v2_problems": [
+      "$.options[2].numeric_claims[0].text: longer than 24 characters (106)",
+      "$.options[2].numeric_claims[1].text: longer than 24 characters (53)"
+     ]
+    }
+   ],
+   "target": "volkswagen"
+  },
+  {
+   "entities": [
+    "byd",
+    "volkswagen",
+    "tesla",
+    "kia",
+    "mg",
+    "toyota",
+    "ford",
+    "bmw"
+   ],
+   "file": "claude_uk_cars_bev_v1_2025-08-23_C_v2_extended.json",
+   "focal": "byd",
+   "investigation_id": "inv:81792570d9ec039c.1",
+   "metrics": {
+    "metric:market_segment_share:L4": 0.20537642972109071,
+    "metric:market_segment_share:P4": 0.16110065581125105,
+    "metric:non_segment_share:L4:bmw": 0.05634710778569811,
+    "metric:non_segment_share:L4:byd": 0.002923828272417151,
+    "metric:non_segment_share:L4:ford": 0.0622226044219964,
+    "metric:non_segment_share:L4:kia": 0.059669358700399786,
+    "metric:non_segment_share:L4:mg": 0.03867978574265609,
+    "metric:non_segment_share:L4:tesla": 0.0,
+    "metric:non_segment_share:L4:toyota": 0.0679205431416244,
+    "metric:non_segment_share:L4:volkswagen": 0.09639724469708125,
+    "metric:non_segment_share:P4:bmw": 0.05476849670999543,
+    "metric:non_segment_share:P4:byd": 0.0,
+    "metric:non_segment_share:P4:ford": 0.0822253997047363,
+    "metric:non_segment_share:P4:kia": 0.05456899421561872,
+    "metric:non_segment_share:P4:mg": 0.03243136369781149,
+    "metric:non_segment_share:P4:tesla": 0.0,
+    "metric:non_segment_share:P4:toyota": 0.07034993928573342,
+    "metric:non_segment_share:P4:volkswagen": 0.0880437261825287,
+    "metric:segment_mix:L4:bmw": 0.2803002765705255,
+    "metric:segment_mix:L4:byd": 0.718522930315664,
+    "metric:segment_mix:L4:ford": 0.11297008396246384,
+    "metric:segment_mix:L4:kia": 0.15529125320768267,
+    "metric:segment_mix:L4:mg": 0.2425369517809547,
+    "metric:segment_mix:L4:tesla": 1.0,
+    "metric:segment_mix:L4:toyota": 0.056059498731782814,
+    "metric:segment_mix:L4:volkswagen": 0.1580124827753911,
+    "metric:segment_mix:P4:bmw": 0.2619752670310005,
+    "metric:segment_mix:P4:byd": 1.0,
+    "metric:segment_mix:P4:ford": 0.023764070365970925,
+    "metric:segment_mix:P4:kia": 0.15579366322403515,
+    "metric:segment_mix:P4:mg": 0.34758179487486673,
+    "metric:segment_mix:P4:tesla": 1.0,
+    "metric:segment_mix:P4:toyota": 0.03048955640362756,
+    "metric:segment_mix:P4:volkswagen": 0.12471433815258191,
+    "metric:segment_share:L4:bmw": 0.08490918317518982,
+    "metric:segment_share:L4:byd": 0.028877548089351883,
+    "metric:segment_share:L4:ford": 0.03066085158127555,
+    "metric:segment_share:L4:kia": 0.042442623107783344,
+    "metric:segment_share:L4:mg": 0.04791939946955698,
+    "metric:segment_share:L4:tesla": 0.12232265106615219,
+    "metric:segment_share:L4:toyota": 0.015606897674285003,
+    "metric:segment_share:L4:volkswagen": 0.06999406363401346,
+    "metric:segment_share:P4:bmw": 0.10123547908926833,
+    "metric:segment_share:P4:byd": 0.0074581506267327406,
+    "metric:segment_share:P4:ford": 0.010422804264635651,
+    "metric:segment_share:P4:kia": 0.05243963704700651,
+    "metric:segment_share:P4:mg": 0.08997227614694263,
+    "metric:segment_share:P4:tesla": 0.14891492436411902,
+    "metric:segment_share:P4:toyota": 0.011520594419256604,
+    "metric:segment_share:P4:volkswagen": 0.06532471640421006,
+    "metric:share:L4:bmw": 0.06221308485461655,
+    "metric:share:L4:byd": 0.008254110586400727,
+    "metric:share:L4:ford": 0.05574056430782966,
+    "metric:share:L4:kia": 0.05613139324863898,
+    "metric:share:L4:mg": 0.04057738462188898,
+    "metric:share:L4:tesla": 0.025122189349985103,
+    "metric:share:L4:toyota": 0.057176553409847314,
+    "metric:share:L4:volkswagen": 0.09097465363706887,
+    "metric:share:P4:bmw": 0.06225435804486614,
+    "metric:share:P4:byd": 0.0012015129571057376,
+    "metric:share:P4:ford": 0.07065795449038614,
+    "metric:share:P4:kia": 0.054225953379298905,
+    "metric:share:P4:mg": 0.041701242429344296,
+    "metric:share:P4:tesla": 0.023990291975142422,
+    "metric:share:P4:toyota": 0.060872493246797756,
+    "metric:share:P4:volkswagen": 0.08438367880785934,
+    "metric:units_growth:L4:bmw": 0.01556042403961122,
+    "metric:units_growth:L4:byd": 5.981288981288981,
+    "metric:units_growth:L4:ford": -0.1983143842977544,
+    "metric:units_growth:L4:kia": 0.05194350521922586,
+    "metric:units_growth:L4:market": 0.016234163634574195,
+    "metric:units_growth:L4:mg": -0.011153574295264201,
+    "metric:units_growth:L4:tesla": 0.06418159100374843,
+    "metric:units_growth:L4:toyota": -0.045467602281587305,
+    "metric:units_growth:L4:volkswagen": 0.09560939220631592,
+    "metric:units_growth:P4:bmw": 0.15399788853697838,
+    "metric:units_growth:P4:byd": 69.73529411764706,
+    "metric:units_growth:P4:ford": 0.04575434030345149,
+    "metric:units_growth:P4:kia": 0.08291928564302098,
+    "metric:units_growth:P4:market": 0.15831866851768361,
+    "metric:units_growth:P4:mg": 0.45023194398596167,
+    "metric:units_growth:P4:tesla": -0.0845486607568392,
+    "metric:units_growth:P4:toyota": 0.016425306149687957,
+    "metric:units_growth:P4:volkswagen": 0.12391953847075188
+   },
+   "rejected": [
+    {
+     "option": {
+      "assumptions": [
+       {
+        "kind": "measurement",
+        "statement": "BYD's BEV volume in the prior window was not inflated by a one-off batch"
+       },
+       {
+        "kind": "competitive",
+        "statement": "Competitors' BEV offers did not change in a way that drew BYD's BEV buyers away"
+       }
+      ],
+      "competitor_responses": [
+       {
+        "competitor": "tesla",
+        "effect_on_option": "offsets_partly",
+        "likelihood": "medium",
+        "response": "match_price"
+       },
+       {
+        "competitor": "volkswagen",
+        "effect_on_option": "offsets_partly",
+        "likelihood": "medium",
+        "response": "increase_marketing"
+       }
+      ],
+      "cost": {
+       "basis": "Price and financing costs depend on internal margin data not present in the bundle.",
+       "currency": "unknown",
+       "high": 0,
+       "known": false,
+       "low": 0
+      },
+      "intended_effect": {
+       "basis": "Assumed scenario magnitude; BYD L4 segment_share is 2.8878% and P4 is 0.7458%, so a modest recovery is plausible but unverified.",
+       "direction": "increase",
+       "entity": "byd",
+       "entity_b": "",
+       "magnitude_high_pp": 1.5,
+       "magnitude_low_pp": 0.5,
+       "template": "segment_share"
+      },
+      "levers": [
+       "price",
+       "charging_or_support_infrastructure",
+       "financing_terms"
+      ],
+      "linked_hypotheses": [
+       "H2"
+      ],
+      "mode": "continuation",
+      "numeric_claims": [
+       {
+        "decimals": 4,
+        "kind": "observed",
+        "metric_ids": [
+         "metric:segment_share:L4:byd"
+        ],
+        "operation": "value",
+        "text": "BYD L4 segment share of 2.8878%",
+        "unit": "percent",
+        "value": 2.8878
+       },
+       {
+        "decimals": 1,
+        "kind": "assumed",
+        "metric_ids": [],
+        "operation": "none",
+        "text": "assumed recovery of 0.5 to 1.5 pp",
+        "unit": "pp",
+        "value": 0.5
+       }
+      ],
+      "ref": "O1",
+      "risks": [
+       "Price action may erode margin without restoring BEV share",
+       "Hybrid-led growth may already be the structural driver, making BEV intervention low-yield"
+      ],
+      "success_criteria": [
+       {
+        "comparator": "increase_vs_L4",
+        "entity": "byd",
+        "entity_b": "",
+        "horizon_quarters": 2,
+        "reference_metric": "metric:segment_share:L4:byd",
+        "template": "segment_share"
+       }
+      ],
+      "supporting_evidence": [
+       "metric:segment_share:L4:byd",
+       "metric:segment_share:P4:byd",
+       "metric:segment_mix:L4:byd",
+       "metric:market_segment_share:L4"
+      ],
+      "title": "Defend BYD BEV share with targeted price and charging-infrastructure support in the Battery electric segment",
+      "uncertainty": "high"
+     },
+     "v2_problems": [
+      "$.options[0].numeric_claims[0].text: longer than 24 characters (31)",
+      "$.options[0].numeric_claims[1].text: longer than 24 characters (33)"
+     ]
+    },
+    {
+     "option": {
+      "assumptions": [
+       {
+        "kind": "competitive",
+        "statement": "BYD's non-BEV growth is driven by product decisions rather than a temporary registration batch"
+       },
+       {
+        "kind": "measurement",
+        "statement": "The DfT Cars universe captures BYD's hybrid registrations consistently across quarters"
+       }
+      ],
+      "competitor_responses": [
+       {
+        "competitor": "toyota",
+        "effect_on_option": "offsets_partly",
+        "likelihood": "high",
+        "response": "expand_range"
+       },
+       {
+        "competitor": "kia",
+        "effect_on_option": "offsets_partly",
+        "likelihood": "medium",
+        "response": "increase_distribution"
+       }
+      ],
+      "cost": {
+       "basis": "Range and distribution expansion costs are not in the bundle.",
+       "currency": "unknown",
+       "high": 0,
+       "known": false,
+       "low": 0
+      },
+      "intended_effect": {
+       "basis": "Assumed scenario magnitude; BYD L4 non_segment_share is 0.2924% and P4 is 0.0%, so growth from a very small base is assumed.",
+       "direction": "increase",
+       "entity": "byd",
+       "entity_b": "",
+       "magnitude_high_pp": 1.0,
+       "magnitude_low_pp": 0.3,
+       "template": "non_segment_share"
+      },
+      "levers": [
+       "product_range",
+       "distribution",
+       "availability"
+      ],
+      "linked_hypotheses": [
+       "H1"
+      ],
+      "mode": "continuation",
+      "numeric_claims": [
+       {
+        "decimals": 4,
+        "kind": "observed",
+        "metric_ids": [
+         "metric:non_segment_share:L4:byd"
+        ],
+        "operation": "value",
+        "text": "BYD L4 non-segment share of 0.2924%",
+        "unit": "percent",
+        "value": 0.2924
+       },
+       {
+        "decimals": 1,
+        "kind": "assumed",
+        "metric_ids": [],
+        "operation": "none",
+        "text": "assumed gain of 0.3 to 1.0 pp",
+        "unit": "pp",
+        "value": 0.3
+       }
+      ],
+      "ref": "O2",
+      "risks": [
+       "Hybrid expansion may cannibalise future BEV demand",
+       "Toyota's established hybrid position limits BYD's ability to gain share"
+      ],
+      "success_criteria": [
+       {
+        "comparator": "increase_vs_L4",
+        "entity": "byd",
+        "entity_b": "",
+        "horizon_quarters": 2,
+        "reference_metric": "metric:non_segment_share:L4:byd",
+        "template": "non_segment_share"
+       }
+      ],
+      "supporting_evidence": [
+       "metric:non_segment_share:L4:byd",
+       "metric:non_segment_share:P4:byd",
+       "metric:segment_mix:L4:byd",
+       "metric:units_growth:L4:byd"
+      ],
+      "title": "Reinforce BYD hybrid and non-BEV line-up breadth to lock in non-segment share",
+      "uncertainty": "medium"
+     },
+     "v2_problems": [
+      "$.options[1].numeric_claims[0].text: longer than 24 characters (35)",
+      "$.options[1].numeric_claims[1].text: longer than 24 characters (29)"
+     ]
+    },
+    {
+     "option": {
+      "assumptions": [
+       {
+        "kind": "competitive",
+        "statement": "Competitors' BEV offers did not change in a way that drew BYD's BEV buyers away"
+       },
+       {
+        "kind": "behavioural",
+        "statement": "Advertising reach translates into registrations within two quarters"
+       }
+      ],
+      "competitor_responses": [
+       {
+        "competitor": "volkswagen",
+        "effect_on_option": "offsets_fully",
+        "likelihood": "high",
+        "response": "increase_marketing"
+       },
+       {
+        "competitor": "tesla",
+        "effect_on_option": "none",
+        "likelihood": "low",
+        "response": "hold"
+       }
+      ],
+      "cost": {
+       "basis": "Advertising spend is not disclosed in the bundle.",
+       "currency": "unknown",
+       "high": 0,
+       "known": false,
+       "low": 0
+      },
+      "intended_effect": {
+       "basis": "Assumed scenario magnitude; L4 segment_share gap of BYD over Volkswagen is 2.8878 minus 6.9994, about -4.11 pp, so partial closing is assumed.",
+       "direction": "increase",
+       "entity": "byd",
+       "entity_b": "volkswagen",
+       "magnitude_high_pp": 2.0,
+       "magnitude_low_pp": 0.5,
+       "template": "segment_share_gap"
+      },
+      "levers": [
+       "disclosed_advertising",
+       "service"
+      ],
+      "linked_hypotheses": [
+       "H2"
+      ],
+      "mode": "continuation",
+      "numeric_claims": [
+       {
+        "decimals": 4,
+        "kind": "observed",
+        "metric_ids": [
+         "metric:segment_share:L4:byd"
+        ],
+        "operation": "value",
+        "text": "BYD L4 segment share of 2.8878%",
+        "unit": "percent",
+        "value": 2.8878
+       },
+       {
+        "decimals": 4,
+        "kind": "observed",
+        "metric_ids": [
+         "metric:segment_share:L4:volkswagen"
+        ],
+        "operation": "value",
+        "text": "Volkswagen L4 segment share of 6.9994%",
+        "unit": "percent",
+        "value": 6.9994
+       },
+       {
+        "decimals": 1,
+        "kind": "assumed",
+        "metric_ids": [],
+        "operation": "none",
+        "text": "assumed gap closure of 0.5 to 2.0 pp",
+        "unit": "pp",
+        "value": 0.5
+       }
+      ],
+      "ref": "O3",
+      "risks": [
+       "Volkswagen marketing response may fully neutralise the effect",
+       "Gap closure may reflect Volkswagen weakness rather than BYD gains"
+      ],
+      "success_criteria": [
+       {
+        "comparator": "increase_vs_L4",
+        "entity": "byd",
+        "entity_b": "volkswagen",
+        "horizon_quarters": 2,
+        "reference_metric": "",
+        "template": "segment_share_gap"
+       }
+      ],
+      "supporting_evidence": [
+       "metric:segment_share:L4:byd",
+       "metric:segment_share:L4:volkswagen",
+       "metric:segment_share:P4:byd",
+       "metric:segment_share:P4:volkswagen"
+      ],
+      "title": "Targeted disclosed advertising to recover BYD BEV consideration against Tesla and Volkswagen",
+      "uncertainty": "high"
+     },
+     "v2_problems": [
+      "$.options[2].numeric_claims[0].text: longer than 24 characters (31)",
+      "$.options[2].numeric_claims[1].text: longer than 24 characters (38)",
+      "$.options[2].numeric_claims[2].text: longer than 24 characters (36)"
+     ]
+    },
+    {
+     "option": {
+      "assumptions": [
+       {
+        "kind": "measurement",
+        "statement": "The DfT Cars universe captures BYD's hybrid registrations consistently across quarters"
+       }
+      ],
+      "competitor_responses": [
+       {
+        "competitor": "byd",
+        "effect_on_option": "none",
+        "likelihood": "medium",
+        "response": "hold"
+       }
+      ],
+      "cost": {
+       "basis": "Holding current line-up and spend incurs no incremental cost relative to baseline.",
+       "currency": "unknown",
+       "high": 0,
+       "known": true,
+       "low": 0
+      },
+      "intended_effect": {
+       "basis": "Assumed scenario magnitude; BYD L4 segment_mix is 71.8523% after a 28.15 pp fall, so modest stabilisation is assumed.",
+       "direction": "increase",
+       "entity": "byd",
+       "entity_b": "",
+       "magnitude_high_pp": 1.0,
+       "magnitude_low_pp": 0.0,
+       "template": "segment_mix"
+      },
+      "levers": [
+       "availability"
+      ],
+      "linked_hypotheses": [
+       "H1",
+       "H2"
+      ],
+      "mode": "enforcement",
+      "numeric_claims": [
+       {
+        "decimals": 4,
+        "kind": "observed",
+        "metric_ids": [
+         "metric:segment_mix:L4:byd"
+        ],
+        "operation": "value",
+        "text": "BYD L4 segment mix of 71.8523%",
+        "unit": "percent",
+        "value": 71.8523
+       },
+       {
+        "decimals": 1,
+        "kind": "observed",
+        "metric_ids": [
+         "metric:segment_mix:P4:byd"
+        ],
+        "operation": "value",
+        "text": "BYD P4 segment mix of 100.0%",
+        "unit": "percent",
+        "value": 100.0
+       },
+       {
+        "decimals": 1,
+        "kind": "assumed",
+        "metric_ids": [],
+        "operation": "none",
+        "text": "assumed stabilisation of 0.0 to 1.0 pp",
+        "unit": "pp",
+        "value": 0.0
+       }
+      ],
+      "ref": "O4",
+      "risks": [
+       "Delay may let BEV share erode further if the drop reflects real BEV losses",
+       "Measurement may not separate batch effects from structural change within two quarters"
+      ],
+      "success_criteria": [
+       {
+        "comparator": "above_reference",
+        "entity": "byd",
+        "entity_b": "",
+        "horizon_quarters": 2,
+        "reference_metric": "metric:segment_mix:L4:byd",
+        "template": "segment_mix"
+       }
+      ],
+      "supporting_evidence": [
+       "metric:segment_mix:L4:byd",
+       "metric:segment_mix:P4:byd",
+       "metric:units_growth:L4:byd"
+      ],
+      "title": "Hold BYD line-up steady and monitor segment mix before committing spend",
+      "uncertainty": "medium"
+     },
+     "v2_problems": [
+      "$.options[3].numeric_claims[0].text: longer than 24 characters (30)",
+      "$.options[3].numeric_claims[1].text: longer than 24 characters (28)",
+      "$.options[3].numeric_claims[2].text: longer than 24 characters (38)"
+     ]
+    }
+   ],
+   "target": "volkswagen"
+  },
+  {
+   "entities": [
+    "byd",
+    "volkswagen",
+    "tesla",
+    "kia",
+    "mg",
+    "toyota",
+    "ford",
+    "bmw"
+   ],
+   "file": "claude_uk_cars_bev_v1_2026-02-23_B_v2_base.json",
+   "focal": "byd",
+   "investigation_id": "inv:4928c4681d1dba92.1",
+   "metrics": {
+    "metric:market_segment_share:L4": 0.22346980998055133,
+    "metric:market_segment_share:P4": 0.1717004056020651,
+    "metric:segment_mix:L4:bmw": 0.26583991862921524,
+    "metric:segment_mix:L4:byd": 0.5638795986622074,
+    "metric:segment_mix:L4:ford": 0.20179464346873074,
+    "metric:segment_mix:L4:kia": 0.1770186060117185,
+    "metric:segment_mix:L4:mg": 0.21390589180630065,
+    "metric:segment_mix:L4:tesla": 1.0,
+    "metric:segment_mix:L4:toyota": 0.048954600864393634,
+    "metric:segment_mix:L4:volkswagen": 0.19103014143412372,
+    "metric:segment_mix:P4:bmw": 0.2707164404223228,
+    "metric:segment_mix:P4:byd": 0.9902993811674193,
+    "metric:segment_mix:P4:ford": 0.04834827531260745,
+    "metric:segment_mix:P4:kia": 0.13917796794546378,
+    "metric:segment_mix:P4:mg": 0.2783794773222933,
+    "metric:segment_mix:P4:tesla": 1.0,
+    "metric:segment_mix:P4:toyota": 0.056449028228623084,
+    "metric:segment_mix:P4:volkswagen": 0.1092696242602193,
+    "metric:segment_share:L4:bmw": 0.0736679834698559,
+    "metric:segment_share:L4:byd": 0.04752199610596291,
+    "metric:segment_share:L4:ford": 0.05109948007233022,
+    "metric:segment_share:L4:kia": 0.043298396853548644,
+    "metric:segment_share:L4:mg": 0.03924825136920068,
+    "metric:segment_share:L4:tesla": 0.10663504026295591,
+    "metric:segment_share:L4:toyota": 0.011493480306492809,
+    "metric:segment_share:L4:volkswagen": 0.0770481637750478,
+    "metric:segment_share:P4:bmw": 0.10380495760702346,
+    "metric:segment_share:P4:byd": 0.017122020057140874,
+    "metric:segment_share:P4:ford": 0.016670907892149492,
+    "metric:segment_share:P4:kia": 0.044396955571235235,
+    "metric:segment_share:P4:mg": 0.0653331868182712,
+    "metric:segment_share:P4:tesla": 0.13318219147976357,
+    "metric:segment_share:P4:toyota": 0.019863393982857736,
+    "metric:segment_share:P4:volkswagen": 0.05509930251119105,
+    "metric:share:L4:bmw": 0.06192662995289487,
+    "metric:share:L4:byd": 0.018833331556756306,
+    "metric:share:L4:ford": 0.05658817749361159,
+    "metric:share:L4:kia": 0.05466026840525725,
+    "metric:share:L4:mg": 0.041003074770312814,
+    "metric:share:L4:tesla": 0.0238297121848312,
+    "metric:share:L4:toyota": 0.05246587276284538,
+    "metric:share:L4:volkswagen": 0.09013205135535061,
+    "metric:share:P4:bmw": 0.06583772044588919,
+    "metric:share:P4:byd": 0.0029686555848112478,
+    "metric:share:P4:ford": 0.05920380051468613,
+    "metric:share:P4:kia": 0.054771422457216654,
+    "metric:share:P4:mg": 0.040296557719969234,
+    "metric:share:P4:tesla": 0.022867436296047303,
+    "metric:share:P4:toyota": 0.060418273095460225,
+    "metric:share:P4:volkswagen": 0.08658007798244625
+   },
+   "rejected": [
+    {
+     "option": {
+      "assumptions": [
+       {
+        "kind": "behavioural",
+        "statement": "BYD BEV volume decline reflects a demand or price gap that price and financing changes can address"
+       },
+       {
+        "kind": "competitive",
+        "statement": "Price moves are not matched aggressively by competitors in the BEV segment"
+       }
+      ],
+      "competitor_responses": [
+       {
+        "competitor": "tesla",
+        "effect_on_option": "offsets_partly",
+        "likelihood": "medium",
+        "response": "match_price"
+       },
+       {
+        "competitor": "volkswagen",
+        "effect_on_option": "offsets_partly",
+        "likelihood": "medium",
+        "response": "match_price"
+       },
+       {
+        "competitor": "mg",
+        "effect_on_option": "offsets_partly",
+        "likelihood": "medium",
+        "response": "match_price"
+       }
+      ],
+      "cost": {
+       "basis": "Cost of price reduction and financing subsidy not provided in the bundle",
+       "currency": "unknown",
+       "high": 0,
+       "known": false,
+       "low": 0
+      },
+      "intended_effect": {
+       "basis": "assumed scenario magnitude for BYD BEV segment share recovery over two quarters; not derived from evidence",
+       "direction": "increase",
+       "entity": "byd",
+       "entity_b": "",
+       "magnitude_high_pp": 2.0,
+       "magnitude_low_pp": 1.0,
+       "template": "segment_share"
+      },
+      "levers": [
+       "price",
+       "financing_terms"
+      ],
+      "linked_hypotheses": [
+       "H2"
+      ],
+      "mode": "continuation",
+      "numeric_claims": [
+       {
+        "decimals": 1,
+        "kind": "assumed",
+        "metric_ids": [],
+        "operation": "none",
+        "text": "1.0 pp to 2.0 pp assumed BEV segment share gain",
+        "unit": "pp",
+        "value": 1.0
+       },
+       {
+        "decimals": 1,
+        "kind": "assumed",
+        "metric_ids": [],
+        "operation": "none",
+        "text": "2.0 pp assumed BEV segment share gain (upper bound)",
+        "unit": "pp",
+        "value": 2.0
+       }
+      ],
+      "ref": "O1",
+      "risks": [
+       "Margin erosion without durable volume gain",
+       "Price war triggering competitor retaliation"
+      ],
+      "success_criteria": [
+       {
+        "comparator": "increase_vs_L4",
+        "entity": "byd",
+        "entity_b": "",
+        "horizon_quarters": 2,
+        "reference_metric": "metric:segment_share:L4:byd",
+        "template": "segment_share"
+       }
+      ],
+      "supporting_evidence": [
+       "metric:segment_share:L4:byd",
+       "metric:segment_share:P4:byd",
+       "metric:segment_mix:L4:byd",
+       "metric:segment_mix:P4:byd"
+      ],
+      "title": "Price BYD BEV models competitively in the UK to rebuild BEV segment share",
+      "uncertainty": "high"
+     },
+     "v2_problems": [
+      "$.options[0].numeric_claims[0].text: longer than 24 characters (47)",
+      "$.options[0].numeric_claims[1].text: longer than 24 characters (51)"
+     ]
+    },
+    {
+     "option": {
+      "assumptions": [
+       {
+        "kind": "behavioural",
+        "statement": "BEV shortfall is partly driven by buyer concern about charging and service support"
+       },
+       {
+        "kind": "market_structure",
+        "statement": "Supply of BEV stock can be made available in the UK within two quarters"
+       }
+      ],
+      "competitor_responses": [
+       {
+        "competitor": "tesla",
+        "effect_on_option": "unknown",
+        "likelihood": "low",
+        "response": "expand_range"
+       },
+       {
+        "competitor": "volkswagen",
+        "effect_on_option": "offsets_partly",
+        "likelihood": "medium",
+        "response": "increase_distribution"
+       }
+      ],
+      "cost": {
+       "basis": "Infrastructure and service costs not provided in the bundle",
+       "currency": "unknown",
+       "high": 0,
+       "known": false,
+       "low": 0
+      },
+      "intended_effect": {
+       "basis": "assumed scenario magnitude for BYD BEV share of its own registration mix; not derived from evidence",
+       "direction": "increase",
+       "entity": "byd",
+       "entity_b": "",
+       "magnitude_high_pp": 4.0,
+       "magnitude_low_pp": 2.0,
+       "template": "segment_mix"
+      },
+      "levers": [
+       "charging_or_support_infrastructure",
+       "service",
+       "availability"
+      ],
+      "linked_hypotheses": [
+       "H1",
+       "H2"
+      ],
+      "mode": "enforcement",
+      "numeric_claims": [
+       {
+        "decimals": 1,
+        "kind": "assumed",
+        "metric_ids": [],
+        "operation": "none",
+        "text": "2.0 pp to 4.0 pp assumed BYD BEV mix gain",
+        "unit": "pp",
+        "value": 2.0
+       },
+       {
+        "decimals": 1,
+        "kind": "assumed",
+        "metric_ids": [],
+        "operation": "none",
+        "text": "4.0 pp assumed BYD BEV mix gain (upper bound)",
+        "unit": "pp",
+        "value": 4.0
+       }
+      ],
+      "ref": "O2",
+      "risks": [
+       "Infrastructure partner dependence",
+       "Effect on mix may be small if hybrid demand is structural"
+      ],
+      "success_criteria": [
+       {
+        "comparator": "increase_vs_L4",
+        "entity": "byd",
+        "entity_b": "",
+        "horizon_quarters": 2,
+        "reference_metric": "metric:segment_mix:L4:byd",
+        "template": "segment_mix"
+       }
+      ],
+      "supporting_evidence": [
+       "metric:segment_mix:L4:byd",
+       "metric:segment_mix:P4:byd"
+      ],
+      "title": "Expand BYD charging and service support to defend BEV share against hybrid-led volume",
+      "uncertainty": "high"
+     },
+     "v2_problems": [
+      "$.options[1].numeric_claims[0].text: longer than 24 characters (41)",
+      "$.options[1].numeric_claims[1].text: longer than 24 characters (45)"
+     ]
+    },
+    {
+     "option": {
+      "assumptions": [
+       {
+        "kind": "competitive",
+        "statement": "Tesla's BEV segment share decline reflects losses to new entrants that a broader BYD range can capture"
+       },
+       {
+        "kind": "competitive",
+        "statement": "Tesla does not respond with a matching range expansion in the test window"
+       }
+      ],
+      "competitor_responses": [
+       {
+        "competitor": "tesla",
+        "effect_on_option": "offsets_partly",
+        "likelihood": "medium",
+        "response": "increase_marketing"
+       },
+       {
+        "competitor": "kia",
+        "effect_on_option": "offsets_partly",
+        "likelihood": "medium",
+        "response": "expand_range"
+       }
+      ],
+      "cost": {
+       "basis": "Range expansion and advertising costs not provided in the bundle",
+       "currency": "unknown",
+       "high": 0,
+       "known": false,
+       "low": 0
+      },
+      "intended_effect": {
+       "basis": "assumed scenario magnitude for BYD segment share gap against Tesla; not derived from evidence",
+       "direction": "increase",
+       "entity": "byd",
+       "entity_b": "tesla",
+       "magnitude_high_pp": 1.5,
+       "magnitude_low_pp": 0.5,
+       "template": "segment_share_gap"
+      },
+      "levers": [
+       "product_range",
+       "disclosed_advertising",
+       "distribution"
+      ],
+      "linked_hypotheses": [
+       "H6"
+      ],
+      "mode": "continuation",
+      "numeric_claims": [
+       {
+        "decimals": 1,
+        "kind": "assumed",
+        "metric_ids": [],
+        "operation": "none",
+        "text": "0.5 pp to 1.5 pp assumed segment share gap gain versus Tesla",
+        "unit": "pp",
+        "value": 0.5
+       },
+       {
+        "decimals": 1,
+        "kind": "assumed",
+        "metric_ids": [],
+        "operation": "none",
+        "text": "1.5 pp assumed segment share gap gain versus Tesla (upper bound)",
+        "unit": "pp",
+        "value": 1.5
+       }
+      ],
+      "ref": "O3",
+      "risks": [
+       "Advertising effects are hard to attribute within two quarters",
+       "Tesla share recovery could erase the gap"
+      ],
+      "success_criteria": [
+       {
+        "comparator": "above_zero",
+        "entity": "byd",
+        "entity_b": "tesla",
+        "horizon_quarters": 2,
+        "reference_metric": "",
+        "template": "segment_share_gap"
+       }
+      ],
+      "supporting_evidence": [
+       "metric:segment_share:L4:tesla",
+       "metric:segment_share:P4:tesla",
+       "metric:segment_share:L4:byd",
+       "metric:segment_share:P4:byd"
+      ],
+      "title": "Broaden BEV product range and disclosed advertising against Tesla's BEV share loss",
+      "uncertainty": "medium"
+     },
+     "v2_problems": [
+      "$.options[2].numeric_claims[0].text: longer than 24 characters (60)",
+      "$.options[2].numeric_claims[1].text: longer than 24 characters (64)"
+     ]
+    },
+    {
+     "option": {
+      "assumptions": [
+       {
+        "kind": "behavioural",
+        "statement": "Ford's BEV mix gain is a one-off timing effect rather than a product-driven shift"
+       }
+      ],
+      "competitor_responses": [
+       {
+        "competitor": "ford",
+        "effect_on_option": "unknown",
+        "likelihood": "medium",
+        "response": "hold"
+       }
+      ],
+      "cost": {
+       "basis": "Monitoring-only option; no spend specified",
+       "currency": "unknown",
+       "high": 0,
+       "known": false,
+       "low": 0
+      },
+      "intended_effect": {
+       "basis": "assumed scenario magnitude for Ford BEV segment share reversal if the gain is a one-off fleet effect; not derived from evidence",
+       "direction": "decrease",
+       "entity": "ford",
+       "entity_b": "",
+       "magnitude_high_pp": 3.0,
+       "magnitude_low_pp": 1.0,
+       "template": "segment_share"
+      },
+      "levers": [
+       "disclosed_advertising"
+      ],
+      "linked_hypotheses": [
+       "H4",
+       "H3"
+      ],
+      "mode": "annihilation",
+      "numeric_claims": [
+       {
+        "decimals": 1,
+        "kind": "assumed",
+        "metric_ids": [],
+        "operation": "none",
+        "text": "1.0 pp to 3.0 pp assumed Ford BEV segment share reversal",
+        "unit": "pp",
+        "value": 1.0
+       },
+       {
+        "decimals": 1,
+        "kind": "assumed",
+        "metric_ids": [],
+        "operation": "none",
+        "text": "3.0 pp assumed Ford BEV segment share reversal (upper bound)",
+        "unit": "pp",
+        "value": 3.0
+       }
+      ],
+      "ref": "O4",
+      "risks": [
+       "Ford BEV gain may be durable, making the option a missed opportunity",
+       "Inaction cedes BEV share to Ford in the interim"
+      ],
+      "success_criteria": [
+       {
+        "comparator": "decrease_vs_L4",
+        "entity": "ford",
+        "entity_b": "",
+        "horizon_quarters": 2,
+        "reference_metric": "metric:segment_share:L4:ford",
+        "template": "segment_share"
+       }
+      ],
+      "supporting_evidence": [
+       "metric:segment_share:L4:ford",
+       "metric:segment_share:P4:ford",
+       "metric:segment_mix:L4:ford",
+       "metric:segment_mix:P4:ford"
+      ],
+      "title": "Monitor Ford BEV gains for a possible one-off reversal before committing spend",
+      "uncertainty": "high"
+     },
+     "v2_problems": [
+      "$.options[3].numeric_claims[0].text: longer than 24 characters (56)",
+      "$.options[3].numeric_claims[1].text: longer than 24 characters (60)"
+     ]
+    }
+   ],
+   "target": "volkswagen"
+  },
+  {
+   "entities": [
+    "byd",
+    "volkswagen",
+    "tesla",
+    "kia",
+    "mg",
+    "toyota",
+    "ford",
+    "bmw"
+   ],
+   "file": "claude_uk_cars_bev_v1_2026-02-23_C_v2_extended.json",
+   "focal": "byd",
+   "investigation_id": "inv:68420c5a72806169.1",
+   "metrics": {
+    "metric:market_segment_share:L4": 0.22346980998055133,
+    "metric:market_segment_share:P4": 0.1717004056020651,
+    "metric:non_segment_share:L4:bmw": 0.05854770396511834,
+    "metric:non_segment_share:L4:byd": 0.010577309449944967,
+    "metric:non_segment_share:L4:ford": 0.05816771449750292,
+    "metric:non_segment_share:L4:kia": 0.05792998709658097,
+    "metric:non_segment_share:L4:mg": 0.04150807773997988,
+    "metric:non_segment_share:L4:tesla": 0.0,
+    "metric:non_segment_share:L4:toyota": 0.06425690532584252,
+    "metric:non_segment_share:L4:volkswagen": 0.09389733171271049,
+    "metric:non_segment_share:P4:bmw": 0.05796739180605084,
+    "metric:non_segment_share:P4:byd": 3.476736734900622e-05,
+    "metric:non_segment_share:P4:ford": 0.06802055590622641,
+    "metric:non_segment_share:P4:kia": 0.05692197303610831,
+    "metric:non_segment_share:P4:mg": 0.035106648899343076,
+    "metric:non_segment_share:P4:tesla": 0.0,
+    "metric:non_segment_share:P4:toyota": 0.06882500085419825,
+    "metric:non_segment_share:P4:volkswagen": 0.09310581088590249,
+    "metric:segment_mix:L4:bmw": 0.26583991862921524,
+    "metric:segment_mix:L4:byd": 0.5638795986622074,
+    "metric:segment_mix:L4:ford": 0.20179464346873074,
+    "metric:segment_mix:L4:kia": 0.1770186060117185,
+    "metric:segment_mix:L4:mg": 0.21390589180630065,
+    "metric:segment_mix:L4:tesla": 1.0,
+    "metric:segment_mix:L4:toyota": 0.048954600864393634,
+    "metric:segment_mix:L4:volkswagen": 0.19103014143412372,
+    "metric:segment_mix:P4:bmw": 0.2707164404223228,
+    "metric:segment_mix:P4:byd": 0.9902993811674193,
+    "metric:segment_mix:P4:ford": 0.04834827531260745,
+    "metric:segment_mix:P4:kia": 0.13917796794546378,
+    "metric:segment_mix:P4:mg": 0.2783794773222933,
+    "metric:segment_mix:P4:tesla": 1.0,
+    "metric:segment_mix:P4:toyota": 0.056449028228623084,
+    "metric:segment_mix:P4:volkswagen": 0.1092696242602193,
+    "metric:segment_share:L4:bmw": 0.0736679834698559,
+    "metric:segment_share:L4:byd": 0.04752199610596291,
+    "metric:segment_share:L4:ford": 0.05109948007233022,
+    "metric:segment_share:L4:kia": 0.043298396853548644,
+    "metric:segment_share:L4:mg": 0.03924825136920068,
+    "metric:segment_share:L4:tesla": 0.10663504026295591,
+    "metric:segment_share:L4:toyota": 0.011493480306492809,
+    "metric:segment_share:L4:volkswagen": 0.0770481637750478,
+    "metric:segment_share:P4:bmw": 0.10380495760702346,
+    "metric:segment_share:P4:byd": 0.017122020057140874,
+    "metric:segment_share:P4:ford": 0.016670907892149492,
+    "metric:segment_share:P4:kia": 0.044396955571235235,
+    "metric:segment_share:P4:mg": 0.0653331868182712,
+    "metric:segment_share:P4:tesla": 0.13318219147976357,
+    "metric:segment_share:P4:toyota": 0.019863393982857736,
+    "metric:segment_share:P4:volkswagen": 0.05509930251119105,
+    "metric:share:L4:bmw": 0.06192662995289487,
+    "metric:share:L4:byd": 0.018833331556756306,
+    "metric:share:L4:ford": 0.05658817749361159,
+    "metric:share:L4:kia": 0.05466026840525725,
+    "metric:share:L4:mg": 0.041003074770312814,
+    "metric:share:L4:tesla": 0.0238297121848312,
+    "metric:share:L4:toyota": 0.05246587276284538,
+    "metric:share:L4:volkswagen": 0.09013205135535061,
+    "metric:share:P4:bmw": 0.06583772044588919,
+    "metric:share:P4:byd": 0.0029686555848112478,
+    "metric:share:P4:ford": 0.05920380051468613,
+    "metric:share:P4:kia": 0.054771422457216654,
+    "metric:share:P4:mg": 0.040296557719969234,
+    "metric:share:P4:tesla": 0.022867436296047303,
+    "metric:share:P4:toyota": 0.060418273095460225,
+    "metric:share:P4:volkswagen": 0.08658007798244625,
+    "metric:units_growth:L4:bmw": -0.03612368024132728,
+    "metric:units_growth:L4:byd": 5.501087138317445,
+    "metric:units_growth:L4:ford": -0.02052180913962709,
+    "metric:units_growth:L4:kia": 0.022672057437087556,
+    "metric:units_growth:L4:market": 0.024751705897043896,
+    "metric:units_growth:L4:mg": 0.042718614078537165,
+    "metric:units_growth:L4:tesla": 0.06787389265242316,
+    "metric:units_growth:L4:toyota": -0.1101286107572832,
+    "metric:units_growth:L4:volkswagen": 0.06679244850208743,
+    "metric:units_growth:P4:bmw": 0.2188620277599045,
+    "metric:units_growth:P4:byd": 12.435955056179775,
+    "metric:units_growth:P4:ford": -0.17914526854924206,
+    "metric:units_growth:P4:kia": 0.030856929258947785,
+    "metric:units_growth:P4:market": 0.061686126103900785,
+    "metric:units_growth:P4:mg": 0.09566238710461294,
+    "metric:units_growth:P4:tesla": -0.25918062056652025,
+    "metric:units_growth:P4:toyota": -0.010570394763589008,
+    "metric:units_growth:P4:volkswagen": 0.03869430545627828
+   },
+   "rejected": [
+    {
+     "option": {
+      "assumptions": [
+       {
+        "kind": "market_structure",
+        "statement": "Market BEV demand remains broadly stable over the next two quarters"
+       },
+       {
+        "kind": "competitive",
+        "statement": "Volkswagen BEV gains are supply-driven rather than discount-driven, so a price push adds volume without eroding margin dramatically"
+       }
+      ],
+      "competitor_responses": [
+       {
+        "competitor": "byd",
+        "effect_on_option": "offsets_partly",
+        "likelihood": "medium",
+        "response": "match_price"
+       },
+       {
+        "competitor": "tesla",
+        "effect_on_option": "none",
+        "likelihood": "medium",
+        "response": "hold"
+       },
+       {
+        "competitor": "kia",
+        "effect_on_option": "offsets_partly",
+        "likelihood": "low",
+        "response": "increase_marketing"
+       }
+      ],
+      "cost": {
+       "basis": "Financing subsidy and price-support costs are not in the bundle; cannot estimate without internal pricing data.",
+       "currency": "unknown",
+       "high": 0,
+       "known": false,
+       "low": 0
+      },
+      "intended_effect": {
+       "basis": "Assumed scenario range; VW L4 BEV segment share is 7.70% vs P4 5.51%, so continued momentum is plausible but the magnitude is an assumption, not observed.",
+       "direction": "increase",
+       "entity": "volkswagen",
+       "entity_b": "",
+       "magnitude_high_pp": 1.5,
+       "magnitude_low_pp": 0.5,
+       "template": "segment_share"
+      },
+      "levers": [
+       "price",
+       "financing_terms",
+       "disclosed_advertising"
+      ],
+      "linked_hypotheses": [
+       "H3",
+       "H4"
+      ],
+      "mode": "continuation",
+      "numeric_claims": [
+       {
+        "decimals": 2,
+        "kind": "observed",
+        "metric_ids": [
+         "metric:segment_share:L4:volkswagen"
+        ],
+        "operation": "value",
+        "text": "Volkswagen L4 BEV segment share is 7.70%",
+        "unit": "percent",
+        "value": 7.7048
+       },
+       {
+        "decimals": 2,
+        "kind": "observed",
+        "metric_ids": [
+         "metric:segment_share:P4:volkswagen"
+        ],
+        "operation": "value",
+        "text": "Volkswagen P4 BEV segment share is 5.51%",
+        "unit": "percent",
+        "value": 5.5099
+       },
+       {
+        "decimals": 1,
+        "kind": "assumed",
+        "metric_ids": [],
+        "operation": "none",
+        "text": "Assumed segment share uplift of 0.5 to 1.5 pp",
+        "unit": "pp",
+        "value": 1.0
+       }
+      ],
+      "ref": "O1",
+      "risks": [
+       "Price competition with BYD could compress margins without proportional share gain",
+       "Denominator effects may mask whether BEV growth is genuinely relative"
+      ],
+      "success_criteria": [
+       {
+        "comparator": "increase_vs_L4",
+        "entity": "volkswagen",
+        "entity_b": "",
+        "horizon_quarters": 2,
+        "reference_metric": "metric:segment_share:L4:volkswagen",
+        "template": "segment_share"
+       }
+      ],
+      "supporting_evidence": [
+       "metric:segment_share:L4:volkswagen",
+       "metric:segment_share:P4:volkswagen",
+       "metric:segment_mix:L4:volkswagen",
+       "metric:market_segment_share:L4"
+      ],
+      "title": "Volkswagen BEV price and financing push to defend and extend BEV segment share",
+      "uncertainty": "medium"
+     },
+     "v2_problems": [
+      "$.options[0].numeric_claims[0].text: longer than 24 characters (40)",
+      "$.options[0].numeric_claims[1].text: longer than 24 characters (40)",
+      "$.options[0].numeric_claims[2].text: longer than 24 characters (45)"
+     ]
+    },
+    {
+     "option": {
+      "assumptions": [
+       {
+        "kind": "market_structure",
+        "statement": "Dealer and charging constraints currently limit Volkswagen BEV availability"
+       },
+       {
+        "kind": "behavioural",
+        "statement": "Improved availability converts into registrations within two quarters"
+       }
+      ],
+      "competitor_responses": [
+       {
+        "competitor": "byd",
+        "effect_on_option": "offsets_partly",
+        "likelihood": "high",
+        "response": "increase_distribution"
+       },
+       {
+        "competitor": "kia",
+        "effect_on_option": "none",
+        "likelihood": "low",
+        "response": "expand_range"
+       }
+      ],
+      "cost": {
+       "basis": "Dealer and charger investment levels are not provided in the bundle.",
+       "currency": "unknown",
+       "high": 0,
+       "known": false,
+       "low": 0
+      },
+      "intended_effect": {
+       "basis": "Assumed scenario range; distribution and charging gains typically act slower than price, so the range is set lower. Not observed in the bundle.",
+       "direction": "increase",
+       "entity": "volkswagen",
+       "entity_b": "",
+       "magnitude_high_pp": 1.0,
+       "magnitude_low_pp": 0.3,
+       "template": "segment_share"
+      },
+      "levers": [
+       "distribution",
+       "availability",
+       "charging_or_support_infrastructure",
+       "service"
+      ],
+      "linked_hypotheses": [
+       "H3",
+       "H4"
+      ],
+      "mode": "continuation",
+      "numeric_claims": [
+       {
+        "decimals": 2,
+        "kind": "observed",
+        "metric_ids": [
+         "metric:segment_mix:L4:volkswagen"
+        ],
+        "operation": "value",
+        "text": "Volkswagen L4 segment mix is 19.10%",
+        "unit": "percent",
+        "value": 19.103
+       },
+       {
+        "decimals": 1,
+        "kind": "assumed",
+        "metric_ids": [],
+        "operation": "none",
+        "text": "Assumed segment share uplift of 0.3 to 1.0 pp",
+        "unit": "pp",
+        "value": 0.7
+       }
+      ],
+      "ref": "O2",
+      "risks": [
+       "Two-quarter horizon may be too short for infrastructure effects to show in registrations",
+       "BYD distribution expansion could absorb the gain"
+      ],
+      "success_criteria": [
+       {
+        "comparator": "increase_vs_L4",
+        "entity": "volkswagen",
+        "entity_b": "",
+        "horizon_quarters": 2,
+        "reference_metric": "metric:segment_share:L4:volkswagen",
+        "template": "segment_share"
+       }
+      ],
+      "supporting_evidence": [
+       "metric:segment_share:L4:volkswagen",
+       "metric:segment_mix:L4:volkswagen",
+       "metric:non_segment_share:L4:volkswagen"
+      ],
+      "title": "Volkswagen BEV distribution and charging-support expansion to lift BEV availability",
+      "uncertainty": "high"
+     },
+     "v2_problems": [
+      "$.options[1].numeric_claims[0].text: longer than 24 characters (35)",
+      "$.options[1].numeric_claims[1].text: longer than 24 characters (45)"
+     ]
+    },
+    {
+     "option": {
+      "assumptions": [
+       {
+        "kind": "behavioural",
+        "statement": "BYD BEV growth decelerates rather than reverses"
+       },
+       {
+        "kind": "measurement",
+        "statement": "Non-BEV ramp is partly a registration timing effect that can be reversed by BEV product focus"
+       }
+      ],
+      "competitor_responses": [
+       {
+        "competitor": "volkswagen",
+        "effect_on_option": "offsets_partly",
+        "likelihood": "medium",
+        "response": "increase_marketing"
+       },
+       {
+        "competitor": "tesla",
+        "effect_on_option": "none",
+        "likelihood": "medium",
+        "response": "hold"
+       }
+      ],
+      "cost": {
+       "basis": "Product development and marketing spend are not in the bundle.",
+       "currency": "unknown",
+       "high": 0,
+       "known": false,
+       "low": 0
+      },
+      "intended_effect": {
+       "basis": "Assumed scenario range; BYD L4 BEV mix is 56.39% after a -42.64 pp fall, so a partial recovery is the modelled ambition. Not observed.",
+       "direction": "increase",
+       "entity": "byd",
+       "entity_b": "",
+       "magnitude_high_pp": 5.0,
+       "magnitude_low_pp": 2.0,
+       "template": "segment_mix"
+      },
+      "levers": [
+       "product_range",
+       "product_quality",
+       "disclosed_advertising"
+      ],
+      "linked_hypotheses": [
+       "H1",
+       "H2"
+      ],
+      "mode": "enforcement",
+      "numeric_claims": [
+       {
+        "decimals": 2,
+        "kind": "observed",
+        "metric_ids": [
+         "metric:segment_mix:L4:byd"
+        ],
+        "operation": "value",
+        "text": "BYD L4 BEV mix is 56.39%",
+        "unit": "percent",
+        "value": 56.388
+       },
+       {
+        "decimals": 2,
+        "kind": "calculated",
+        "metric_ids": [
+         "metric:segment_mix:L4:byd",
+         "metric:segment_mix:P4:byd"
+        ],
+        "operation": "difference",
+        "text": "BYD BEV mix changed by -42.64 pp from P4 to L4",
+        "unit": "pp",
+        "value": -42.64
+       },
+       {
+        "decimals": 1,
+        "kind": "assumed",
+        "metric_ids": [],
+        "operation": "none",
+        "text": "Assumed mix recovery of 2.0 to 5.0 pp",
+        "unit": "pp",
+        "value": 3.5
+       }
+      ],
+      "ref": "O3",
+      "risks": [
+       "Non-BEV growth may be structural demand rather than timing, making a mix recovery unlikely",
+       "Quality claims in advertising must be verifiable to remain lawful"
+      ],
+      "success_criteria": [
+       {
+        "comparator": "increase_vs_L4",
+        "entity": "byd",
+        "entity_b": "",
+        "horizon_quarters": 2,
+        "reference_metric": "metric:segment_mix:L4:byd",
+        "template": "segment_mix"
+       }
+      ],
+      "supporting_evidence": [
+       "metric:segment_mix:L4:byd",
+       "metric:segment_mix:P4:byd",
+       "metric:segment_share:L4:byd",
+       "metric:non_segment_share:L4:byd"
+      ],
+      "title": "BYD BEV-focused product and quality push to re-accelerate BEV mix against its non-BEV ramp",
+      "uncertainty": "high"
+     },
+     "v2_problems": [
+      "$.options[2].numeric_claims[1].text: longer than 24 characters (46)",
+      "$.options[2].numeric_claims[2].text: longer than 24 characters (37)"
+     ]
+    },
+    {
+     "option": {
+      "assumptions": [
+       {
+        "kind": "behavioural",
+        "statement": "Current trends persist without intervention"
+       },
+       {
+        "kind": "measurement",
+        "statement": "The gap between Volkswagen and BYD segment share is informative enough to decide later"
+       }
+      ],
+      "competitor_responses": [
+       {
+        "competitor": "byd",
+        "effect_on_option": "none",
+        "likelihood": "medium",
+        "response": "hold"
+       },
+       {
+        "competitor": "volkswagen",
+        "effect_on_option": "none",
+        "likelihood": "medium",
+        "response": "hold"
+       }
+      ],
+      "cost": {
+       "basis": "No spend; opportunity cost of delayed action is not quantified in the bundle.",
+       "currency": "unknown",
+       "high": 0,
+       "known": true,
+       "low": 0
+      },
+      "intended_effect": {
+       "basis": "Assumed scenario range for a no-change baseline; the option is a reference case rather than an intervention.",
+       "direction": "increase",
+       "entity": "volkswagen",
+       "entity_b": "byd",
+       "magnitude_high_pp": 0.5,
+       "magnitude_low_pp": 0.0,
+       "template": "segment_share_gap"
+      },
+      "levers": [
+       "price",
+       "product_range",
+       "distribution",
+       "service"
+      ],
+      "linked_hypotheses": [
+       "H2",
+       "H4"
+      ],
+      "mode": "annihilation",
+      "numeric_claims": [
+       {
+        "decimals": 2,
+        "kind": "observed",
+        "metric_ids": [
+         "metric:segment_share:L4:byd"
+        ],
+        "operation": "value",
+        "text": "BYD L4 BEV segment share is 4.75%",
+        "unit": "percent",
+        "value": 4.7522
+       },
+       {
+        "decimals": 2,
+        "kind": "observed",
+        "metric_ids": [
+         "metric:segment_share:L4:volkswagen"
+        ],
+        "operation": "value",
+        "text": "Volkswagen L4 BEV segment share is 7.70%",
+        "unit": "percent",
+        "value": 7.7048
+       }
+      ],
+      "ref": "O4",
+      "risks": [
+       "Delay may let BYD's non-BEV ramp entrench",
+       "Monitoring alone yields no share gain"
+      ],
+      "success_criteria": [
+       {
+        "comparator": "above_zero",
+        "entity": "volkswagen",
+        "entity_b": "byd",
+        "horizon_quarters": 2,
+        "reference_metric": "",
+        "template": "segment_share_gap"
+       }
+      ],
+      "supporting_evidence": [
+       "metric:segment_share:L4:volkswagen",
+       "metric:segment_share:L4:byd",
+       "metric:segment_share:P4:byd"
+      ],
+      "title": "Hold-and-monitor: no active lever change until BYD and VW mix trends separate",
+      "uncertainty": "medium"
+     },
+     "v2_problems": [
+      "$.options[3].numeric_claims[0].text: longer than 24 characters (33)",
+      "$.options[3].numeric_claims[1].text: longer than 24 characters (40)"
+     ]
+    }
+   ],
+   "target": "volkswagen"
+  },
+  {
+   "entities": [
+    "byd",
+    "volkswagen",
+    "tesla",
+    "kia",
+    "mg",
+    "toyota",
+    "ford",
+    "bmw"
+   ],
+   "file": "claude_uk_cars_bev_v1_registration_date_C_v2_extended.json",
+   "focal": "byd",
+   "investigation_id": "inv:65137a22117dcca7.1",
+   "metrics": {
+    "metric:market_segment_share:L4": 0.24497769395779223,
+    "metric:market_segment_share:P4": 0.21611394114790486,
+    "metric:non_segment_share:L4:bmw": 0.05706762881026027,
+    "metric:non_segment_share:L4:byd": 0.019509457710843225,
+    "metric:non_segment_share:L4:ford": 0.05021126014760821,
+    "metric:non_segment_share:L4:kia": 0.052495499081557005,
+    "metric:non_segment_share:L4:mg": 0.04201952771701487,
+    "metric:non_segment_share:L4:tesla": 0.0,
+    "metric:non_segment_share:L4:toyota": 0.06139082336071012,
+    "metric:non_segment_share:L4:volkswagen": 0.09226548054227698,
+    "metric:non_segment_share:P4:bmw": 0.05639768377292949,
+    "metric:non_segment_share:P4:byd": 0.005923496788068985,
+    "metric:non_segment_share:P4:ford": 0.06094172751413156,
+    "metric:non_segment_share:P4:kia": 0.059308329701818686,
+    "metric:non_segment_share:P4:mg": 0.038521226333758665,
+    "metric:non_segment_share:P4:tesla": 0.0,
+    "metric:non_segment_share:P4:toyota": 0.0660425686669781,
+    "metric:non_segment_share:P4:volkswagen": 0.09391253640658752,
+    "metric:segment_mix:L4:bmw": 0.24247418682437347,
+    "metric:segment_mix:L4:byd": 0.5384526775043557,
+    "metric:segment_mix:L4:ford": 0.3003214397788087,
+    "metric:segment_mix:L4:kia": 0.24458068754105539,
+    "metric:segment_mix:L4:mg": 0.2444872454283807,
+    "metric:segment_mix:L4:tesla": 1.0,
+    "metric:segment_mix:L4:toyota": 0.060864788365207353,
+    "metric:segment_mix:L4:volkswagen": 0.17490175587559736,
+    "metric:segment_mix:P4:bmw": 0.2722543165525835,
+    "metric:segment_mix:P4:byd": 0.6263349418558658,
+    "metric:segment_mix:P4:ford": 0.15281155478849054,
+    "metric:segment_mix:P4:kia": 0.16796122483088644,
+    "metric:segment_mix:P4:mg": 0.22848459732007184,
+    "metric:segment_mix:P4:tesla": 1.0,
+    "metric:segment_mix:P4:toyota": 0.054795258137176596,
+    "metric:segment_mix:P4:volkswagen": 0.1865050268041909,
+    "metric:segment_share:L4:bmw": 0.05629776362142511,
+    "metric:segment_share:L4:byd": 0.07014710351270133,
+    "metric:segment_share:L4:ford": 0.06642355757146019,
+    "metric:segment_share:L4:kia": 0.052382881818215925,
+    "metric:segment_share:L4:mg": 0.04190818129635674,
+    "metric:segment_share:L4:tesla": 0.09485381564977284,
+    "metric:segment_share:L4:toyota": 0.012262377742011728,
+    "metric:segment_share:L4:volkswagen": 0.060278299887074324,
+    "metric:segment_share:P4:bmw": 0.07652909215377232,
+    "metric:segment_share:P4:byd": 0.03601409177850708,
+    "metric:segment_share:P4:ford": 0.039871363622924386,
+    "metric:segment_share:P4:kia": 0.043426148937089626,
+    "metric:segment_share:P4:mg": 0.04137924760455686,
+    "metric:segment_share:P4:tesla": 0.11390778482063459,
+    "metric:segment_share:P4:toyota": 0.013887088373827865,
+    "metric:segment_share:P4:volkswagen": 0.07809610884056685,
+    "metric:share:L4:bmw": 0.056879029011641054,
+    "metric:share:L4:byd": 0.0319145514068339,
+    "metric:share:L4:ford": 0.054182911384261324,
+    "metric:share:L4:kia": 0.052467910364083874,
+    "metric:share:L4:mg": 0.04199225032765159,
+    "metric:share:L4:tesla": 0.02323706902097889,
+    "metric:share:L4:toyota": 0.049355450045310584,
+    "metric:share:L4:volkswagen": 0.08442933478915414,
+    "metric:share:P4:bmw": 0.060748361778971395,
+    "metric:share:P4:byd": 0.012426493862937964,
+    "metric:share:P4:ford": 0.05638812813218227,
+    "metric:share:P4:kia": 0.05587596902272964,
+    "metric:share:P4:mg": 0.039138884574475404,
+    "metric:share:P4:tesla": 0.024617060305014832,
+    "metric:share:P4:toyota": 0.05477104226836351,
+    "metric:share:P4:volkswagen": 0.09049438591041442,
+    "metric:units_growth:L4:bmw": 0.0014563813777368484,
+    "metric:units_growth:L4:byd": 1.7469741317933707,
+    "metric:units_growth:L4:ford": 0.027753806995981734,
+    "metric:units_growth:L4:kia": 0.004345493090314179,
+    "metric:units_growth:L4:market": 0.0695828606592992,
+    "metric:units_growth:L4:mg": 0.14755930628288683,
+    "metric:units_growth:L4:tesla": 0.00962383196230343,
+    "metric:units_growth:L4:toyota": -0.03617420333294441,
+    "metric:units_growth:L4:volkswagen": -0.002101969985823904,
+    "metric:units_growth:P4:bmw": -0.059907203164219935,
+    "metric:units_growth:P4:byd": 5.389183725044226,
+    "metric:units_growth:P4:ford": -0.11531046608470341,
+    "metric:units_growth:P4:kia": 0.03931212916320015,
+    "metric:units_growth:P4:market": 0.012401964370041707,
+    "metric:units_growth:P4:mg": -0.06764161768494015,
+    "metric:units_growth:P4:tesla": 0.07691315285870948,
+    "metric:units_growth:P4:toyota": -0.09401118735568637,
+    "metric:units_growth:P4:volkswagen": 0.06447696301478367
+   },
+   "rejected": [
+    {
+     "option": {
+      "assumptions": [
+       {
+        "kind": "competitive",
+        "statement": "BYD's segment gain is driven by supply and discounting that VW can partly match"
+       },
+       {
+        "kind": "behavioural",
+        "statement": "Charging support measurably improves BEV purchase intent in the test window"
+       }
+      ],
+      "competitor_responses": [
+       {
+        "competitor": "byd",
+        "effect_on_option": "offsets_partly",
+        "likelihood": "high",
+        "response": "match_price"
+       },
+       {
+        "competitor": "tesla",
+        "effect_on_option": "none",
+        "likelihood": "medium",
+        "response": "hold"
+       }
+      ],
+      "cost": {
+       "basis": "No cost data supplied; price and infrastructure costs not known",
+       "currency": "unknown",
+       "high": 0,
+       "known": false,
+       "low": 0
+      },
+      "intended_effect": {
+       "basis": "assumed scenario magnitude; VW BEV segment share L4 is 6.03% vs P4 7.81%, so recovery is a hypothesised lift, not an observed trend",
+       "direction": "increase",
+       "entity": "volkswagen",
+       "entity_b": "",
+       "magnitude_high_pp": 1.5,
+       "magnitude_low_pp": 0.5,
+       "template": "segment_share"
+      },
+      "levers": [
+       "price",
+       "charging_or_support_infrastructure"
+      ],
+      "linked_hypotheses": [
+       "H1",
+       "H2"
+      ],
+      "mode": "continuation",
+      "numeric_claims": [
+       {
+        "decimals": 2,
+        "kind": "observed",
+        "metric_ids": [
+         "metric:segment_share:L4:volkswagen"
+        ],
+        "operation": "value",
+        "text": "VW BEV segment share L4 was 6.03%",
+        "unit": "percent",
+        "value": 6.0278
+       },
+       {
+        "decimals": 2,
+        "kind": "observed",
+        "metric_ids": [
+         "metric:segment_share:P4:volkswagen"
+        ],
+        "operation": "value",
+        "text": "VW BEV segment share P4 was 7.81%",
+        "unit": "percent",
+        "value": 7.8096
+       },
+       {
+        "decimals": 1,
+        "kind": "assumed",
+        "metric_ids": [],
+        "operation": "none",
+        "text": "assumed segment share lift of 0.5 to 1.5 pp",
+        "unit": "pp",
+        "value": 0.5
+       }
+      ],
+      "ref": "O1",
+      "risks": [
+       "Price response triggers margin erosion without share gain",
+       "BYD matches price and offsets fully"
+      ],
+      "success_criteria": [
+       {
+        "comparator": "increase_vs_L4",
+        "entity": "volkswagen",
+        "entity_b": "",
+        "horizon_quarters": 2,
+        "reference_metric": "metric:segment_share:L4:volkswagen",
+        "template": "segment_share"
+       }
+      ],
+      "supporting_evidence": [
+       "metric:segment_share:L4:volkswagen",
+       "metric:segment_share:P4:volkswagen",
+       "metric:segment_share:L4:byd",
+       "metric:segment_share:P4:byd"
+      ],
+      "title": "Defend VW BEV segment share with targeted price and charging support",
+      "uncertainty": "high"
+     },
+     "v2_problems": [
+      "$.options[0].numeric_claims[0].text: longer than 24 characters (33)",
+      "$.options[0].numeric_claims[1].text: longer than 24 characters (33)",
+      "$.options[0].numeric_claims[2].text: longer than 24 characters (43)"
+     ]
+    },
+    {
+     "option": {
+      "assumptions": [
+       {
+        "kind": "competitive",
+        "statement": "BYD's BEV push reflects a dedicated product strategy that VW can counter with range"
+       },
+       {
+        "kind": "measurement",
+        "statement": "Range expansion is available within the test horizon"
+       }
+      ],
+      "competitor_responses": [
+       {
+        "competitor": "byd",
+        "effect_on_option": "offsets_partly",
+        "likelihood": "high",
+        "response": "expand_range"
+       },
+       {
+        "competitor": "kia",
+        "effect_on_option": "offsets_partly",
+        "likelihood": "medium",
+        "response": "increase_marketing"
+       }
+      ],
+      "cost": {
+       "basis": "No cost data supplied for range or advertising expansion",
+       "currency": "unknown",
+       "high": 0,
+       "known": false,
+       "low": 0
+      },
+      "intended_effect": {
+       "basis": "assumed scenario magnitude; gap between VW and BYD BEV segment share at L4 is 6.03% - 7.01% = -0.98 pp, so the option assumes closing part of this gap",
+       "direction": "increase",
+       "entity": "volkswagen",
+       "entity_b": "byd",
+       "magnitude_high_pp": 2.0,
+       "magnitude_low_pp": 0.5,
+       "template": "segment_share_gap"
+      },
+      "levers": [
+       "product_range",
+       "disclosed_advertising",
+       "availability"
+      ],
+      "linked_hypotheses": [
+       "H1"
+      ],
+      "mode": "continuation",
+      "numeric_claims": [
+       {
+        "decimals": 2,
+        "kind": "calculated",
+        "metric_ids": [
+         "metric:segment_share:L4:volkswagen",
+         "metric:segment_share:L4:byd"
+        ],
+        "operation": "difference",
+        "text": "VW minus BYD BEV segment share at L4 is -0.98 pp (6.03% vs 7.01%)",
+        "unit": "pp",
+        "value": -0.98
+       },
+       {
+        "decimals": 1,
+        "kind": "assumed",
+        "metric_ids": [],
+        "operation": "none",
+        "text": "assumed gap closure of 0.5 to 2.0 pp",
+        "unit": "pp",
+        "value": 0.5
+       }
+      ],
+      "ref": "O2",
+      "risks": [
+       "Range launch delays push benefit beyond the two-quarter window",
+       "BYD range expansion offsets the gain"
+      ],
+      "success_criteria": [
+       {
+        "comparator": "increase_vs_L4",
+        "entity": "volkswagen",
+        "entity_b": "byd",
+        "horizon_quarters": 2,
+        "reference_metric": "metric:segment_share:L4:byd",
+        "template": "segment_share_gap"
+       },
+       {
+        "comparator": "above_zero",
+        "entity": "volkswagen",
+        "entity_b": "byd",
+        "horizon_quarters": 2,
+        "reference_metric": "",
+        "template": "segment_share_gap"
+       }
+      ],
+      "supporting_evidence": [
+       "metric:segment_share:L4:volkswagen",
+       "metric:segment_share:L4:byd",
+       "metric:segment_mix:L4:volkswagen",
+       "metric:segment_mix:L4:byd"
+      ],
+      "title": "Expand VW BEV product range and disclosed advertising to contest segment mix",
+      "uncertainty": "high"
+     },
+     "v2_problems": [
+      "$.options[1].numeric_claims[0].text: longer than 24 characters (65)",
+      "$.options[1].numeric_claims[1].text: longer than 24 characters (36)"
+     ]
+    },
+    {
+     "option": {
+      "assumptions": [
+       {
+        "kind": "market_structure",
+        "statement": "BYD's BEV gain is partly a temporary market-wide surge, so a modest VW share lift is detectable only if demand persists"
+       },
+       {
+        "kind": "behavioural",
+        "statement": "Financing terms are competitive enough to influence registrations"
+       }
+      ],
+      "competitor_responses": [
+       {
+        "competitor": "byd",
+        "effect_on_option": "none",
+        "likelihood": "medium",
+        "response": "hold"
+       },
+       {
+        "competitor": "volkswagen",
+        "effect_on_option": "unknown",
+        "likelihood": "low",
+        "response": "unknown"
+       }
+      ],
+      "cost": {
+       "basis": "Pilot cost not supplied",
+       "currency": "unknown",
+       "high": 0,
+       "known": false,
+       "low": 0
+      },
+      "intended_effect": {
+       "basis": "assumed scenario magnitude; small lift from service and financing, since no evidence isolates these effects",
+       "direction": "increase",
+       "entity": "volkswagen",
+       "entity_b": "",
+       "magnitude_high_pp": 0.8,
+       "magnitude_low_pp": 0.2,
+       "template": "segment_share"
+      },
+      "levers": [
+       "service",
+       "financing_terms"
+      ],
+      "linked_hypotheses": [
+       "H2"
+      ],
+      "mode": "enforcement",
+      "numeric_claims": [
+       {
+        "decimals": 2,
+        "kind": "observed",
+        "metric_ids": [
+         "metric:units_growth:L4:volkswagen"
+        ],
+        "operation": "value",
+        "text": "VW units growth L4 is -0.21%",
+        "unit": "percent",
+        "value": -0.21
+       },
+       {
+        "decimals": 1,
+        "kind": "assumed",
+        "metric_ids": [],
+        "operation": "none",
+        "text": "assumed segment share lift of 0.2 to 0.8 pp",
+        "unit": "pp",
+        "value": 0.2
+       }
+      ],
+      "ref": "O3",
+      "risks": [
+       "Effect too small to detect in the test window",
+       "Market-wide BEV demand fades, eroding the baseline regardless of action"
+      ],
+      "success_criteria": [
+       {
+        "comparator": "increase_vs_L4",
+        "entity": "volkswagen",
+        "entity_b": "",
+        "horizon_quarters": 2,
+        "reference_metric": "metric:segment_share:L4:volkswagen",
+        "template": "segment_share"
+       }
+      ],
+      "supporting_evidence": [
+       "metric:segment_share:L4:volkswagen",
+       "metric:units_growth:L4:volkswagen",
+       "metric:units_growth:L4:market"
+      ],
+      "title": "Test VW service and financing terms against BYD's BEV growth in a controlled pilot",
+      "uncertainty": "high"
+     },
+     "v2_problems": [
+      "$.options[2].numeric_claims[0].text: longer than 24 characters (28)",
+      "$.options[2].numeric_claims[1].text: longer than 24 characters (43)"
+     ]
+    }
+   ],
+   "target": "volkswagen"
+  },
+  {
+   "entities": [
+    "byd",
+    "volkswagen",
+    "tesla",
+    "kia",
+    "mg",
+    "toyota",
+    "ford",
+    "bmw"
+   ],
+   "file": "claude_uk_cars_hev_v1_2026-02-23_C_v2_extended.json",
+   "focal": "kia",
+   "investigation_id": "inv:c9603a0c84807713.1",
+   "metrics": {
+    "metric:market_segment_share:L4": 0.3170913816310334,
+    "metric:market_segment_share:P4": 0.2755447624504541,
+    "metric:non_segment_share:L4:bmw": 0.05924505357050369,
+    "metric:non_segment_share:L4:byd": 0.02757811374783515,
+    "metric:non_segment_share:L4:ford": 0.03602963139548661,
+    "metric:non_segment_share:L4:kia": 0.04350630138969003,
+    "metric:non_segment_share:L4:mg": 0.034915013008611155,
+    "metric:non_segment_share:L4:toyota": 0.02738158332570625,
+    "metric:non_segment_share:L4:volkswagen": 0.1193642063470103,
+    "metric:non_segment_share:P4:bmw": 0.08241609119145984,
+    "metric:non_segment_share:P4:byd": 0.004097776413146879,
+    "metric:non_segment_share:P4:ford": 0.02689975354400432,
+    "metric:non_segment_share:P4:kia": 0.04444706404840297,
+    "metric:non_segment_share:P4:mg": 0.05290853713699828,
+    "metric:non_segment_share:P4:toyota": 0.026635204004704323,
+    "metric:non_segment_share:P4:volkswagen": 0.10733583535971884,
+    "metric:segment_mix:L4:bmw": 0.3466630154135044,
+    "metric:segment_mix:L4:byd": 0.0,
+    "metric:segment_mix:L4:ford": 0.565192821426125,
+    "metric:segment_mix:L4:kia": 0.4564456224016736,
+    "metric:segment_mix:L4:mg": 0.4184884078179283,
+    "metric:segment_mix:L4:toyota": 0.643594621550737,
+    "metric:segment_mix:L4:volkswagen": 0.09560645726603699,
+    "metric:segment_mix:P4:bmw": 0.09312217194570135,
+    "metric:segment_mix:P4:byd": 0.0,
+    "metric:segment_mix:P4:ford": 0.6708375615360747,
+    "metric:segment_mix:P4:kia": 0.41210385089564144,
+    "metric:segment_mix:P4:mg": 0.048805431313840734,
+    "metric:segment_mix:P4:toyota": 0.6806262070099026,
+    "metric:segment_mix:P4:volkswagen": 0.10187181722255356,
+    "metric:segment_share:L4:bmw": 0.06770184721969676,
+    "metric:segment_share:L4:byd": 0.0,
+    "metric:segment_share:L4:ford": 0.10086439919137342,
+    "metric:segment_share:L4:kia": 0.07868217705743663,
+    "metric:segment_share:L4:mg": 0.05411472045693819,
+    "metric:segment_share:L4:toyota": 0.10648902960227247,
+    "metric:segment_share:L4:volkswagen": 0.027175781542471994,
+    "metric:segment_share:P4:bmw": 0.0222502923639404,
+    "metric:segment_share:P4:byd": 0.0,
+    "metric:segment_share:P4:ford": 0.14413677406799422,
+    "metric:segment_share:P4:kia": 0.08191596135930762,
+    "metric:segment_share:P4:mg": 0.007137464209067697,
+    "metric:segment_share:P4:toyota": 0.14923985375496207,
+    "metric:segment_share:P4:volkswagen": 0.0320095718782829,
+    "metric:share:L4:bmw": 0.06192662995289487,
+    "metric:share:L4:byd": 0.018833331556756306,
+    "metric:share:L4:ford": 0.05658817749361159,
+    "metric:share:L4:kia": 0.05466026840525725,
+    "metric:share:L4:mg": 0.041003074770312814,
+    "metric:share:L4:tesla": 0.0238297121848312,
+    "metric:share:L4:toyota": 0.05246587276284538,
+    "metric:share:L4:volkswagen": 0.09013205135535061,
+    "metric:share:P4:bmw": 0.06583772044588919,
+    "metric:share:P4:byd": 0.0029686555848112478,
+    "metric:share:P4:ford": 0.05920380051468613,
+    "metric:share:P4:kia": 0.054771422457216654,
+    "metric:share:P4:mg": 0.040296557719969234,
+    "metric:share:P4:tesla": 0.022867436296047303,
+    "metric:share:P4:toyota": 0.060418273095460225,
+    "metric:share:P4:volkswagen": 0.08658007798244625,
+    "metric:units_growth:L4:bmw": -0.03612368024132728,
+    "metric:units_growth:L4:byd": 5.501087138317445,
+    "metric:units_growth:L4:ford": -0.02052180913962709,
+    "metric:units_growth:L4:kia": 0.022672057437087556,
+    "metric:units_growth:L4:market": 0.024751705897043896,
+    "metric:units_growth:L4:mg": 0.042718614078537165,
+    "metric:units_growth:L4:tesla": 0.06787389265242316,
+    "metric:units_growth:L4:toyota": -0.1101286107572832,
+    "metric:units_growth:L4:volkswagen": 0.06679244850208743,
+    "metric:units_growth:P4:bmw": 0.2188620277599045,
+    "metric:units_growth:P4:byd": 12.435955056179775,
+    "metric:units_growth:P4:ford": -0.17914526854924206,
+    "metric:units_growth:P4:kia": 0.030856929258947785,
+    "metric:units_growth:P4:market": 0.061686126103900785,
+    "metric:units_growth:P4:mg": 0.09566238710461294,
+    "metric:units_growth:P4:tesla": -0.25918062056652025,
+    "metric:units_growth:P4:toyota": -0.010570394763589008,
+    "metric:units_growth:P4:volkswagen": 0.03869430545627828
+   },
+   "rejected": [
+    {
+     "option": {
+      "assumptions": [
+       {
+        "kind": "competitive",
+        "statement": "Toyota price moves on hybrid petrol models are not fully matched by MG and BMW in the next two quarters"
+       },
+       {
+        "kind": "behavioural",
+        "statement": "Hybrid petrol demand is price-responsive in the GB market"
+       }
+      ],
+      "competitor_responses": [
+       {
+        "competitor": "mg",
+        "effect_on_option": "offsets_partly",
+        "likelihood": "medium",
+        "response": "match_price"
+       },
+       {
+        "competitor": "bmw",
+        "effect_on_option": "none",
+        "likelihood": "low",
+        "response": "increase_marketing"
+       }
+      ],
+      "cost": {
+       "basis": "Cost of price concessions and advertising not available in the bundle; not estimated.",
+       "currency": "unknown",
+       "high": 0,
+       "known": false,
+       "low": 0
+      },
+      "intended_effect": {
+       "basis": "Assumed scenario range; Toyota L4 segment_share is 10.6489% versus P4 14.924%, so the option targets recovering part of that decline. Not derived from a fitted model.",
+       "direction": "increase",
+       "entity": "toyota",
+       "entity_b": "",
+       "magnitude_high_pp": 1.5,
+       "magnitude_low_pp": 0.5,
+       "template": "segment_share"
+      },
+      "levers": [
+       "price",
+       "disclosed_advertising"
+      ],
+      "linked_hypotheses": [
+       "H1",
+       "H3"
+      ],
+      "mode": "continuation",
+      "numeric_claims": [
+       {
+        "decimals": 4,
+        "kind": "observed",
+        "metric_ids": [
+         "metric:segment_share:L4:toyota"
+        ],
+        "operation": "value",
+        "text": "Toyota L4 segment share 10.6489%",
+        "unit": "percent",
+        "value": 10.6489
+       },
+       {
+        "decimals": 1,
+        "kind": "assumed",
+        "metric_ids": [],
+        "operation": "none",
+        "text": "Assumed effect range 0.5 to 1.5 pp",
+        "unit": "pp",
+        "value": 1.0
+       }
+      ],
+      "ref": "O1",
+      "risks": [
+       "Margin erosion if price moves are not matched by volume",
+       "MG may hold price and absorb share gains"
+      ],
+      "success_criteria": [
+       {
+        "comparator": "above_reference",
+        "entity": "toyota",
+        "entity_b": "",
+        "horizon_quarters": 2,
+        "reference_metric": "metric:segment_share:L4:toyota",
+        "template": "segment_share"
+       }
+      ],
+      "supporting_evidence": [
+       "metric:segment_share:L4:toyota",
+       "metric:segment_share:P4:toyota",
+       "metric:segment_share:L4:mg",
+       "metric:segment_share:L4:bmw"
+      ],
+      "title": "Price-led hybrid petrol defence against segment share erosion",
+      "uncertainty": "high"
+     },
+     "v2_problems": [
+      "$.options[0].numeric_claims[0].text: longer than 24 characters (32)",
+      "$.options[0].numeric_claims[1].text: longer than 24 characters (34)"
+     ]
+    },
+    {
+     "option": {
+      "assumptions": [
+       {
+        "kind": "market_structure",
+        "statement": "MG's hybrid petrol gains are partly driven by fleet batches that may not repeat (H2)"
+       },
+       {
+        "kind": "behavioural",
+        "statement": "Additional Toyota hybrid petrol availability converts to registrations within two quarters"
+       }
+      ],
+      "competitor_responses": [
+       {
+        "competitor": "mg",
+        "effect_on_option": "offsets_partly",
+        "likelihood": "medium",
+        "response": "expand_range"
+       },
+       {
+        "competitor": "kia",
+        "effect_on_option": "none",
+        "likelihood": "low",
+        "response": "increase_distribution"
+       }
+      ],
+      "cost": {
+       "basis": "Range and distribution costs not in the bundle; not estimated.",
+       "currency": "unknown",
+       "high": 0,
+       "known": false,
+       "low": 0
+      },
+      "intended_effect": {
+       "basis": "Assumed scenario range on the Toyota minus MG segment share gap; L4 gap is 10.6489 minus 5.4115 = 5.2374 pp (calculated). Scenario assumption only.",
+       "direction": "increase",
+       "entity": "toyota",
+       "entity_b": "mg",
+       "magnitude_high_pp": 3.0,
+       "magnitude_low_pp": 1.0,
+       "template": "segment_share_gap"
+      },
+      "levers": [
+       "product_range",
+       "availability",
+       "distribution"
+      ],
+      "linked_hypotheses": [
+       "H1",
+       "H2"
+      ],
+      "mode": "enforcement",
+      "numeric_claims": [
+       {
+        "decimals": 4,
+        "kind": "observed",
+        "metric_ids": [
+         "metric:segment_share:L4:toyota"
+        ],
+        "operation": "value",
+        "text": "Toyota L4 segment share 10.6489%",
+        "unit": "percent",
+        "value": 10.6489
+       },
+       {
+        "decimals": 4,
+        "kind": "observed",
+        "metric_ids": [
+         "metric:segment_share:L4:mg"
+        ],
+        "operation": "value",
+        "text": "MG L4 segment share 5.4115%",
+        "unit": "percent",
+        "value": 5.4115
+       },
+       {
+        "decimals": 4,
+        "kind": "calculated",
+        "metric_ids": [
+         "metric:segment_share:L4:toyota",
+         "metric:segment_share:L4:mg"
+        ],
+        "operation": "difference",
+        "text": "Current Toyota minus MG segment share gap 5.2374 pp",
+        "unit": "pp",
+        "value": 5.2374
+       },
+       {
+        "decimals": 1,
+        "kind": "assumed",
+        "metric_ids": [],
+        "operation": "none",
+        "text": "Assumed effect range 1.0 to 3.0 pp",
+        "unit": "pp",
+        "value": 2.0
+       }
+      ],
+      "ref": "O2",
+      "risks": [
+       "If MG's gains are structural (H1) rather than a one-off batch (H2), the gap will not close",
+       "Supply constraints may limit availability gains"
+      ],
+      "success_criteria": [
+       {
+        "comparator": "above_zero",
+        "entity": "toyota",
+        "entity_b": "mg",
+        "horizon_quarters": 2,
+        "reference_metric": "",
+        "template": "segment_share_gap"
+       }
+      ],
+      "supporting_evidence": [
+       "metric:segment_share:L4:toyota",
+       "metric:segment_share:L4:mg",
+       "metric:segment_share:P4:mg"
+      ],
+      "title": "Product range and availability push in hybrid petrol against MG and BMW gap",
+      "uncertainty": "medium"
+     },
+     "v2_problems": [
+      "$.options[1].numeric_claims[0].text: longer than 24 characters (32)",
+      "$.options[1].numeric_claims[1].text: longer than 24 characters (27)",
+      "$.options[1].numeric_claims[2].text: longer than 24 characters (51)",
+      "$.options[1].numeric_claims[3].text: longer than 24 characters (34)"
+     ]
+    },
+    {
+     "option": {
+      "assumptions": [
+       {
+        "kind": "competitive",
+        "statement": "BMW's hybrid petrol push reflects substitution from other BMW powertrains (H3) rather than market growth (H4)"
+       },
+       {
+        "kind": "behavioural",
+        "statement": "Financing and service improvements influence the hybrid petrol mix of Toyota's own sales"
+       }
+      ],
+      "competitor_responses": [
+       {
+        "competitor": "bmw",
+        "effect_on_option": "offsets_partly",
+        "likelihood": "medium",
+        "response": "increase_marketing"
+       },
+       {
+        "competitor": "ford",
+        "effect_on_option": "none",
+        "likelihood": "medium",
+        "response": "hold"
+       }
+      ],
+      "cost": {
+       "basis": "Financing subsidy and service costs not available; not estimated.",
+       "currency": "unknown",
+       "high": 0,
+       "known": false,
+       "low": 0
+      },
+      "intended_effect": {
+       "basis": "Assumed scenario range on Toyota segment mix; L4 segment_mix is 64.3595% versus P4 68.0626% (observed). Scenario assumption only.",
+       "direction": "increase",
+       "entity": "toyota",
+       "entity_b": "",
+       "magnitude_high_pp": 2.5,
+       "magnitude_low_pp": 1.0,
+       "template": "segment_mix"
+      },
+      "levers": [
+       "service",
+       "financing_terms",
+       "charging_or_support_infrastructure"
+      ],
+      "linked_hypotheses": [
+       "H3",
+       "H4"
+      ],
+      "mode": "continuation",
+      "numeric_claims": [
+       {
+        "decimals": 4,
+        "kind": "observed",
+        "metric_ids": [
+         "metric:segment_mix:L4:toyota"
+        ],
+        "operation": "value",
+        "text": "Toyota L4 segment mix 64.3595%",
+        "unit": "percent",
+        "value": 64.3595
+       },
+       {
+        "decimals": 4,
+        "kind": "observed",
+        "metric_ids": [
+         "metric:segment_mix:P4:toyota"
+        ],
+        "operation": "value",
+        "text": "Toyota P4 segment mix 68.0626%",
+        "unit": "percent",
+        "value": 68.0626
+       },
+       {
+        "decimals": 2,
+        "kind": "assumed",
+        "metric_ids": [],
+        "operation": "none",
+        "text": "Assumed effect range 1.0 to 2.5 pp",
+        "unit": "pp",
+        "value": 1.75
+       }
+      ],
+      "ref": "O3",
+      "risks": [
+       "Financing subsidies may be costly and not reflected in mix",
+       "If H4 holds, BMW gains are market-driven and the option has little leverage"
+      ],
+      "success_criteria": [
+       {
+        "comparator": "above_reference",
+        "entity": "toyota",
+        "entity_b": "",
+        "horizon_quarters": 2,
+        "reference_metric": "metric:segment_mix:L4:toyota",
+        "template": "segment_mix"
+       }
+      ],
+      "supporting_evidence": [
+       "metric:segment_mix:L4:toyota",
+       "metric:segment_mix:P4:toyota",
+       "metric:segment_mix:L4:bmw",
+       "metric:share:L4:bmw"
+      ],
+      "title": "Service and financing support to hold hybrid petrol mix as BMW substitutes powertrains",
+      "uncertainty": "high"
+     },
+     "v2_problems": [
+      "$.options[2].numeric_claims[0].text: longer than 24 characters (30)",
+      "$.options[2].numeric_claims[1].text: longer than 24 characters (30)",
+      "$.options[2].numeric_claims[2].text: longer than 24 characters (34)"
+     ]
+    },
+    {
+     "option": {
+      "assumptions": [
+       {
+        "kind": "market_structure",
+        "statement": "Ford's decline reflects total-volume contraction (H6) so Toyota can gain share as Ford shrinks"
+       },
+       {
+        "kind": "behavioural",
+        "statement": "Disclosed advertising on quality features lifts total share modestly"
+       }
+      ],
+      "competitor_responses": [
+       {
+        "competitor": "ford",
+        "effect_on_option": "none",
+        "likelihood": "low",
+        "response": "increase_marketing"
+       },
+       {
+        "competitor": "volkswagen",
+        "effect_on_option": "none",
+        "likelihood": "medium",
+        "response": "hold"
+       }
+      ],
+      "cost": {
+       "basis": "Advertising budget not in the bundle; not estimated.",
+       "currency": "unknown",
+       "high": 0,
+       "known": false,
+       "low": 0
+      },
+      "intended_effect": {
+       "basis": "Assumed scenario range on Toyota total share; L4 share 5.2466% versus P4 6.0418% (observed). Scenario assumption only.",
+       "direction": "increase",
+       "entity": "toyota",
+       "entity_b": "",
+       "magnitude_high_pp": 0.8,
+       "magnitude_low_pp": 0.2,
+       "template": "share"
+      },
+      "levers": [
+       "disclosed_advertising",
+       "product_quality"
+      ],
+      "linked_hypotheses": [
+       "H5",
+       "H6"
+      ],
+      "mode": "enforcement",
+      "numeric_claims": [
+       {
+        "decimals": 4,
+        "kind": "observed",
+        "metric_ids": [
+         "metric:share:L4:toyota"
+        ],
+        "operation": "value",
+        "text": "Toyota L4 share 5.2466%",
+        "unit": "percent",
+        "value": 5.2466
+       },
+       {
+        "decimals": 4,
+        "kind": "observed",
+        "metric_ids": [
+         "metric:share:P4:toyota"
+        ],
+        "operation": "value",
+        "text": "Toyota P4 share 6.0418%",
+        "unit": "percent",
+        "value": 6.0418
+       },
+       {
+        "decimals": 1,
+        "kind": "assumed",
+        "metric_ids": [],
+        "operation": "none",
+        "text": "Assumed effect range 0.2 to 0.8 pp",
+        "unit": "pp",
+        "value": 0.5
+       }
+      ],
+      "ref": "O4",
+      "risks": [
+       "Share gains may be small relative to noise",
+       "If H5 holds (Ford mix shift), Ford's segment dependence falls and the rationale weakens"
+      ],
+      "success_criteria": [
+       {
+        "comparator": "above_reference",
+        "entity": "toyota",
+        "entity_b": "",
+        "horizon_quarters": 2,
+        "reference_metric": "metric:share:L4:toyota",
+        "template": "share"
+       }
+      ],
+      "supporting_evidence": [
+       "metric:share:L4:toyota",
+       "metric:share:P4:toyota",
+       "metric:share:L4:ford",
+       "metric:units_growth:L4:toyota"
+      ],
+      "title": "Disclosed-advertising focus on total share defence against BMW and Ford",
+      "uncertainty": "high"
+     },
+     "v2_problems": [
+      "$.options[3].numeric_claims[2].text: longer than 24 characters (34)"
+     ]
+    }
+   ],
+   "target": "toyota"
+  }
+ ],
+ "provenance": {
+  "note": "real Haiku strategist options rejected under strategy_options.v2 (numeric_claims text limit), verbatim; with each investigation's evidence metrics (fractions)",
+  "source": "validation_records of the R2 Step 2a (r2s2a-c6fea6716c9a) and 2b (r2s2b-33f66362ef91) loop.v2 investigations"
+ }
+}

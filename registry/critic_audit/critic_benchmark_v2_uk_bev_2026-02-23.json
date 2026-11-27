@@ -1,0 +1,347 @@
+{
+ "audit": {
+  "auditor": null,
+  "checklist": [
+   "the item carries exactly the stated defect and no other",
+   "every number in a clean item equals the evidence",
+   "every mechanism refers only to quantities in the evidence (no external facts)",
+   "the expected dimension and evidence ids are the only correct ones"
+  ],
+  "rule": "an independent person, blind to critic outputs, confirms every item before scores are 'audited'",
+  "status": "proposed"
+ },
+ "key": {
+  "S1:H1": {
+   "accept": [
+    "test_validity"
+   ],
+   "evidence": [],
+   "expected_severity": "high",
+   "kind": "misencoded_test"
+  },
+  "S1:H2": {
+   "accept": [
+    "factual_contradiction"
+   ],
+   "evidence": [
+    "metric:non_segment_share:L4:tesla",
+    "metric:non_segment_share:P4:tesla",
+    "metric:segment_mix:L4:tesla",
+    "metric:segment_mix:P4:tesla"
+   ],
+   "expected_severity": "high",
+   "kind": "contradicted_assumption"
+  },
+  "S1:H3": {
+   "accept": [
+    "numerical_accuracy",
+    "factual_contradiction"
+   ],
+   "evidence": [
+    "metric:segment_share:L4:byd"
+   ],
+   "expected_severity": "high",
+   "kind": "wrong_number"
+  },
+  "S1:H4": {
+   "accept": [],
+   "evidence": [],
+   "expected_severity": null,
+   "kind": "clean"
+  },
+  "S2:H1": {
+   "accept": [
+    "unsupported_detail"
+   ],
+   "evidence": [],
+   "expected_severity": "medium",
+   "kind": "unsupported_detail"
+  },
+  "S2:H2": {
+   "accept": [],
+   "evidence": [],
+   "expected_severity": null,
+   "kind": "clean"
+  },
+  "S2:H3": {
+   "accept": [
+    "causal_identification",
+    "test_validity"
+   ],
+   "evidence": [],
+   "expected_severity": "medium",
+   "kind": "trend_only_test"
+  }
+ },
+ "key_sha256": "c32e45532949af9baab8fd1e52df3f03ba152e68b1222c2010be702e069e3794",
+ "payload_sha256": "4ebd619493b7e358b44d5d8b54f6ed838b0d0c52dd3fe16596fd6bd31c96e087",
+ "seed": 0,
+ "sets": [
+  {
+   "hypotheses": [
+    {
+     "assumptions": [
+      {
+       "kind": "market_structure",
+       "statement": "segment growth continues"
+      }
+     ],
+     "explains": "metric:segment_share:L4:byd",
+     "mechanism": {
+      "cause": "growth of the segment's share of the market",
+      "direction": "increase",
+      "effect_template": "segment_share",
+      "pathway": "a larger segment raises the brand's segment units"
+     },
+     "novelty": "original",
+     "observable_implications": [
+      {
+       "comparator": "above_reference",
+       "description": "segment_share_gap byd-volkswagen above_reference",
+       "entity": "byd",
+       "entity_b": "volkswagen",
+       "id": "I1",
+       "reference_metric": "metric:segment_share:L4:volkswagen",
+       "template": "segment_share_gap",
+       "would_refute_if": "the opposite movement"
+      }
+     ],
+     "ref": "H1",
+     "rivals": [],
+     "statement": "byd's segment share will stay above volkswagen's as the segment grows.",
+     "supporting_evidence": [
+      "metric:segment_share:L4:byd",
+      "metric:segment_share:L4:volkswagen"
+     ]
+    },
+    {
+     "assumptions": [
+      {
+       "kind": "market_structure",
+       "statement": "tesla sells substantial volumes outside the segment"
+      }
+     ],
+     "explains": "metric:share:L4:tesla",
+     "mechanism": {
+      "cause": "growth of the segment's share of the market",
+      "direction": "increase",
+      "effect_template": "share",
+      "pathway": "a larger segment raises the brand's segment units"
+     },
+     "novelty": "original",
+     "observable_implications": [
+      {
+       "comparator": "decrease_vs_L4",
+       "description": "share tesla decrease_vs_L4",
+       "entity": "tesla",
+       "entity_b": "",
+       "id": "I1",
+       "reference_metric": "",
+       "template": "share",
+       "would_refute_if": "the opposite movement"
+      }
+     ],
+     "ref": "H2",
+     "rivals": [],
+     "statement": "tesla's total share is supported by substantial sales outside the segment.",
+     "supporting_evidence": [
+      "metric:share:L4:tesla"
+     ]
+    },
+    {
+     "assumptions": [
+      {
+       "kind": "market_structure",
+       "statement": "segment growth continues"
+      }
+     ],
+     "explains": "metric:segment_share:L4:byd",
+     "mechanism": {
+      "cause": "growth of the segment's share of the market",
+      "direction": "increase",
+      "effect_template": "segment_share",
+      "pathway": "a larger segment raises the brand's segment units"
+     },
+     "novelty": "original",
+     "observable_implications": [
+      {
+       "comparator": "increase_vs_L4",
+       "description": "segment_share byd increase_vs_L4",
+       "entity": "byd",
+       "entity_b": "",
+       "id": "I1",
+       "reference_metric": "",
+       "template": "segment_share",
+       "would_refute_if": "the opposite movement"
+      }
+     ],
+     "ref": "H3",
+     "rivals": [],
+     "statement": "byd's segment share reached 7.13% in the latest window as the segment grew.",
+     "supporting_evidence": [
+      "metric:segment_share:L4:byd",
+      "metric:market_segment_share:L4"
+     ]
+    },
+    {
+     "assumptions": [
+      {
+       "kind": "market_structure",
+       "statement": "segment growth continues"
+      }
+     ],
+     "explains": "metric:segment_share:L4:byd",
+     "mechanism": {
+      "cause": "growth of the segment's share of the market",
+      "direction": "increase",
+      "effect_template": "segment_share",
+      "pathway": "a larger segment raises the brand's segment units"
+     },
+     "novelty": "original",
+     "observable_implications": [
+      {
+       "comparator": "increase_vs_L4",
+       "description": "market_segment_share market increase_vs_L4",
+       "entity": "market",
+       "entity_b": "",
+       "id": "I1",
+       "reference_metric": "",
+       "template": "market_segment_share",
+       "would_refute_if": "the opposite movement"
+      },
+      {
+       "comparator": "increase_vs_L4",
+       "description": "segment_share byd increase_vs_L4",
+       "entity": "byd",
+       "entity_b": "",
+       "id": "I2",
+       "reference_metric": "",
+       "template": "segment_share",
+       "would_refute_if": "the opposite movement"
+      }
+     ],
+     "ref": "H4",
+     "rivals": [],
+     "statement": "byd's segment share moved from 1.71% to 4.75% while the segment's market share moved from 17.17% to 22.35%.",
+     "supporting_evidence": [
+      "metric:segment_share:L4:byd",
+      "metric:segment_share:P4:byd",
+      "metric:market_segment_share:L4",
+      "metric:market_segment_share:P4"
+     ]
+    }
+   ],
+   "set_id": "S1"
+  },
+  {
+   "hypotheses": [
+    {
+     "assumptions": [
+      {
+       "kind": "market_structure",
+       "statement": "volkswagen launched several new models this year"
+      }
+     ],
+     "explains": "metric:segment_share:L4:volkswagen",
+     "mechanism": {
+      "cause": "recent model launches",
+      "direction": "increase",
+      "effect_template": "segment_share",
+      "pathway": "new models attract buyers"
+     },
+     "novelty": "original",
+     "observable_implications": [
+      {
+       "comparator": "increase_vs_L4",
+       "description": "segment_share volkswagen increase_vs_L4",
+       "entity": "volkswagen",
+       "entity_b": "",
+       "id": "I1",
+       "reference_metric": "",
+       "template": "segment_share",
+       "would_refute_if": "the opposite movement"
+      }
+     ],
+     "ref": "H1",
+     "rivals": [],
+     "statement": "A wave of recent model launches by volkswagen explains its segment movement.",
+     "supporting_evidence": [
+      "metric:segment_share:L4:volkswagen"
+     ]
+    },
+    {
+     "assumptions": [
+      {
+       "kind": "market_structure",
+       "statement": "tesla's segment mix stays at 100.00%"
+      }
+     ],
+     "explains": "metric:segment_mix:L4:tesla",
+     "mechanism": {
+      "cause": "growth of the segment's share of the market",
+      "direction": "increase",
+      "effect_template": "share",
+      "pathway": "a larger segment raises the brand's segment units"
+     },
+     "novelty": "original",
+     "observable_implications": [
+      {
+       "comparator": "increase_vs_L4",
+       "description": "segment_mix tesla increase_vs_L4",
+       "entity": "tesla",
+       "entity_b": "",
+       "id": "I1",
+       "reference_metric": "",
+       "template": "segment_mix",
+       "would_refute_if": "the opposite movement"
+      }
+     ],
+     "ref": "H2",
+     "rivals": [],
+     "statement": "tesla sells only in the segment (100.00% segment mix), so its total share moves with the segment.",
+     "supporting_evidence": [
+      "metric:segment_mix:L4:tesla",
+      "metric:market_segment_share:L4"
+     ]
+    },
+    {
+     "assumptions": [
+      {
+       "kind": "market_structure",
+       "statement": "segment growth is the cause"
+      }
+     ],
+     "explains": "metric:segment_share:L4:volkswagen",
+     "mechanism": {
+      "cause": "growth of the segment's share of the market",
+      "direction": "increase",
+      "effect_template": "segment_share",
+      "pathway": "a larger segment raises the brand's segment units"
+     },
+     "novelty": "original",
+     "observable_implications": [
+      {
+       "comparator": "increase_vs_L4",
+       "description": "segment_share volkswagen increase_vs_L4",
+       "entity": "volkswagen",
+       "entity_b": "",
+       "id": "I1",
+       "reference_metric": "",
+       "template": "segment_share",
+       "would_refute_if": "the opposite movement"
+      }
+     ],
+     "ref": "H3",
+     "rivals": [],
+     "statement": "Segment growth causes volkswagen's segment movement, so it will continue.",
+     "supporting_evidence": [
+      "metric:segment_share:L4:volkswagen",
+      "metric:market_segment_share:L4"
+     ]
+    }
+   ],
+   "set_id": "S2"
+  }
+ ],
+ "version": "critic_benchmark.v2"
+}

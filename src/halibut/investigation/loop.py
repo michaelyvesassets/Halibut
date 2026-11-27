@@ -43,6 +43,7 @@ from ..world.panel import build_panel
 from . import artifact as art
 from . import compiler, strategy
 from . import loop_v2 as v2
+from . import strategy_v3 as sv3
 
 SUBJECT = {"hypotheses": "hypothesis", "explanations": "explanation", "information_gaps": "information_gap"}
 
@@ -99,15 +100,17 @@ def run_investigation(store, market_path, *, as_of: str | None = None, evaluate_
                       agents: str = "mock", router: Router | None = None, approval_id: str | None = None,
                       max_usd: float | None = None, tenant: str = "public", faults: bool = False, decision: str | None = None,
                       approval_subject: str | None = None, contract: str = "loop.v1", measurements: str = "base",
-                      prospective: bool = False, log=print) -> dict:
+                      prospective: bool = False, strategist: str = "v2", log=print) -> dict:
     """``approval_subject`` (default ``investigation:<market id>``): the subject of the granted paid_run approval
     that authorizes paid agents (a validation experiment authorizes several investigations with one approval)."""
     if contract not in v2.CONTRACTS or measurements not in v2.MEASUREMENTS:
         raise ValueError(f"unknown contract {contract!r} or measurements {measurements!r}")
     if contract == v2.V1 and measurements != "base":
         raise ValueError("loop.v1 is frozen to the base measurement set")
+    if strategist not in ("v2", "v3") or (strategist == "v3" and contract != v2.CONTRACT):
+        raise ValueError("strategist 'v3' (strategy.v3) runs only with contract loop.v2")
     # the v1 prompt version stays exactly 'loop.v1' in every hash, so recorded v1 requests and ids are unchanged
-    pv = PROMPT_VERSION if contract == v2.V1 else f"{v2.CONTRACT}:{measurements}"
+    pv = PROMPT_VERSION if contract == v2.V1 else f"{v2.CONTRACT}:{measurements}" + ("+strategy.v3" if strategist == "v3" else "")
     registered_at = utc_now()
     if prospective:  # registration is the REAL call time; the evidence date must be the registration date (no backdating)
         if as_of and as_of != registered_at[:10]:
@@ -151,7 +154,7 @@ def run_investigation(store, market_path, *, as_of: str | None = None, evaluate_
                  "budget_usd": max_usd if agents not in OFFLINE_AGENTS else 0.0}
     ctx = {"market": market, "objective": objective, "router": router, "spec_sha": spec_sha, "agents": agents,
            "faults": faults, "t_eval": t_eval, "contract": contract, "measurements": measurements, "pv": pv,
-           "prospective": {"registered_at": registered_at} if prospective else None}
+           "prospective": {"registered_at": registered_at} if prospective else None, "strategist": strategist}
     if contract == v2.CONTRACT:
         R.stages["information_gaps"] = []
     status, reason, evidence, world = "completed", None, {"coverage": {}, "panel": {}, "metrics": []}, \
@@ -410,7 +413,15 @@ def _loop(R: _Run, ctx: dict, panel, evidence: dict):
             baselines[(tgt["template"], e)] = official_baseline(R, panel, tgt, prov)
     bl_view = [{"template": k[0], "entity": k[1], **{x: v[x] for x in ("point", "interval80", "model", "status")}}
                for k, v in baselines.items()]
-    if V2:
+    if V2 and ctx["strategist"] == "v3":  # strategy.v3: the engine computes every quantity; the model references them
+        cat = sv3.catalogue(metrics, baselines, panel.entities, market.focal, market.target)
+        ctx["catalogue"] = cat
+        sschema = sv3.schema(refs, panel.entities, list(metrics), ALLOWED_LEVERS, MODES, list(cat), ext)
+        sres = call_role(router, store, "strategist", {"contract": sv3.CONTRACT, "slice": agent_slice, "hypotheses": hyp_view,
+                                                       "catalogue": sv3.catalogue_view(cat), "allowed_levers": ALLOWED_LEVERS,
+                                                       "baselines": bl_view}, sschema, R.input_id, system=sv3.system_prompt(sschema))
+        sschema = v2.inline(sschema)
+    elif V2:
         sschema = v2.strategist_schema(refs, panel.entities, list(metrics), ALLOWED_LEVERS, MODES, ext)
         sres = call_role(router, store, "strategist", {"contract": v2.CONTRACT, "slice": agent_slice, "hypotheses": hyp_view,
                                                        "allowed_levers": ALLOWED_LEVERS, "baselines": bl_view}, sschema,
@@ -569,9 +580,20 @@ def _option(R: _Run, ctx, panel, metrics, o, by_ref, allowed, baselines, prov):
         imp = {**sc, "template": sc["template"], "description": "success criterion", "would_refute_if": "criterion not met"}
         return compiler.compile_implication(imp, panel, metrics)
     V2 = ctx["contract"] == v2.CONTRACT
-    # v2: the free-text number check is replaced by declared, exactly reproducible numeric claims (all text fields)
+    V3 = V2 and ctx.get("strategist") == "v3"
+    # v2: the free-text number check is replaced by declared, exactly reproducible numeric claims (all text fields);
+    # v3: no digits in text at all (catalogue references), checked by strategy_v3.validate
     pr, criteria = strategy.validate_option(o, set(by_ref), allowed, crit, check_text_numbers=not V2)
-    if V2:
+    subclaims = []
+    if V3:
+        pr += sv3.validate(o, ctx["catalogue"], panel.entities)
+        for i, sc in enumerate(o["subclaims"]):
+            spec_s, why = crit({**sc, "horizon_quarters": 2})
+            if spec_s is None:
+                pr.append(f"subclaims[{i}] is not forecastable with this evidence: {why}")
+            else:
+                subclaims.append({**sc, "spec": spec_s})
+    elif V2:
         pr += v2.validate_option(o, panel.entities, {k: m["value"] for k, m in metrics.items()})
     if pr:
         R.fail("strategic_option", "validation", "rejected", classify_problems(pr, None), pr, o, by)
@@ -612,12 +634,23 @@ def _option(R: _Run, ctx, panel, metrics, o, by_ref, allowed, baselines, prov):
                "cost": o["cost"] if o["cost"]["known"] else {"known": False, "basis": o["cost"]["basis"]},
                "risks": o["risks"], "uncertainty": o["uncertainty"], "success_criteria": criteria,
                "requires_approval": True, "compliance": compliance, "executable": False, "simulation": simulation}
-    if V2:  # every number in the option's text, with its kind (observed / calculated / assumed) and source metrics
+    if V2 and not V3:  # every number in the option's text, with its kind (observed / calculated / assumed) and source metrics
         payload["numeric_claims"] = o["numeric_claims"]
+    if V3:
+        cat = ctx["catalogue"]
+        payload.update({
+            "contract": sv3.CONTRACT, "objective": o["objective"], "actions": o["actions"], "rationale": o["rationale"],
+            "quantities": {q: cat[q] for q in o["quantity_refs"]}, "rendered_text": sv3.render(o, cat),
+            "calculations": sv3.run_calculations(o, cat), "scenarios": sv3.scenarios(base, sims),
+            "subclaims": subclaims, "limitations": o["limitations"],
+            "validity_note": "a structurally valid option is a well-formed proposal, not evidence that the strategy works"})
     oc = R.claim("strategic_proposal", o["title"], by, payload, evidence=o["supporting_evidence"],
                  exists=lambda x: x in metrics, provenance=prov)
     if not oc:
         return None
+    for i, sc in enumerate(payload.get("subclaims", [])):  # v3: forecastable subclaims become registered tests
+        t = compiler.register_test(R.store, oc, f"{o['ref']}.S{i + 1}", sc["spec"], None, R.input_id, R.as_of)
+        sc["test_id"] = t["test_id"]
     links = [("relies_on", h) for h in hyp_claims]
     for h in hyp_claims:
         R.link(oc, "derived_from", h, by)
@@ -816,7 +849,8 @@ def _document(R: _Run, ctx, status, reason, evidence, world, panel) -> dict:
            "approvals": [{k: a[k] for k in ("approval_id", "kind", "subject", "status", "requested_by")} for a in R.approvals_],
            "provenance": {"engine_version": ENGINE_VERSION, "prompt_version": ctx["pv"],
                           "schemas": ({k: sch.SCHEMA_VERSIONS[k] for k in ("hypothesis_generator", "loop_critic", "strategist")}
-                                      if ctx["contract"] == v2.V1 else dict(v2.SCHEMA_VERSIONS)),
+                                      if ctx["contract"] == v2.V1 else {**v2.SCHEMA_VERSIONS, **(
+                                          {"strategist": sv3.SCHEMA_VERSION} if ctx.get("strategist") == "v3" else {})}),
                           "registry_rule": reg.RULE, "test_spec_version": compiler.TEST_SPEC_VERSION,
                           "market_spec_sha256": ctx["spec_sha"], "panel": (panel.snapshot if panel else {}),
                           "agents": ctx["agents"]}}

@@ -213,6 +213,20 @@ def sync(store, markets_dir="configs/intel/markets", include_scripted: bool = Fa
                           {**base_prov, "hypothesis_claim_id": hyp, "hypothesis_ref": href, "implication_id": imp.get("id"),
                            "statement": t["label"][:300]},
                           _h([hyp, q["template"], q["entity"], q.get("entity_b") or "", q["comparator"]])))
+        for o in d["stages"].get("strategic_options", []):  # strategy.v3: forecastable subclaims of a proposal
+            for sc in o["data"].get("subclaims", []):
+                spec = sc.get("spec")
+                if not spec or not sc.get("test_id"):
+                    continue
+                row = store.conn.execute("SELECT registered_at FROM hypothesis_tests WHERE test_id=?", (sc["test_id"],)).fetchone()
+                q = {k: spec.get(k) for k in ("template", "entity", "entity_b", "comparator", "reference_value",
+                                               "reference_source", "target_periods", "would_refute_if")}
+                q["probability"] = None
+                items.append(("binary", "strategy_subclaim", sc["test_id"], q, "standard",
+                              row["registered_at"] if row else d["created_at"],
+                              {**base_prov, "strategic_option_claim_id": o["id"], "option_ref": o["data"].get("ref"),
+                               "statement": f"{o['label'][:150]} | subclaim: {sc.get('rationale', '')[:120]}"},
+                              _h([o["id"], q["template"], q["entity"], q.get("entity_b") or "", q["comparator"]])))
         for stage in ("forecasts", "estimates"):
             for f in d["stages"][stage]:
                 x = f["data"]

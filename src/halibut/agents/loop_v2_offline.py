@@ -142,9 +142,45 @@ def upgrade(role: str, out: dict, p: dict, rich: bool) -> dict:
     return out
 
 
+def upgrade_v3(out: dict, p: dict, rich: bool) -> dict:
+    """Scripted v1/v2 strategist options rewritten to strategy.v3: no digits in text, catalogue references, objective,
+    actions, justified assumptions and responses, forecastable subclaims, calculation requests."""
+    cat = {r[0]: r for r in p["catalogue"]["quantities"]}
+    m = p["slice"]["market"]
+    opts = []
+    for o in out["options"]:
+        e = o["intended_effect"]
+        obs = f"q:obs:{e['template']}:L4:{e['entity']}"
+        p4 = f"q:obs:{e['template']}:P4:{e['entity']}"
+        ref = obs if obs in cat else next(iter(cat))
+        strip = lambda t: NUM.sub("", t).replace("%", "").strip() or "see rationale"  # noqa: E731
+        o = {**o, "title": strip(o["title"]), "risks": [strip(r) for r in o["risks"]]}
+        o["intended_effect"] = {**e, "entity_b": e.get("entity_b", ""), "basis": "assumed effect (scripted)",
+                                "assumption": {"justification": "scripted placeholder for pipeline testing", "basis": "unknown",
+                                               "uncertainty": "high"}}
+        o["objective"] = {k: o["intended_effect"][k] for k in ("template", "entity", "entity_b", "direction")}
+        o["actions"] = [{"lever": lv, "description": "scripted action"} for lv in o["levers"]]
+        o["rationale"] = f"The entity's latest-window value is {{{ref}}}; the option targets that quantity."
+        o["quantity_refs"] = [ref]
+        o["assumptions"] = [{**a, "statement": strip(a["statement"]), "justification": "scripted", "uncertainty": "high"}
+                            for a in o["assumptions"]]
+        o["competitor_responses"] = [{**r, "justification": "scripted"} for r in o["competitor_responses"]]
+        o["cost"] = {**o["cost"], "basis": strip(o["cost"]["basis"])}
+        o["subclaims"] = [{k: c[k] for k in ("template", "entity", "entity_b", "comparator", "reference_metric")}
+                          | {"rationale": "the option's intended movement"} for c in o["success_criteria"]]
+        o["calculation_requests"] = ([{"operation": "difference", "inputs": [obs, p4], "purpose": "recent change"}]
+                                     if rich and obs in cat and p4 in cat else [])
+        o["limitations"] = ["scripted output: not intelligence"]
+        o.pop("numeric_claims", None)
+        opts.append(o)
+    return {"options": opts}
+
+
 def v2_adapter(responder, rich: bool = False):
     def wrapped(role: str, p: dict) -> dict:
-        if p.get("contract") != "loop.v2":
+        if p.get("contract") not in ("loop.v2", "strategy.v3"):
             return responder(role, p)
+        if p.get("contract") == "strategy.v3":
+            return upgrade_v3(responder(role, _downgrade(p)), p, rich)
         return upgrade(role, responder(role, _downgrade(p)), p, rich)
     return wrapped
