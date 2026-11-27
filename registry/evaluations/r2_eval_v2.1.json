@@ -1,0 +1,3573 @@
+{
+ "aggregate": {
+  "by_contract": {
+   "loop.v1": {
+    "by_temporal_and_basis": {
+     "future|pending": {
+      "baseline_hit_rates": {},
+      "effective_independent_outcomes": 0,
+      "hit_rate": null,
+      "hit_rate_wilson95": null,
+      "informative": 0,
+      "informative_and_weakly_assessed": 0,
+      "leakage_risk": {
+       "low": 3
+      },
+      "pending": 3,
+      "registered": 3,
+      "resolved": 0,
+      "skill_tiers": {}
+     },
+     "nowcast|pending": {
+      "baseline_hit_rates": {},
+      "effective_independent_outcomes": 0,
+      "hit_rate": null,
+      "hit_rate_wilson95": null,
+      "informative": 0,
+      "informative_and_weakly_assessed": 0,
+      "leakage_risk": {
+       "medium": 3
+      },
+      "pending": 3,
+      "registered": 3,
+      "resolved": 0,
+      "skill_tiers": {}
+     },
+     "retrospective|estimated_lag": {
+      "baseline_hit_rates": {
+       "holt": {
+        "hit_rate": 0.875,
+        "n": 16
+       },
+       "momentum": {
+        "hit_rate": 0.8125,
+        "n": 16
+       },
+       "reference_class": {
+        "hit_rate": 0.4375,
+        "n": 16
+       }
+      },
+      "effective_independent_outcomes": 16,
+      "hit_rate": 0.8125,
+      "hit_rate_wilson95": [
+       0.5699111903802586,
+       0.9340840092857187
+      ],
+      "informative": 0,
+      "informative_and_weakly_assessed": 0,
+      "leakage_risk": {
+       "high": 16
+      },
+      "pending": 0,
+      "registered": 16,
+      "resolved": 16,
+      "skill_tiers": {
+       "beats_some": 7,
+       "consensus": 6
+      }
+     }
+    },
+    "cost_per_useful_v21_usd": null,
+    "cost_usd": 0.026088,
+    "discriminating_resolutions": 0,
+    "evidence_contradicted_hypotheses": 0,
+    "investigations": 6,
+    "originality": {
+     "accepted": 20,
+     "original": 4
+    },
+    "pairs": {},
+    "useful_v21": 0
+   },
+   "loop.v2:base": {
+    "by_temporal_and_basis": {
+     "retrospective|estimated_lag": {
+      "baseline_hit_rates": {
+       "holt": {
+        "hit_rate": 1.0,
+        "n": 6
+       },
+       "momentum": {
+        "hit_rate": 1.0,
+        "n": 8
+       },
+       "persistence": {
+        "hit_rate": 1.0,
+        "n": 2
+       },
+       "reference_class": {
+        "hit_rate": 0.6666666666666666,
+        "n": 6
+       }
+      },
+      "effective_independent_outcomes": 7,
+      "hit_rate": 0.6428571428571429,
+      "hit_rate_wilson95": [
+       0.30256002981392766,
+       0.8819169887384475
+      ],
+      "informative": 3,
+      "informative_and_weakly_assessed": 0,
+      "leakage_risk": {
+       "high": 8
+      },
+      "pending": 0,
+      "registered": 8,
+      "resolved": 8,
+      "skill_tiers": {
+       "beats_some": 2,
+       "consensus": 3
+      }
+     }
+    },
+    "cost_per_useful_v21_usd": null,
+    "cost_usd": 0.012761499999999999,
+    "discriminating_resolutions": 0,
+    "evidence_contradicted_hypotheses": 3,
+    "investigations": 2,
+    "originality": {
+     "accepted": 8,
+     "original": 4
+    },
+    "pairs": {
+     "no_opposition": 2,
+     "pure_negation": 1
+    },
+    "useful_v21": 0
+   },
+   "loop.v2:extended": {
+    "by_temporal_and_basis": {
+     "future|pending": {
+      "baseline_hit_rates": {},
+      "effective_independent_outcomes": 0,
+      "hit_rate": null,
+      "hit_rate_wilson95": null,
+      "informative": 0,
+      "informative_and_weakly_assessed": 0,
+      "leakage_risk": {
+       "low": 3
+      },
+      "pending": 3,
+      "registered": 3,
+      "resolved": 0,
+      "skill_tiers": {}
+     },
+     "nowcast|pending": {
+      "baseline_hit_rates": {},
+      "effective_independent_outcomes": 0,
+      "hit_rate": null,
+      "hit_rate_wilson95": null,
+      "informative": 0,
+      "informative_and_weakly_assessed": 0,
+      "leakage_risk": {
+       "medium": 3
+      },
+      "pending": 3,
+      "registered": 3,
+      "resolved": 0,
+      "skill_tiers": {}
+     },
+     "retrospective|estimated_lag": {
+      "baseline_hit_rates": {
+       "holt": {
+        "hit_rate": 0.9411764705882353,
+        "n": 17
+       },
+       "momentum": {
+        "hit_rate": 0.6666666666666666,
+        "n": 21
+       },
+       "persistence": {
+        "hit_rate": 0.5,
+        "n": 4
+       },
+       "reference_class": {
+        "hit_rate": 0.5294117647058824,
+        "n": 17
+       }
+      },
+      "effective_independent_outcomes": 17,
+      "hit_rate": 0.8235294117647058,
+      "hit_rate_wilson95": [
+       0.5897054143116588,
+       0.9380887336237901
+      ],
+      "informative": 7,
+      "informative_and_weakly_assessed": 0,
+      "leakage_risk": {
+       "high": 21
+      },
+      "pending": 0,
+      "registered": 21,
+      "resolved": 21,
+      "skill_tiers": {
+       "beats_all": 3,
+       "beats_some": 8,
+       "consensus": 5
+      }
+     }
+    },
+    "cost_per_useful_v21_usd": 0.028971700000000003,
+    "cost_usd": 0.028971700000000003,
+    "discriminating_resolutions": 1,
+    "evidence_contradicted_hypotheses": 5,
+    "investigations": 4,
+    "originality": {
+     "accepted": 16,
+     "original": 11
+    },
+    "pairs": {
+     "contradicted_at_registration": 2,
+     "genuine": 2,
+     "no_opposition": 3,
+     "pure_negation": 1
+    },
+    "useful_v21": 1
+   }
+  },
+  "note": "secondary readout; the frozen R2 scores are unchanged; pending tests are never scored; small samples",
+  "version": "r2_eval.v2.1"
+ },
+ "by_experiment": {
+  "by_contract": {
+   "r2r-878aa70df76d|loop.v1": {
+    "by_temporal_and_basis": {
+     "retrospective|estimated_lag": {
+      "baseline_hit_rates": {
+       "holt": {
+        "hit_rate": 0.8333333333333334,
+        "n": 6
+       },
+       "momentum": {
+        "hit_rate": 0.8333333333333334,
+        "n": 6
+       },
+       "reference_class": {
+        "hit_rate": 0.5,
+        "n": 6
+       }
+      },
+      "effective_independent_outcomes": 6,
+      "hit_rate": 0.8333333333333334,
+      "hit_rate_wilson95": [
+       0.43649717781352987,
+       0.9699466302516935
+      ],
+      "informative": 0,
+      "informative_and_weakly_assessed": 0,
+      "leakage_risk": {
+       "high": 6
+      },
+      "pending": 0,
+      "registered": 6,
+      "resolved": 6,
+      "skill_tiers": {
+       "beats_some": 2,
+       "consensus": 3
+      }
+     }
+    },
+    "cost_per_useful_v21_usd": null,
+    "cost_usd": 0.0029205999999999998,
+    "discriminating_resolutions": 0,
+    "evidence_contradicted_hypotheses": 0,
+    "investigations": 2,
+    "originality": {
+     "accepted": 7,
+     "original": 2
+    },
+    "pairs": {},
+    "useful_v21": 0
+   },
+   "r2s2a-c6fea6716c9a|loop.v1": {
+    "by_temporal_and_basis": {
+     "retrospective|estimated_lag": {
+      "baseline_hit_rates": {
+       "holt": {
+        "hit_rate": 0.8333333333333334,
+        "n": 6
+       },
+       "momentum": {
+        "hit_rate": 0.8333333333333334,
+        "n": 6
+       },
+       "reference_class": {
+        "hit_rate": 0.16666666666666666,
+        "n": 6
+       }
+      },
+      "effective_independent_outcomes": 6,
+      "hit_rate": 0.8333333333333334,
+      "hit_rate_wilson95": [
+       0.43649717781352987,
+       0.9699466302516935
+      ],
+      "informative": 0,
+      "informative_and_weakly_assessed": 0,
+      "leakage_risk": {
+       "high": 6
+      },
+      "pending": 0,
+      "registered": 6,
+      "resolved": 6,
+      "skill_tiers": {
+       "beats_some": 4,
+       "consensus": 1
+      }
+     }
+    },
+    "cost_per_useful_v21_usd": null,
+    "cost_usd": 0.011359000000000001,
+    "discriminating_resolutions": 0,
+    "evidence_contradicted_hypotheses": 0,
+    "investigations": 2,
+    "originality": {
+     "accepted": 6,
+     "original": 1
+    },
+    "pairs": {},
+    "useful_v21": 0
+   },
+   "r2s2a-c6fea6716c9a|loop.v2:base": {
+    "by_temporal_and_basis": {
+     "retrospective|estimated_lag": {
+      "baseline_hit_rates": {
+       "holt": {
+        "hit_rate": 1.0,
+        "n": 6
+       },
+       "momentum": {
+        "hit_rate": 1.0,
+        "n": 8
+       },
+       "persistence": {
+        "hit_rate": 1.0,
+        "n": 2
+       },
+       "reference_class": {
+        "hit_rate": 0.6666666666666666,
+        "n": 6
+       }
+      },
+      "effective_independent_outcomes": 7,
+      "hit_rate": 0.6428571428571429,
+      "hit_rate_wilson95": [
+       0.30256002981392766,
+       0.8819169887384475
+      ],
+      "informative": 3,
+      "informative_and_weakly_assessed": 0,
+      "leakage_risk": {
+       "high": 8
+      },
+      "pending": 0,
+      "registered": 8,
+      "resolved": 8,
+      "skill_tiers": {
+       "beats_some": 2,
+       "consensus": 3
+      }
+     }
+    },
+    "cost_per_useful_v21_usd": null,
+    "cost_usd": 0.012761499999999999,
+    "discriminating_resolutions": 0,
+    "evidence_contradicted_hypotheses": 3,
+    "investigations": 2,
+    "originality": {
+     "accepted": 8,
+     "original": 4
+    },
+    "pairs": {
+     "no_opposition": 2,
+     "pure_negation": 1
+    },
+    "useful_v21": 0
+   },
+   "r2s2a-c6fea6716c9a|loop.v2:extended": {
+    "by_temporal_and_basis": {
+     "retrospective|estimated_lag": {
+      "baseline_hit_rates": {
+       "holt": {
+        "hit_rate": 0.9166666666666666,
+        "n": 12
+       },
+       "momentum": {
+        "hit_rate": 0.6,
+        "n": 15
+       },
+       "persistence": {
+        "hit_rate": 0.3333333333333333,
+        "n": 3
+       },
+       "reference_class": {
+        "hit_rate": 0.5833333333333334,
+        "n": 12
+       }
+      },
+      "effective_independent_outcomes": 12,
+      "hit_rate": 0.7916666666666666,
+      "hit_rate_wilson95": [
+       0.5088141930100764,
+       0.9330643031076998
+      ],
+      "informative": 6,
+      "informative_and_weakly_assessed": 0,
+      "leakage_risk": {
+       "high": 15
+      },
+      "pending": 0,
+      "registered": 15,
+      "resolved": 15,
+      "skill_tiers": {
+       "beats_all": 3,
+       "beats_some": 4,
+       "consensus": 4
+      }
+     }
+    },
+    "cost_per_useful_v21_usd": 0.015405600000000002,
+    "cost_usd": 0.015405600000000002,
+    "discriminating_resolutions": 1,
+    "evidence_contradicted_hypotheses": 3,
+    "investigations": 2,
+    "originality": {
+     "accepted": 8,
+     "original": 7
+    },
+    "pairs": {
+     "contradicted_at_registration": 2,
+     "genuine": 1,
+     "no_opposition": 1
+    },
+    "useful_v21": 1
+   },
+   "r2s2b-33f66362ef91|loop.v1": {
+    "by_temporal_and_basis": {
+     "future|pending": {
+      "baseline_hit_rates": {},
+      "effective_independent_outcomes": 0,
+      "hit_rate": null,
+      "hit_rate_wilson95": null,
+      "informative": 0,
+      "informative_and_weakly_assessed": 0,
+      "leakage_risk": {
+       "low": 3
+      },
+      "pending": 3,
+      "registered": 3,
+      "resolved": 0,
+      "skill_tiers": {}
+     },
+     "nowcast|pending": {
+      "baseline_hit_rates": {},
+      "effective_independent_outcomes": 0,
+      "hit_rate": null,
+      "hit_rate_wilson95": null,
+      "informative": 0,
+      "informative_and_weakly_assessed": 0,
+      "leakage_risk": {
+       "medium": 3
+      },
+      "pending": 3,
+      "registered": 3,
+      "resolved": 0,
+      "skill_tiers": {}
+     },
+     "retrospective|estimated_lag": {
+      "baseline_hit_rates": {
+       "holt": {
+        "hit_rate": 1.0,
+        "n": 4
+       },
+       "momentum": {
+        "hit_rate": 0.75,
+        "n": 4
+       },
+       "reference_class": {
+        "hit_rate": 0.75,
+        "n": 4
+       }
+      },
+      "effective_independent_outcomes": 4,
+      "hit_rate": 0.75,
+      "hit_rate_wilson95": [
+       0.30064184258240184,
+       0.9544127391902995
+      ],
+      "informative": 0,
+      "informative_and_weakly_assessed": 0,
+      "leakage_risk": {
+       "high": 4
+      },
+      "pending": 0,
+      "registered": 4,
+      "resolved": 4,
+      "skill_tiers": {
+       "beats_some": 1,
+       "consensus": 2
+      }
+     }
+    },
+    "cost_per_useful_v21_usd": null,
+    "cost_usd": 0.0118084,
+    "discriminating_resolutions": 0,
+    "evidence_contradicted_hypotheses": 0,
+    "investigations": 2,
+    "originality": {
+     "accepted": 7,
+     "original": 1
+    },
+    "pairs": {},
+    "useful_v21": 0
+   },
+   "r2s2b-33f66362ef91|loop.v2:extended": {
+    "by_temporal_and_basis": {
+     "future|pending": {
+      "baseline_hit_rates": {},
+      "effective_independent_outcomes": 0,
+      "hit_rate": null,
+      "hit_rate_wilson95": null,
+      "informative": 0,
+      "informative_and_weakly_assessed": 0,
+      "leakage_risk": {
+       "low": 3
+      },
+      "pending": 3,
+      "registered": 3,
+      "resolved": 0,
+      "skill_tiers": {}
+     },
+     "nowcast|pending": {
+      "baseline_hit_rates": {},
+      "effective_independent_outcomes": 0,
+      "hit_rate": null,
+      "hit_rate_wilson95": null,
+      "informative": 0,
+      "informative_and_weakly_assessed": 0,
+      "leakage_risk": {
+       "medium": 3
+      },
+      "pending": 3,
+      "registered": 3,
+      "resolved": 0,
+      "skill_tiers": {}
+     },
+     "retrospective|estimated_lag": {
+      "baseline_hit_rates": {
+       "holt": {
+        "hit_rate": 1.0,
+        "n": 5
+       },
+       "momentum": {
+        "hit_rate": 0.8333333333333334,
+        "n": 6
+       },
+       "persistence": {
+        "hit_rate": 1.0,
+        "n": 1
+       },
+       "reference_class": {
+        "hit_rate": 0.4,
+        "n": 5
+       }
+      },
+      "effective_independent_outcomes": 5,
+      "hit_rate": 0.9,
+      "hit_rate_wilson95": [
+       0.46294398253247676,
+       0.9894700456409833
+      ],
+      "informative": 1,
+      "informative_and_weakly_assessed": 0,
+      "leakage_risk": {
+       "high": 6
+      },
+      "pending": 0,
+      "registered": 6,
+      "resolved": 6,
+      "skill_tiers": {
+       "beats_some": 4,
+       "consensus": 1
+      }
+     }
+    },
+    "cost_per_useful_v21_usd": null,
+    "cost_usd": 0.0135661,
+    "discriminating_resolutions": 0,
+    "evidence_contradicted_hypotheses": 2,
+    "investigations": 2,
+    "originality": {
+     "accepted": 8,
+     "original": 4
+    },
+    "pairs": {
+     "genuine": 1,
+     "no_opposition": 2,
+     "pure_negation": 1
+    },
+    "useful_v21": 0
+   }
+  },
+  "note": "secondary readout; the frozen R2 scores are unchanged; pending tests are never scored; small samples",
+  "version": "r2_eval.v2.1"
+ },
+ "evaluations": [
+  {
+   "as_of": "2025-08-23T23:59:59Z",
+   "calibration": "not assessable: categorical claims (no stated probabilities)",
+   "causal_validity": "not assessed: no identification design (predictive support is not causal evidence)",
+   "contract": "loop.v1",
+   "decision_relevance": {
+    "eligible_protocols": 0,
+    "options_accepted": 4,
+    "options_simulated": 4
+   },
+   "discriminating_resolutions": [],
+   "efficiency": {
+    "cost_usd": 0.0061499,
+    "input_tokens": 22529,
+    "output_tokens": 7794
+   },
+   "file": "r2s2a-c6fea6716c9a/claude_uk_cars_bev_v1_2025-08-23_A_v1_base.json",
+   "hypothesis_quality": {
+    "H1": {
+     "critic_flags_unverified": [],
+     "reason": "segment_mix byd decrease as claimed",
+     "status": "consistent"
+    },
+    "H2": {
+     "critic_flags_unverified": [],
+     "reason": "segment_share mg decrease as claimed",
+     "status": "consistent"
+    },
+    "H3": {
+     "critic_flags_unverified": [],
+     "reason": "share tesla increase as claimed",
+     "status": "consistent"
+    },
+    "H4": {
+     "critic_flags_unverified": [],
+     "reason": "segment_mix ford increase as claimed",
+     "status": "consistent"
+    }
+   },
+   "investigation_id": "inv:17c67d43133d0841.1",
+   "market_id": "uk_cars_first_registrations",
+   "originality": {
+    "accepted": 4,
+    "original": 0
+   },
+   "pairs": [],
+   "tests": [
+    {
+     "baselines": {
+      "holt": {
+       "point": 0.12357290994164086,
+       "predicts": true
+      },
+      "momentum": {
+       "point": 0.5074151280524121,
+       "predicts": true
+      },
+      "persistence": {
+       "point": 0.718522930315664,
+       "predicts": null
+      },
+      "reference_class": {
+       "predicts": false,
+       "rate_up": 0.7076023391812866
+      }
+     },
+     "basis": "estimated_lag",
+     "committed_baselines": 3,
+     "hit": true,
+     "hypothesis": "c:815d6c02281f1bf640e4c767",
+     "informative": false,
+     "label": "H1.I1: segment_mix byd below_reference 71.85% over 2025-Q2, 2025-Q3",
+     "leakage_risk": "high",
+     "outcome_group": "og:3f0e703a727a605a",
+     "quantity": [
+      "segment_mix",
+      "byd",
+      ""
+     ],
+     "skill_tier": "beats_some",
+     "status": "resolved",
+     "temporal": "retrospective",
+     "test": "t:62bdd1706a8d18f6bd15",
+     "weakly_assessed": false
+    },
+    {
+     "baselines": {
+      "holt": {
+       "point": 0.03897037648942993,
+       "predicts": true
+      },
+      "momentum": {
+       "point": 0.016379741961517744,
+       "predicts": true
+      },
+      "persistence": {
+       "point": 0.04791939946955698,
+       "predicts": null
+      },
+      "reference_class": {
+       "predicts": false,
+       "rate_up": 0.5441860465116279
+      }
+     },
+     "basis": "estimated_lag",
+     "committed_baselines": 3,
+     "hit": true,
+     "hypothesis": "c:33197da4fbcaf0dd88ba98a9",
+     "informative": false,
+     "label": "H2.I2: segment_share mg below_reference 4.79% over 2025-Q2, 2025-Q3",
+     "leakage_risk": "high",
+     "outcome_group": "og:ed47449504d9cfc1",
+     "quantity": [
+      "segment_share",
+      "mg",
+      ""
+     ],
+     "skill_tier": "beats_some",
+     "status": "resolved",
+     "temporal": "retrospective",
+     "test": "t:094938d36837835cf863",
+     "weakly_assessed": false
+    },
+    {
+     "baselines": {
+      "holt": {
+       "point": 0.02712708444188589,
+       "predicts": true
+      },
+      "momentum": {
+       "point": 0.025971112381117115,
+       "predicts": true
+      },
+      "persistence": {
+       "point": 0.025122189349985103,
+       "predicts": null
+      },
+      "reference_class": {
+       "predicts": true,
+       "rate_up": 0.6254980079681275
+      }
+     },
+     "basis": "estimated_lag",
+     "committed_baselines": 3,
+     "hit": false,
+     "hypothesis": "c:7294e2518d0d1401701c8183",
+     "informative": false,
+     "label": "H3.I3: share tesla above_reference 2.51% over 2025-Q2, 2025-Q3",
+     "leakage_risk": "high",
+     "outcome_group": "og:262c01428afce9c4",
+     "quantity": [
+      "share",
+      "tesla",
+      ""
+     ],
+     "skill_tier": null,
+     "status": "resolved",
+     "temporal": "retrospective",
+     "test": "t:2a99d050088f39eeaea7",
+     "weakly_assessed": false
+    },
+    {
+     "baselines": {
+      "holt": {
+       "point": 0.1775813361287149,
+       "predicts": true
+      },
+      "momentum": {
+       "point": 0.17987459415983353,
+       "predicts": true
+      },
+      "persistence": {
+       "point": 0.11297008396246384,
+       "predicts": null
+      },
+      "reference_class": {
+       "predicts": true,
+       "rate_up": 0.7076023391812866
+      }
+     },
+     "basis": "estimated_lag",
+     "committed_baselines": 3,
+     "hit": true,
+     "hypothesis": "c:395bced5e2a072332b30ac85",
+     "informative": false,
+     "label": "H4.I4: segment_mix ford above_reference 11.30% over 2025-Q2, 2025-Q3",
+     "leakage_risk": "high",
+     "outcome_group": "og:e3a118908e586aa9",
+     "quantity": [
+      "segment_mix",
+      "ford",
+      ""
+     ],
+     "skill_tier": "consensus",
+     "status": "resolved",
+     "temporal": "retrospective",
+     "test": "t:2ae9bf96dec1b2534df7",
+     "weakly_assessed": false
+    }
+   ],
+   "useful_v21": [],
+   "version": "r2_eval.v2.1"
+  },
+  {
+   "as_of": "2025-08-23T23:59:59Z",
+   "calibration": "not assessable: categorical claims (no stated probabilities)",
+   "causal_validity": "not assessed: no identification design (predictive support is not causal evidence)",
+   "contract": "loop.v2:base",
+   "decision_relevance": {
+    "eligible_protocols": 0,
+    "options_accepted": 0,
+    "options_simulated": 0
+   },
+   "discriminating_resolutions": [],
+   "efficiency": {
+    "cost_usd": 0.0057236,
+    "input_tokens": 22151,
+    "output_tokens": 7017
+   },
+   "file": "r2s2a-c6fea6716c9a/claude_uk_cars_bev_v1_2025-08-23_B_v2_base.json",
+   "hypothesis_quality": {
+    "H1": {
+     "critic_flags_unverified": [
+      "H1 claims BYD's BEV share (2.89%) is low relative to its total share, implying a deliberate shift. But BYD's total share (0.83%) is itself low; the real issue i"
+     ],
+     "reason": "segment_mix byd decrease as claimed",
+     "status": "consistent"
+    },
+    "H2": {
+     "critic_flags_unverified": [
+      "H2 says BYD's BEV registrations are contracting in absolute terms, but BYD's BEV segment share rose from 0.75% (P4) to 2.89% (L4), and the market BEV share also"
+     ],
+     "reason": "claims segment_share byd decrease; the evidence shows increase (0.75% to 2.89%)",
+     "status": "contradicted"
+    },
+    "H3": {
+     "critic_flags_unverified": [],
+     "reason": "segment_share mg decrease as claimed",
+     "status": "consistent"
+    }
+   },
+   "investigation_id": "inv:7c4b36e6c2a5817e.1",
+   "market_id": "uk_cars_first_registrations",
+   "originality": {
+    "accepted": 3,
+    "original": 2
+   },
+   "pairs": [
+    {
+     "class": "no_opposition",
+     "contradicted": [
+      "H2"
+     ],
+     "declared_rivals": true,
+     "disputed_quantities": [],
+     "ids": [
+      "c:0915113ee68f5f7cde884b83",
+      "c:5a4a958eab63fc18a2aa5f6e"
+     ],
+     "pair": [
+      "H1",
+      "H2"
+     ],
+     "plausibility": "not machine-assessable (needs audited judgement)"
+    }
+   ],
+   "tests": [
+    {
+     "baselines": {
+      "holt": {
+       "point": 0.12357290994164086,
+       "predicts": true
+      },
+      "momentum": {
+       "point": 0.5074151280524121,
+       "predicts": true
+      },
+      "persistence": {
+       "point": 0.718522930315664,
+       "predicts": null
+      },
+      "reference_class": {
+       "predicts": false,
+       "rate_up": 0.7076023391812866
+      }
+     },
+     "basis": "estimated_lag",
+     "committed_baselines": 3,
+     "hit": true,
+     "hypothesis": "c:0915113ee68f5f7cde884b83",
+     "informative": false,
+     "label": "H1.I1: segment_mix byd below_reference 71.85% over 2025-Q2, 2025-Q3",
+     "leakage_risk": "high",
+     "outcome_group": "og:3f0e703a727a605a",
+     "quantity": [
+      "segment_mix",
+      "byd",
+      ""
+     ],
+     "skill_tier": "beats_some",
+     "status": "resolved",
+     "temporal": "retrospective",
+     "test": "t:4a033c255f36a23dffd8",
+     "weakly_assessed": false
+    },
+    {
+     "baselines": {
+      "holt": {
+       "point": 0.0842519805450411,
+       "predicts": false
+      },
+      "momentum": {
+       "point": 0.04494209618631624,
+       "predicts": false
+      },
+      "persistence": {
+       "point": 0.028877548089351883,
+       "predicts": null
+      },
+      "reference_class": {
+       "predicts": false,
+       "rate_up": 0.5441860465116279
+      }
+     },
+     "basis": "estimated_lag",
+     "committed_baselines": 3,
+     "hit": false,
+     "hypothesis": "c:5a4a958eab63fc18a2aa5f6e",
+     "informative": true,
+     "label": "H2.I2: segment_share byd below_reference 2.89% over 2025-Q2, 2025-Q3",
+     "leakage_risk": "high",
+     "outcome_group": "og:f5ef3150314c55d8",
+     "quantity": [
+      "segment_share",
+      "byd",
+      ""
+     ],
+     "skill_tier": null,
+     "status": "resolved",
+     "temporal": "retrospective",
+     "test": "t:c0578c08e5c988dc5780",
+     "weakly_assessed": false
+    },
+    {
+     "baselines": {
+      "momentum": {
+       "point": 0.057116332094848274,
+       "predicts": true
+      },
+      "persistence": {
+       "point": 0.022074664164456484,
+       "predicts": true
+      }
+     },
+     "basis": "estimated_lag",
+     "committed_baselines": 2,
+     "hit": true,
+     "hypothesis": "c:994baa21197c4bb59364506c",
+     "informative": false,
+     "label": "H3.I3: segment_share_gap volkswagen-mg above_zero 0.00% over 2025-Q2, 2025-Q3",
+     "leakage_risk": "high",
+     "outcome_group": "og:25e0fc3b5ecc3f7e",
+     "quantity": [
+      "segment_share_gap",
+      "volkswagen",
+      "mg"
+     ],
+     "skill_tier": "consensus",
+     "status": "resolved",
+     "temporal": "retrospective",
+     "test": "t:477583862b74480113d9",
+     "weakly_assessed": false
+    }
+   ],
+   "useful_v21": [],
+   "version": "r2_eval.v2.1"
+  },
+  {
+   "as_of": "2025-08-23T23:59:59Z",
+   "calibration": "not assessable: categorical claims (no stated probabilities)",
+   "causal_validity": "not assessed: no identification design (predictive support is not causal evidence)",
+   "contract": "loop.v2:extended",
+   "decision_relevance": {
+    "eligible_protocols": 0,
+    "options_accepted": 0,
+    "options_simulated": 0
+   },
+   "discriminating_resolutions": [],
+   "efficiency": {
+    "cost_usd": 0.0062284,
+    "input_tokens": 27614,
+    "output_tokens": 6934
+   },
+   "file": "r2s2a-c6fea6716c9a/claude_uk_cars_bev_v1_2025-08-23_C_v2_extended.json",
+   "hypothesis_quality": {
+    "H1": {
+     "critic_flags_unverified": [
+      "H1 says BYD's segment_mix fell because non-BEV volume grew, but the evidence shows BYD's segment_mix at 71.85% and non_segment_share at only 0.29%, so non-BEV u"
+     ],
+     "reason": "segment_mix byd decrease as claimed",
+     "status": "consistent"
+    },
+    "H2": {
+     "critic_flags_unverified": [],
+     "reason": "claims segment_share byd decrease; the evidence shows increase (0.75% to 2.89%)",
+     "status": "contradicted"
+    }
+   },
+   "investigation_id": "inv:81792570d9ec039c.1",
+   "market_id": "uk_cars_first_registrations",
+   "originality": {
+    "accepted": 2,
+    "original": 2
+   },
+   "pairs": [
+    {
+     "class": "contradicted_at_registration",
+     "contradicted": [
+      "H2"
+     ],
+     "declared_rivals": true,
+     "disputed_quantities": [
+      [
+       "segment_share",
+       "byd",
+       ""
+      ]
+     ],
+     "ids": [
+      "c:df2bcfaef04b100a2c3eeb57",
+      "c:1aa4473e915ae409443fa7e7"
+     ],
+     "pair": [
+      "H1",
+      "H2"
+     ],
+     "plausibility": "not machine-assessable (needs audited judgement)"
+    }
+   ],
+   "tests": [
+    {
+     "baselines": {
+      "holt": {
+       "point": 0.0842519805450411,
+       "predicts": true
+      },
+      "momentum": {
+       "point": 0.04494209618631624,
+       "predicts": true
+      },
+      "persistence": {
+       "point": 0.028877548089351883,
+       "predicts": null
+      },
+      "reference_class": {
+       "predicts": true,
+       "rate_up": 0.5441860465116279
+      }
+     },
+     "basis": "estimated_lag",
+     "committed_baselines": 3,
+     "hit": true,
+     "hypothesis": "c:df2bcfaef04b100a2c3eeb57",
+     "informative": false,
+     "label": "H1.I1: segment_share byd above_reference 2.89% over 2025-Q2, 2025-Q3",
+     "leakage_risk": "high",
+     "outcome_group": "og:f5ef3150314c55d8",
+     "quantity": [
+      "segment_share",
+      "byd",
+      ""
+     ],
+     "skill_tier": "consensus",
+     "status": "resolved",
+     "temporal": "retrospective",
+     "test": "t:6fce673fb1b004dd91de",
+     "weakly_assessed": false
+    },
+    {
+     "baselines": {
+      "holt": {
+       "point": 0.10035120965946007,
+       "predicts": true
+      },
+      "momentum": {
+       "point": 0.0051166994767300146,
+       "predicts": true
+      },
+      "persistence": {
+       "point": 0.002923828272417151,
+       "predicts": null
+      },
+      "reference_class": {
+       "predicts": true,
+       "rate_up": 0.642512077294686
+      }
+     },
+     "basis": "estimated_lag",
+     "committed_baselines": 3,
+     "hit": true,
+     "hypothesis": "c:df2bcfaef04b100a2c3eeb57",
+     "informative": false,
+     "label": "H1.I2: non_segment_share byd above_reference 0.29% over 2025-Q2, 2025-Q3",
+     "leakage_risk": "high",
+     "outcome_group": "og:976ae7621d744287",
+     "quantity": [
+      "non_segment_share",
+      "byd",
+      ""
+     ],
+     "skill_tier": "consensus",
+     "status": "resolved",
+     "temporal": "retrospective",
+     "test": "t:3e24bcce0bdc87575538",
+     "weakly_assessed": false
+    },
+    {
+     "baselines": {
+      "holt": {
+       "point": 0.0842519805450411,
+       "predicts": false
+      },
+      "momentum": {
+       "point": 0.04494209618631624,
+       "predicts": false
+      },
+      "persistence": {
+       "point": 0.028877548089351883,
+       "predicts": null
+      },
+      "reference_class": {
+       "predicts": false,
+       "rate_up": 0.5441860465116279
+      }
+     },
+     "basis": "estimated_lag",
+     "committed_baselines": 3,
+     "hit": false,
+     "hypothesis": "c:1aa4473e915ae409443fa7e7",
+     "informative": true,
+     "label": "H2.I1: segment_share byd below_reference 2.89% over 2025-Q2, 2025-Q3",
+     "leakage_risk": "high",
+     "outcome_group": "og:f5ef3150314c55d8",
+     "quantity": [
+      "segment_share",
+      "byd",
+      ""
+     ],
+     "skill_tier": null,
+     "status": "resolved",
+     "temporal": "retrospective",
+     "test": "t:7a264701c33e6a07e377",
+     "weakly_assessed": false
+    }
+   ],
+   "useful_v21": [],
+   "version": "r2_eval.v2.1"
+  },
+  {
+   "as_of": "2026-02-23T23:59:59Z",
+   "calibration": "not assessable: categorical claims (no stated probabilities)",
+   "causal_validity": "not assessed: no identification design (predictive support is not causal evidence)",
+   "contract": "loop.v1",
+   "decision_relevance": {
+    "eligible_protocols": 0,
+    "options_accepted": 4,
+    "options_simulated": 3
+   },
+   "discriminating_resolutions": [],
+   "efficiency": {
+    "cost_usd": 0.0052091,
+    "input_tokens": 21856,
+    "output_tokens": 6047
+   },
+   "file": "r2s2a-c6fea6716c9a/claude_uk_cars_bev_v1_2026-02-23_A_v1_base.json",
+   "hypothesis_quality": {
+    "H1": {
+     "critic_flags_unverified": [],
+     "reason": "segment_mix byd decrease as claimed",
+     "status": "consistent"
+    },
+    "H2": {
+     "critic_flags_unverified": [],
+     "reason": "segment_share tesla decrease as claimed",
+     "status": "consistent"
+    }
+   },
+   "investigation_id": "inv:b8a71e8c9255196a.1",
+   "market_id": "uk_cars_first_registrations",
+   "originality": {
+    "accepted": 2,
+    "original": 1
+   },
+   "pairs": [],
+   "tests": [
+    {
+     "baselines": {
+      "holt": {
+       "point": 0.2532321452008509,
+       "predicts": true
+      },
+      "momentum": {
+       "point": 0.2440647617832984,
+       "predicts": true
+      },
+      "persistence": {
+       "point": 0.5638795986622074,
+       "predicts": null
+      },
+      "reference_class": {
+       "predicts": false,
+       "rate_up": 0.6918918918918919
+      }
+     },
+     "basis": "estimated_lag",
+     "committed_baselines": 3,
+     "hit": true,
+     "hypothesis": "c:009815c42d778de90085ab66",
+     "informative": false,
+     "label": "H1.I1: segment_mix byd below_reference 56.39% over 2025-Q4, 2026-Q1",
+     "leakage_risk": "high",
+     "outcome_group": "og:3476fb802478fb50",
+     "quantity": [
+      "segment_mix",
+      "byd",
+      ""
+     ],
+     "skill_tier": "beats_some",
+     "status": "resolved",
+     "temporal": "retrospective",
+     "test": "t:d95261c50c95e8819408",
+     "weakly_assessed": false
+    },
+    {
+     "baselines": {
+      "holt": {
+       "point": 0.09158500094047625,
+       "predicts": true
+      },
+      "momentum": {
+       "point": 0.08672467685035017,
+       "predicts": true
+      },
+      "persistence": {
+       "point": 0.10663504026295591,
+       "predicts": null
+      },
+      "reference_class": {
+       "predicts": false,
+       "rate_up": 0.5411255411255411
+      }
+     },
+     "basis": "estimated_lag",
+     "committed_baselines": 3,
+     "hit": true,
+     "hypothesis": "c:91458fdaac01c855eb6aaf59",
+     "informative": false,
+     "label": "H2.I3: segment_share tesla below_reference 10.66% over 2025-Q4, 2026-Q1",
+     "leakage_risk": "high",
+     "outcome_group": "og:38826b33c8bc19fe",
+     "quantity": [
+      "segment_share",
+      "tesla",
+      ""
+     ],
+     "skill_tier": "beats_some",
+     "status": "resolved",
+     "temporal": "retrospective",
+     "test": "t:a8f8ff096698dd82ef5b",
+     "weakly_assessed": false
+    }
+   ],
+   "useful_v21": [],
+   "version": "r2_eval.v2.1"
+  },
+  {
+   "as_of": "2026-02-23T23:59:59Z",
+   "calibration": "not assessable: categorical claims (no stated probabilities)",
+   "causal_validity": "not assessed: no identification design (predictive support is not causal evidence)",
+   "contract": "loop.v2:base",
+   "decision_relevance": {
+    "eligible_protocols": 0,
+    "options_accepted": 0,
+    "options_simulated": 0
+   },
+   "discriminating_resolutions": [],
+   "efficiency": {
+    "cost_usd": 0.0070379,
+    "input_tokens": 23189,
+    "output_tokens": 9438
+   },
+   "file": "r2s2a-c6fea6716c9a/claude_uk_cars_bev_v1_2026-02-23_B_v2_base.json",
+   "hypothesis_quality": {
+    "H1": {
+     "critic_flags_unverified": [],
+     "reason": "segment_mix byd decrease as claimed",
+     "status": "consistent"
+    },
+    "H2": {
+     "critic_flags_unverified": [],
+     "reason": "claims segment_share byd decrease; the evidence shows increase (1.71% to 4.75%)",
+     "status": "contradicted"
+    },
+    "H3": {
+     "critic_flags_unverified": [],
+     "reason": "segment_share ford increase as claimed",
+     "status": "consistent"
+    },
+    "H4": {
+     "critic_flags_unverified": [],
+     "reason": "claims segment_share ford decrease; the evidence shows increase (1.67% to 5.11%)",
+     "status": "contradicted"
+    },
+    "H6": {
+     "critic_flags_unverified": [],
+     "reason": "segment_share tesla decrease as claimed",
+     "status": "consistent"
+    }
+   },
+   "investigation_id": "inv:4928c4681d1dba92.1",
+   "market_id": "uk_cars_first_registrations",
+   "originality": {
+    "accepted": 5,
+    "original": 2
+   },
+   "pairs": [
+    {
+     "class": "no_opposition",
+     "contradicted": [
+      "H2"
+     ],
+     "declared_rivals": true,
+     "disputed_quantities": [],
+     "ids": [
+      "c:5a29d85b88c9de60614a6b65",
+      "c:08d0e7c8066a4a2a8088f863"
+     ],
+     "pair": [
+      "H1",
+      "H2"
+     ],
+     "plausibility": "not machine-assessable (needs audited judgement)"
+    },
+    {
+     "class": "pure_negation",
+     "contradicted": [
+      "H4"
+     ],
+     "declared_rivals": true,
+     "disputed_quantities": [
+      [
+       "segment_share",
+       "ford",
+       ""
+      ]
+     ],
+     "ids": [
+      "c:c0f9215c95e70bd482861e10",
+      "c:f458bfde2193622a71a89614"
+     ],
+     "pair": [
+      "H3",
+      "H4"
+     ],
+     "plausibility": "not machine-assessable (needs audited judgement)"
+    }
+   ],
+   "tests": [
+    {
+     "baselines": {
+      "holt": {
+       "point": 0.2532321452008509,
+       "predicts": true
+      },
+      "momentum": {
+       "point": 0.2440647617832984,
+       "predicts": true
+      },
+      "persistence": {
+       "point": 0.5638795986622074,
+       "predicts": null
+      },
+      "reference_class": {
+       "predicts": false,
+       "rate_up": 0.6918918918918919
+      }
+     },
+     "basis": "estimated_lag",
+     "committed_baselines": 3,
+     "hit": true,
+     "hypothesis": "c:5a29d85b88c9de60614a6b65",
+     "informative": false,
+     "label": "H1.I1: segment_mix byd below_reference 56.39% over 2025-Q4, 2026-Q1",
+     "leakage_risk": "high",
+     "outcome_group": "og:3476fb802478fb50",
+     "quantity": [
+      "segment_mix",
+      "byd",
+      ""
+     ],
+     "skill_tier": "beats_some",
+     "status": "resolved",
+     "temporal": "retrospective",
+     "test": "t:7385a4a14564bf5bcc19",
+     "weakly_assessed": false
+    },
+    {
+     "baselines": {
+      "holt": {
+       "point": 0.09674688808872034,
+       "predicts": false
+      },
+      "momentum": {
+       "point": 0.07032197814257943,
+       "predicts": false
+      },
+      "persistence": {
+       "point": 0.04752199610596291,
+       "predicts": null
+      },
+      "reference_class": {
+       "predicts": false,
+       "rate_up": 0.5411255411255411
+      }
+     },
+     "basis": "estimated_lag",
+     "committed_baselines": 3,
+     "hit": false,
+     "hypothesis": "c:08d0e7c8066a4a2a8088f863",
+     "informative": true,
+     "label": "H2.I2: segment_share byd below_reference 4.75% over 2025-Q4, 2026-Q1",
+     "leakage_risk": "high",
+     "outcome_group": "og:070554cd77cfc008",
+     "quantity": [
+      "segment_share",
+      "byd",
+      ""
+     ],
+     "skill_tier": null,
+     "status": "resolved",
+     "temporal": "retrospective",
+     "test": "t:1ce6ed7f049b7e463a30",
+     "weakly_assessed": false
+    },
+    {
+     "baselines": {
+      "holt": {
+       "point": 0.10576135063831235,
+       "predicts": true
+      },
+      "momentum": {
+       "point": 0.07692090920746578,
+       "predicts": true
+      },
+      "persistence": {
+       "point": 0.05109948007233022,
+       "predicts": null
+      },
+      "reference_class": {
+       "predicts": true,
+       "rate_up": 0.5411255411255411
+      }
+     },
+     "basis": "estimated_lag",
+     "committed_baselines": 3,
+     "hit": true,
+     "hypothesis": "c:c0f9215c95e70bd482861e10",
+     "informative": false,
+     "label": "H3.I3: segment_share ford above_reference 5.11% over 2025-Q4, 2026-Q1",
+     "leakage_risk": "high",
+     "outcome_group": "og:7386984e0ec38f47",
+     "quantity": [
+      "segment_share",
+      "ford",
+      ""
+     ],
+     "skill_tier": "consensus",
+     "status": "resolved",
+     "temporal": "retrospective",
+     "test": "t:a24ce2e78c103a2e3c4d",
+     "weakly_assessed": false
+    },
+    {
+     "baselines": {
+      "holt": {
+       "point": 0.10576135063831235,
+       "predicts": false
+      },
+      "momentum": {
+       "point": 0.07692090920746578,
+       "predicts": false
+      },
+      "persistence": {
+       "point": 0.05109948007233022,
+       "predicts": null
+      },
+      "reference_class": {
+       "predicts": false,
+       "rate_up": 0.5411255411255411
+      }
+     },
+     "basis": "estimated_lag",
+     "committed_baselines": 3,
+     "hit": false,
+     "hypothesis": "c:f458bfde2193622a71a89614",
+     "informative": true,
+     "label": "H4.I3: segment_share ford below_reference 5.11% over 2025-Q4, 2026-Q1",
+     "leakage_risk": "high",
+     "outcome_group": "og:7386984e0ec38f47",
+     "quantity": [
+      "segment_share",
+      "ford",
+      ""
+     ],
+     "skill_tier": null,
+     "status": "resolved",
+     "temporal": "retrospective",
+     "test": "t:29102cf4d30cbeb9c59a",
+     "weakly_assessed": false
+    },
+    {
+     "baselines": {
+      "momentum": {
+       "point": 0.01640269870777073,
+       "predicts": true
+      },
+      "persistence": {
+       "point": 0.059113044156993,
+       "predicts": true
+      }
+     },
+     "basis": "estimated_lag",
+     "committed_baselines": 2,
+     "hit": true,
+     "hypothesis": "c:2b43e87c78995b035befd3c3",
+     "informative": false,
+     "label": "H6.I4: segment_share_gap tesla-byd above_zero 0.00% over 2025-Q4, 2026-Q1",
+     "leakage_risk": "high",
+     "outcome_group": "og:1cf74160681e7aed",
+     "quantity": [
+      "segment_share_gap",
+      "tesla",
+      "byd"
+     ],
+     "skill_tier": "consensus",
+     "status": "resolved",
+     "temporal": "retrospective",
+     "test": "t:c6a2092f81991cccd9df",
+     "weakly_assessed": false
+    }
+   ],
+   "useful_v21": [],
+   "version": "r2_eval.v2.1"
+  },
+  {
+   "as_of": "2026-02-23T23:59:59Z",
+   "calibration": "not assessable: categorical claims (no stated probabilities)",
+   "causal_validity": "not assessed: no identification design (predictive support is not causal evidence)",
+   "contract": "loop.v2:extended",
+   "decision_relevance": {
+    "eligible_protocols": 0,
+    "options_accepted": 0,
+    "options_simulated": 0
+   },
+   "discriminating_resolutions": [
+    {
+     "pair": [
+      "H5",
+      "H6"
+     ],
+     "quantity": [
+      "segment_share",
+      "ford",
+      ""
+     ],
+     "winner": "H6",
+     "winner_id": "c:d9aa5dfd7361fe524b66f0da"
+    }
+   ],
+   "efficiency": {
+    "cost_usd": 0.009177200000000002,
+    "input_tokens": 31042,
+    "output_tokens": 12146
+   },
+   "file": "r2s2a-c6fea6716c9a/claude_uk_cars_bev_v1_2026-02-23_C_v2_extended.json",
+   "hypothesis_quality": {
+    "H1": {
+     "critic_flags_unverified": [],
+     "reason": "segment_mix byd decrease as claimed",
+     "status": "consistent"
+    },
+    "H2": {
+     "critic_flags_unverified": [
+      "H2 claims BYD's BEV segment share is losing ground and BEV growth has slowed, but BYD BEV segment share rose from 1.71% (P4) to 4.75% (L4), nearly tripling; the"
+     ],
+     "reason": "claims segment_share byd decrease; the evidence shows increase (1.71% to 4.75%)",
+     "status": "contradicted"
+    },
+    "H3": {
+     "critic_flags_unverified": [],
+     "reason": "segment_share volkswagen increase as claimed",
+     "status": "consistent"
+    },
+    "H4": {
+     "critic_flags_unverified": [
+      "H4 asserts Volkswagen's non-BEV volume is shrinking, but non-BEV share is essentially flat (9.31% P4 to 9.39% L4), and non-BEV share actually rose slightly, con"
+     ],
+     "reason": "claims non_segment_share volkswagen decrease; the evidence shows increase (9.31% to 9.39%)",
+     "status": "contradicted"
+    },
+    "H5": {
+     "critic_flags_unverified": [],
+     "reason": "segment_mix ford increase as claimed",
+     "status": "consistent"
+    },
+    "H6": {
+     "critic_flags_unverified": [],
+     "reason": "segment_share ford increase as claimed",
+     "status": "consistent"
+    }
+   },
+   "investigation_id": "inv:68420c5a72806169.1",
+   "market_id": "uk_cars_first_registrations",
+   "originality": {
+    "accepted": 6,
+    "original": 5
+   },
+   "pairs": [
+    {
+     "class": "no_opposition",
+     "contradicted": [
+      "H2"
+     ],
+     "declared_rivals": true,
+     "disputed_quantities": [],
+     "ids": [
+      "c:ddb3293e5b5bd5b2a0fc1baa",
+      "c:3973b1ca396b1c02ed20ad3c"
+     ],
+     "pair": [
+      "H1",
+      "H2"
+     ],
+     "plausibility": "not machine-assessable (needs audited judgement)"
+    },
+    {
+     "class": "contradicted_at_registration",
+     "contradicted": [
+      "H4"
+     ],
+     "declared_rivals": true,
+     "disputed_quantities": [
+      [
+       "segment_share",
+       "volkswagen",
+       ""
+      ]
+     ],
+     "ids": [
+      "c:506a2cc0d401b1571ba708ff",
+      "c:9cc75082639b877453f43807"
+     ],
+     "pair": [
+      "H3",
+      "H4"
+     ],
+     "plausibility": "not machine-assessable (needs audited judgement)"
+    },
+    {
+     "class": "genuine",
+     "contradicted": [],
+     "declared_rivals": true,
+     "disputed_quantities": [
+      [
+       "segment_share",
+       "ford",
+       ""
+      ]
+     ],
+     "ids": [
+      "c:e3de5bea80a54089049f3a4c",
+      "c:d9aa5dfd7361fe524b66f0da"
+     ],
+     "pair": [
+      "H5",
+      "H6"
+     ],
+     "plausibility": "not machine-assessable (needs audited judgement)"
+    }
+   ],
+   "tests": [
+    {
+     "baselines": {
+      "holt": {
+       "point": 0.2532321452008509,
+       "predicts": true
+      },
+      "momentum": {
+       "point": 0.2440647617832984,
+       "predicts": true
+      },
+      "persistence": {
+       "point": 0.5638795986622074,
+       "predicts": null
+      },
+      "reference_class": {
+       "predicts": false,
+       "rate_up": 0.6918918918918919
+      }
+     },
+     "basis": "estimated_lag",
+     "committed_baselines": 3,
+     "hit": true,
+     "hypothesis": "c:ddb3293e5b5bd5b2a0fc1baa",
+     "informative": false,
+     "label": "H1.I1: segment_mix byd below_reference 56.39% over 2025-Q4, 2026-Q1",
+     "leakage_risk": "high",
+     "outcome_group": "og:3476fb802478fb50",
+     "quantity": [
+      "segment_mix",
+      "byd",
+      ""
+     ],
+     "skill_tier": "beats_some",
+     "status": "resolved",
+     "temporal": "retrospective",
+     "test": "t:4009cd825d5855aa6efb",
+     "weakly_assessed": false
+    },
+    {
+     "baselines": {
+      "holt": {
+       "point": 0.05269937626674255,
+       "predicts": true
+      },
+      "momentum": {
+       "point": 0.018484216011891937,
+       "predicts": true
+      },
+      "persistence": {
+       "point": 0.010577309449944967,
+       "predicts": null
+      },
+      "reference_class": {
+       "predicts": true,
+       "rate_up": 0.6334841628959276
+      }
+     },
+     "basis": "estimated_lag",
+     "committed_baselines": 3,
+     "hit": true,
+     "hypothesis": "c:ddb3293e5b5bd5b2a0fc1baa",
+     "informative": false,
+     "label": "H1.I2: non_segment_share byd above_reference 1.06% over 2025-Q4, 2026-Q1",
+     "leakage_risk": "high",
+     "outcome_group": "og:fd69ec5026420c58",
+     "quantity": [
+      "non_segment_share",
+      "byd",
+      ""
+     ],
+     "skill_tier": "consensus",
+     "status": "resolved",
+     "temporal": "retrospective",
+     "test": "t:d3fd7923374602867876",
+     "weakly_assessed": false
+    },
+    {
+     "baselines": {
+      "holt": {
+       "point": 0.09674688808872034,
+       "predicts": false
+      },
+      "momentum": {
+       "point": 0.07032197814257943,
+       "predicts": false
+      },
+      "persistence": {
+       "point": 0.04752199610596291,
+       "predicts": null
+      },
+      "reference_class": {
+       "predicts": false,
+       "rate_up": 0.5411255411255411
+      }
+     },
+     "basis": "estimated_lag",
+     "committed_baselines": 3,
+     "hit": false,
+     "hypothesis": "c:3973b1ca396b1c02ed20ad3c",
+     "informative": true,
+     "label": "H2.I3: segment_share byd below_reference 4.75% over 2025-Q4, 2026-Q1",
+     "leakage_risk": "high",
+     "outcome_group": "og:070554cd77cfc008",
+     "quantity": [
+      "segment_share",
+      "byd",
+      ""
+     ],
+     "skill_tier": null,
+     "status": "resolved",
+     "temporal": "retrospective",
+     "test": "t:960c4513dff99eb1d5c3",
+     "weakly_assessed": false
+    },
+    {
+     "baselines": {
+      "momentum": {
+       "point": -0.02318783158036094,
+       "predicts": false
+      },
+      "persistence": {
+       "point": -0.029526167669084898,
+       "predicts": false
+      }
+     },
+     "basis": "estimated_lag",
+     "committed_baselines": 2,
+     "hit": true,
+     "hypothesis": "c:3973b1ca396b1c02ed20ad3c",
+     "informative": true,
+     "label": "H2.I4: segment_share_gap byd-volkswagen above_zero 0.00% over 2025-Q4, 2026-Q1",
+     "leakage_risk": "high",
+     "outcome_group": "og:2534cf53a0842c33",
+     "quantity": [
+      "segment_share_gap",
+      "byd",
+      "volkswagen"
+     ],
+     "skill_tier": "beats_all",
+     "status": "resolved",
+     "temporal": "retrospective",
+     "test": "t:f9851d006f310efbfa9b",
+     "weakly_assessed": false
+    },
+    {
+     "baselines": {
+      "holt": {
+       "point": 0.07614951806748892,
+       "predicts": false
+      },
+      "momentum": {
+       "point": 0.09350980972294037,
+       "predicts": true
+      },
+      "persistence": {
+       "point": 0.0770481637750478,
+       "predicts": null
+      },
+      "reference_class": {
+       "predicts": true,
+       "rate_up": 0.5411255411255411
+      }
+     },
+     "basis": "estimated_lag",
+     "committed_baselines": 3,
+     "hit": false,
+     "hypothesis": "c:506a2cc0d401b1571ba708ff",
+     "informative": false,
+     "label": "H3.I3: segment_share volkswagen above_reference 7.70% over 2025-Q4, 2026-Q1",
+     "leakage_risk": "high",
+     "outcome_group": "og:6219d2076d1510a4",
+     "quantity": [
+      "segment_share",
+      "volkswagen",
+      ""
+     ],
+     "skill_tier": null,
+     "status": "resolved",
+     "temporal": "retrospective",
+     "test": "t:fecb80b802bd4e661c01",
+     "weakly_assessed": false
+    },
+    {
+     "baselines": {
+      "momentum": {
+       "point": 0.006785132872590208,
+       "predicts": false
+      },
+      "persistence": {
+       "point": -0.0295868764879081,
+       "predicts": true
+      }
+     },
+     "basis": "estimated_lag",
+     "committed_baselines": 2,
+     "hit": true,
+     "hypothesis": "c:506a2cc0d401b1571ba708ff",
+     "informative": false,
+     "label": "H3.I4: segment_share_gap volkswagen-tesla below_zero 0.00% over 2025-Q4, 2026-Q1",
+     "leakage_risk": "high",
+     "outcome_group": "og:3829a54bf28bac33",
+     "quantity": [
+      "segment_share_gap",
+      "volkswagen",
+      "tesla"
+     ],
+     "skill_tier": "beats_some",
+     "status": "resolved",
+     "temporal": "retrospective",
+     "test": "t:0ecec62a1cde1412e910",
+     "weakly_assessed": false
+    },
+    {
+     "baselines": {
+      "holt": {
+       "point": 0.09523915146683416,
+       "predicts": false
+      },
+      "momentum": {
+       "point": 0.09449097233281649,
+       "predicts": false
+      },
+      "persistence": {
+       "point": 0.09389733171271049,
+       "predicts": null
+      },
+      "reference_class": {
+       "predicts": false,
+       "rate_up": 0.6334841628959276
+      }
+     },
+     "basis": "estimated_lag",
+     "committed_baselines": 3,
+     "hit": true,
+     "hypothesis": "c:9cc75082639b877453f43807",
+     "informative": true,
+     "label": "H4.I2: non_segment_share volkswagen below_reference 9.39% over 2025-Q4, 2026-Q1",
+     "leakage_risk": "high",
+     "outcome_group": "og:01b6cea026550daf",
+     "quantity": [
+      "non_segment_share",
+      "volkswagen",
+      ""
+     ],
+     "skill_tier": "beats_all",
+     "status": "resolved",
+     "temporal": "retrospective",
+     "test": "t:e49c5ddf14bb572cd873",
+     "weakly_assessed": false
+    },
+    {
+     "baselines": {
+      "holt": {
+       "point": 0.07614951806748892,
+       "predicts": true
+      },
+      "momentum": {
+       "point": 0.09350980972294037,
+       "predicts": false
+      },
+      "persistence": {
+       "point": 0.0770481637750478,
+       "predicts": null
+      },
+      "reference_class": {
+       "predicts": false,
+       "rate_up": 0.5411255411255411
+      }
+     },
+     "basis": "estimated_lag",
+     "committed_baselines": 3,
+     "hit": true,
+     "hypothesis": "c:9cc75082639b877453f43807",
+     "informative": false,
+     "label": "H4.I3: segment_share volkswagen below_reference 7.70% over 2025-Q4, 2026-Q1",
+     "leakage_risk": "high",
+     "outcome_group": "og:6219d2076d1510a4",
+     "quantity": [
+      "segment_share",
+      "volkswagen",
+      ""
+     ],
+     "skill_tier": "beats_some",
+     "status": "resolved",
+     "temporal": "retrospective",
+     "test": "t:212d02f40539d297ccf4",
+     "weakly_assessed": false
+    },
+    {
+     "baselines": {
+      "holt": {
+       "point": 0.10576135063831235,
+       "predicts": false
+      },
+      "momentum": {
+       "point": 0.07692090920746578,
+       "predicts": false
+      },
+      "persistence": {
+       "point": 0.05109948007233022,
+       "predicts": null
+      },
+      "reference_class": {
+       "predicts": false,
+       "rate_up": 0.5411255411255411
+      }
+     },
+     "basis": "estimated_lag",
+     "committed_baselines": 3,
+     "hit": false,
+     "hypothesis": "c:e3de5bea80a54089049f3a4c",
+     "informative": true,
+     "label": "H5.I3: segment_share ford below_reference 5.11% over 2025-Q4, 2026-Q1",
+     "leakage_risk": "high",
+     "outcome_group": "og:7386984e0ec38f47",
+     "quantity": [
+      "segment_share",
+      "ford",
+      ""
+     ],
+     "skill_tier": null,
+     "status": "resolved",
+     "temporal": "retrospective",
+     "test": "t:a75cda3007e5c6dbe527",
+     "weakly_assessed": false
+    },
+    {
+     "baselines": {
+      "holt": {
+       "point": 0.05483673009586734,
+       "predicts": true
+      },
+      "momentum": {
+       "point": 0.05462646022780569,
+       "predicts": true
+      },
+      "persistence": {
+       "point": 0.05658817749361159,
+       "predicts": null
+      },
+      "reference_class": {
+       "predicts": false,
+       "rate_up": 0.6142322097378277
+      }
+     },
+     "basis": "estimated_lag",
+     "committed_baselines": 3,
+     "hit": true,
+     "hypothesis": "c:e3de5bea80a54089049f3a4c",
+     "informative": false,
+     "label": "H5.I1: share ford below_reference 5.66% over 2025-Q4, 2026-Q1",
+     "leakage_risk": "high",
+     "outcome_group": "og:5d133c087efcf909",
+     "quantity": [
+      "share",
+      "ford",
+      ""
+     ],
+     "skill_tier": "beats_some",
+     "status": "resolved",
+     "temporal": "retrospective",
+     "test": "t:c3c713d6cbf21ca595bf",
+     "weakly_assessed": false
+    },
+    {
+     "baselines": {
+      "holt": {
+       "point": 0.10576135063831235,
+       "predicts": true
+      },
+      "momentum": {
+       "point": 0.07692090920746578,
+       "predicts": true
+      },
+      "persistence": {
+       "point": 0.05109948007233022,
+       "predicts": null
+      },
+      "reference_class": {
+       "predicts": true,
+       "rate_up": 0.5411255411255411
+      }
+     },
+     "basis": "estimated_lag",
+     "committed_baselines": 3,
+     "hit": true,
+     "hypothesis": "c:d9aa5dfd7361fe524b66f0da",
+     "informative": false,
+     "label": "H6.I3: segment_share ford above_reference 5.11% over 2025-Q4, 2026-Q1",
+     "leakage_risk": "high",
+     "outcome_group": "og:7386984e0ec38f47",
+     "quantity": [
+      "segment_share",
+      "ford",
+      ""
+     ],
+     "skill_tier": "consensus",
+     "status": "resolved",
+     "temporal": "retrospective",
+     "test": "t:ed062a79a7d860374ef7",
+     "weakly_assessed": false
+    },
+    {
+     "baselines": {
+      "momentum": {
+       "point": 0.006598931064886332,
+       "predicts": false
+      },
+      "persistence": {
+       "point": 0.003577483966367312,
+       "predicts": false
+      }
+     },
+     "basis": "estimated_lag",
+     "committed_baselines": 2,
+     "hit": true,
+     "hypothesis": "c:d9aa5dfd7361fe524b66f0da",
+     "informative": true,
+     "label": "H6.I4: segment_share_gap ford-byd below_zero 0.00% over 2025-Q4, 2026-Q1",
+     "leakage_risk": "high",
+     "outcome_group": "og:dbb5d0e7c53c787a",
+     "quantity": [
+      "segment_share_gap",
+      "ford",
+      "byd"
+     ],
+     "skill_tier": "beats_all",
+     "status": "resolved",
+     "temporal": "retrospective",
+     "test": "t:210a02c6497b70acad19",
+     "weakly_assessed": false
+    }
+   ],
+   "useful_v21": [
+    "H6"
+   ],
+   "version": "r2_eval.v2.1"
+  },
+  {
+   "as_of": "2026-11-27T23:59:59Z",
+   "calibration": "not assessable: categorical claims (no stated probabilities)",
+   "causal_validity": "not assessed: no identification design (predictive support is not causal evidence)",
+   "contract": "loop.v1",
+   "decision_relevance": {
+    "eligible_protocols": 0,
+    "options_accepted": 1,
+    "options_simulated": 1
+   },
+   "discriminating_resolutions": [],
+   "efficiency": {
+    "cost_usd": 0.0056994,
+    "input_tokens": 22074,
+    "output_tokens": 6984
+   },
+   "file": "r2s2b-33f66362ef91/claude_uk_cars_bev_v1_registration_date_A_v1_base.json",
+   "hypothesis_quality": {
+    "H1": {
+     "critic_flags_unverified": [],
+     "reason": "segment_mix ford increase as claimed",
+     "status": "consistent"
+    },
+    "H2": {
+     "critic_flags_unverified": [],
+     "reason": "segment_mix byd decrease as claimed",
+     "status": "consistent"
+    },
+    "H3": {
+     "critic_flags_unverified": [],
+     "reason": "share kia decrease as claimed",
+     "status": "consistent"
+    }
+   },
+   "investigation_id": "inv:47285b8cd8dfd9c1.1",
+   "market_id": "uk_cars_first_registrations",
+   "originality": {
+    "accepted": 3,
+    "original": 1
+   },
+   "pairs": [],
+   "tests": [
+    {
+     "baselines": {
+      "holt": {
+       "point": 0.37121213264784136,
+       "predicts": true
+      },
+      "momentum": {
+       "point": 0.41095385352154734,
+       "predicts": true
+      },
+      "persistence": {
+       "point": 0.3003214397788087,
+       "predicts": null
+      },
+      "reference_class": {
+       "predicts": true,
+       "rate_up": 0.6699029126213593
+      }
+     },
+     "basis": null,
+     "committed_baselines": 3,
+     "hit": null,
+     "hypothesis": "c:47f96c867cd9fc2fc84848ce",
+     "informative": false,
+     "label": "H1.I1: segment_mix ford above_reference 30.03% over 2026-Q3, 2026-Q4",
+     "leakage_risk": "medium",
+     "outcome_group": "og:8147d0826fd8efb3",
+     "quantity": [
+      "segment_mix",
+      "ford",
+      ""
+     ],
+     "skill_tier": null,
+     "status": "pending",
+     "temporal": "nowcast",
+     "test": "t:7a10990e1cf32bd5f5cc",
+     "weakly_assessed": false
+    },
+    {
+     "baselines": {
+      "holt": {
+       "point": 0.37121213264784136,
+       "predicts": true
+      },
+      "momentum": {
+       "point": 0.41095385352154734,
+       "predicts": true
+      },
+      "persistence": {
+       "point": 0.3003214397788087,
+       "predicts": null
+      },
+      "reference_class": {
+       "predicts": true,
+       "rate_up": 0.6699029126213593
+      }
+     },
+     "basis": null,
+     "committed_baselines": 3,
+     "hit": null,
+     "hypothesis": "c:47f96c867cd9fc2fc84848ce",
+     "informative": false,
+     "label": "H1.I1@future: segment_mix ford above_reference over 2027-Q1, 2027-Q2 (engine horizon extension)",
+     "leakage_risk": "low",
+     "outcome_group": "og:ecc77127dd89f55f",
+     "quantity": [
+      "segment_mix",
+      "ford",
+      ""
+     ],
+     "skill_tier": null,
+     "status": "pending",
+     "temporal": "future",
+     "test": "t:579c125d6b1a67e17016",
+     "weakly_assessed": false
+    },
+    {
+     "baselines": {
+      "holt": {
+       "point": 0.3381428078519275,
+       "predicts": true
+      },
+      "momentum": {
+       "point": 0.472540979240723,
+       "predicts": true
+      },
+      "persistence": {
+       "point": 0.5384526775043557,
+       "predicts": null
+      },
+      "reference_class": {
+       "predicts": false,
+       "rate_up": 0.6699029126213593
+      }
+     },
+     "basis": null,
+     "committed_baselines": 3,
+     "hit": null,
+     "hypothesis": "c:1739818ae5c26a8f115d6a9a",
+     "informative": false,
+     "label": "H2.I2: segment_mix byd below_reference 53.85% over 2026-Q3, 2026-Q4",
+     "leakage_risk": "medium",
+     "outcome_group": "og:c00f63a9fefed6bc",
+     "quantity": [
+      "segment_mix",
+      "byd",
+      ""
+     ],
+     "skill_tier": null,
+     "status": "pending",
+     "temporal": "nowcast",
+     "test": "t:a40752db42ec9d12503a",
+     "weakly_assessed": false
+    },
+    {
+     "baselines": {
+      "holt": {
+       "point": 0.3381428078519275,
+       "predicts": true
+      },
+      "momentum": {
+       "point": 0.472540979240723,
+       "predicts": true
+      },
+      "persistence": {
+       "point": 0.5384526775043557,
+       "predicts": null
+      },
+      "reference_class": {
+       "predicts": false,
+       "rate_up": 0.6699029126213593
+      }
+     },
+     "basis": null,
+     "committed_baselines": 3,
+     "hit": null,
+     "hypothesis": "c:1739818ae5c26a8f115d6a9a",
+     "informative": false,
+     "label": "H2.I2@future: segment_mix byd below_reference over 2027-Q1, 2027-Q2 (engine horizon extension)",
+     "leakage_risk": "low",
+     "outcome_group": "og:b6a743887de09381",
+     "quantity": [
+      "segment_mix",
+      "byd",
+      ""
+     ],
+     "skill_tier": null,
+     "status": "pending",
+     "temporal": "future",
+     "test": "t:1a7ec5ad536e5a70e010",
+     "weakly_assessed": false
+    },
+    {
+     "baselines": {
+      "holt": {
+       "point": 0.05121597791390435,
+       "predicts": true
+      },
+      "momentum": {
+       "point": 0.04991186637009955,
+       "predicts": true
+      },
+      "persistence": {
+       "point": 0.052467910364083874,
+       "predicts": true
+      }
+     },
+     "basis": null,
+     "committed_baselines": 3,
+     "hit": null,
+     "hypothesis": "c:65f66327c87feee44fcfd8b3",
+     "informative": false,
+     "label": "H3.I3: share kia below_reference 5.59% over 2026-Q3, 2026-Q4",
+     "leakage_risk": "medium",
+     "outcome_group": "og:6929cabcb776e98a",
+     "quantity": [
+      "share",
+      "kia",
+      ""
+     ],
+     "skill_tier": null,
+     "status": "pending",
+     "temporal": "nowcast",
+     "test": "t:7ce30f2ead033055c7be",
+     "weakly_assessed": false
+    },
+    {
+     "baselines": {
+      "holt": {
+       "point": 0.05121597791390435,
+       "predicts": true
+      },
+      "momentum": {
+       "point": 0.04991186637009955,
+       "predicts": true
+      },
+      "persistence": {
+       "point": 0.052467910364083874,
+       "predicts": true
+      }
+     },
+     "basis": null,
+     "committed_baselines": 3,
+     "hit": null,
+     "hypothesis": "c:65f66327c87feee44fcfd8b3",
+     "informative": false,
+     "label": "H3.I3@future: share kia below_reference over 2027-Q1, 2027-Q2 (engine horizon extension)",
+     "leakage_risk": "low",
+     "outcome_group": "og:ae4915153e6aae40",
+     "quantity": [
+      "share",
+      "kia",
+      ""
+     ],
+     "skill_tier": null,
+     "status": "pending",
+     "temporal": "future",
+     "test": "t:3df09077eebc934d4b8d",
+     "weakly_assessed": false
+    }
+   ],
+   "useful_v21": [],
+   "version": "r2_eval.v2.1"
+  },
+  {
+   "as_of": "2026-11-27T23:59:59Z",
+   "calibration": "not assessable: categorical claims (no stated probabilities)",
+   "causal_validity": "not assessed: no identification design (predictive support is not causal evidence)",
+   "contract": "loop.v2:extended",
+   "decision_relevance": {
+    "eligible_protocols": 0,
+    "options_accepted": 0,
+    "options_simulated": 0
+   },
+   "discriminating_resolutions": [],
+   "efficiency": {
+    "cost_usd": 0.0056863999999999994,
+    "input_tokens": 27534,
+    "output_tokens": 5866
+   },
+   "file": "r2s2b-33f66362ef91/claude_uk_cars_bev_v1_registration_date_C_v2_extended.json",
+   "hypothesis_quality": {
+    "H1": {
+     "critic_flags_unverified": [],
+     "reason": "segment_share byd increase as claimed",
+     "status": "consistent"
+    },
+    "H2": {
+     "critic_flags_unverified": [],
+     "reason": "market_segment_share byd increase as claimed",
+     "status": "consistent"
+    }
+   },
+   "investigation_id": "inv:65137a22117dcca7.1",
+   "market_id": "uk_cars_first_registrations",
+   "originality": {
+    "accepted": 2,
+    "original": 1
+   },
+   "pairs": [
+    {
+     "class": "genuine",
+     "contradicted": [],
+     "declared_rivals": true,
+     "disputed_quantities": [
+      [
+       "segment_share",
+       "byd",
+       ""
+      ]
+     ],
+     "ids": [
+      "c:bd831a4d79f6c68b60df090e",
+      "c:130e8ba08520709c7a92393e"
+     ],
+     "pair": [
+      "H1",
+      "H2"
+     ],
+     "plausibility": "not machine-assessable (needs audited judgement)"
+    }
+   ],
+   "tests": [
+    {
+     "baselines": {
+      "holt": {
+       "point": 0.0377646978013826,
+       "predicts": false
+      },
+      "momentum": {
+       "point": 0.095746862313347,
+       "predicts": true
+      },
+      "persistence": {
+       "point": 0.07014710351270133,
+       "predicts": null
+      },
+      "reference_class": {
+       "predicts": true,
+       "rate_up": 0.5333333333333333
+      }
+     },
+     "basis": null,
+     "committed_baselines": 3,
+     "hit": null,
+     "hypothesis": "c:bd831a4d79f6c68b60df090e",
+     "informative": false,
+     "label": "H1.I1: segment_share byd above_reference 7.01% over 2026-Q3, 2026-Q4",
+     "leakage_risk": "medium",
+     "outcome_group": "og:56f3b2c3365a54e9",
+     "quantity": [
+      "segment_share",
+      "byd",
+      ""
+     ],
+     "skill_tier": null,
+     "status": "pending",
+     "temporal": "nowcast",
+     "test": "t:06599bd8fe93c7326a9d",
+     "weakly_assessed": false
+    },
+    {
+     "baselines": {
+      "holt": {
+       "point": 0.0377646978013826,
+       "predicts": false
+      },
+      "momentum": {
+       "point": 0.095746862313347,
+       "predicts": true
+      },
+      "persistence": {
+       "point": 0.07014710351270133,
+       "predicts": null
+      },
+      "reference_class": {
+       "predicts": true,
+       "rate_up": 0.5333333333333333
+      }
+     },
+     "basis": null,
+     "committed_baselines": 3,
+     "hit": null,
+     "hypothesis": "c:bd831a4d79f6c68b60df090e",
+     "informative": false,
+     "label": "H1.I1@future: segment_share byd above_reference over 2027-Q1, 2027-Q2 (engine horizon extension)",
+     "leakage_risk": "low",
+     "outcome_group": "og:4c82f00c7ca7301f",
+     "quantity": [
+      "segment_share",
+      "byd",
+      ""
+     ],
+     "skill_tier": null,
+     "status": "pending",
+     "temporal": "future",
+     "test": "t:001c0b8ed4b216bee3d5",
+     "weakly_assessed": false
+    },
+    {
+     "baselines": {
+      "holt": {
+       "point": 0.2774409149227469,
+       "predicts": true
+      },
+      "momentum": {
+       "point": 0.2666255085652078,
+       "predicts": true
+      },
+      "persistence": {
+       "point": 0.24497769395779223,
+       "predicts": null
+      },
+      "reference_class": {
+       "predicts": true,
+       "rate_up": 0.9230769230769231
+      }
+     },
+     "basis": null,
+     "committed_baselines": 3,
+     "hit": null,
+     "hypothesis": "c:130e8ba08520709c7a92393e",
+     "informative": false,
+     "label": "H2.I3: market_segment_share market above_reference 24.50% over 2026-Q3, 2026-Q4",
+     "leakage_risk": "medium",
+     "outcome_group": "og:0dbb4faa603a1327",
+     "quantity": [
+      "market_segment_share",
+      "market",
+      ""
+     ],
+     "skill_tier": null,
+     "status": "pending",
+     "temporal": "nowcast",
+     "test": "t:cf4fb0de2ab22c9d2e0f",
+     "weakly_assessed": false
+    },
+    {
+     "baselines": {
+      "holt": {
+       "point": 0.2774409149227469,
+       "predicts": true
+      },
+      "momentum": {
+       "point": 0.2666255085652078,
+       "predicts": true
+      },
+      "persistence": {
+       "point": 0.24497769395779223,
+       "predicts": null
+      },
+      "reference_class": {
+       "predicts": true,
+       "rate_up": 0.9230769230769231
+      }
+     },
+     "basis": null,
+     "committed_baselines": 3,
+     "hit": null,
+     "hypothesis": "c:130e8ba08520709c7a92393e",
+     "informative": false,
+     "label": "H2.I3@future: market_segment_share market above_reference over 2027-Q1, 2027-Q2 (engine horizon extension)",
+     "leakage_risk": "low",
+     "outcome_group": "og:a4392bf5f4ef6b34",
+     "quantity": [
+      "market_segment_share",
+      "market",
+      ""
+     ],
+     "skill_tier": null,
+     "status": "pending",
+     "temporal": "future",
+     "test": "t:30e32d7d2146fe9556f4",
+     "weakly_assessed": false
+    },
+    {
+     "baselines": {
+      "holt": {
+       "point": 0.0377646978013826,
+       "predicts": true
+      },
+      "momentum": {
+       "point": 0.095746862313347,
+       "predicts": false
+      },
+      "persistence": {
+       "point": 0.07014710351270133,
+       "predicts": null
+      },
+      "reference_class": {
+       "predicts": false,
+       "rate_up": 0.5333333333333333
+      }
+     },
+     "basis": null,
+     "committed_baselines": 3,
+     "hit": null,
+     "hypothesis": "c:130e8ba08520709c7a92393e",
+     "informative": false,
+     "label": "H2.I1: segment_share byd below_reference 7.01% over 2026-Q3, 2026-Q4",
+     "leakage_risk": "medium",
+     "outcome_group": "og:56f3b2c3365a54e9",
+     "quantity": [
+      "segment_share",
+      "byd",
+      ""
+     ],
+     "skill_tier": null,
+     "status": "pending",
+     "temporal": "nowcast",
+     "test": "t:5cf6281882bd770e6c40",
+     "weakly_assessed": false
+    },
+    {
+     "baselines": {
+      "holt": {
+       "point": 0.0377646978013826,
+       "predicts": true
+      },
+      "momentum": {
+       "point": 0.095746862313347,
+       "predicts": false
+      },
+      "persistence": {
+       "point": 0.07014710351270133,
+       "predicts": null
+      },
+      "reference_class": {
+       "predicts": false,
+       "rate_up": 0.5333333333333333
+      }
+     },
+     "basis": null,
+     "committed_baselines": 3,
+     "hit": null,
+     "hypothesis": "c:130e8ba08520709c7a92393e",
+     "informative": false,
+     "label": "H2.I1@future: segment_share byd below_reference over 2027-Q1, 2027-Q2 (engine horizon extension)",
+     "leakage_risk": "low",
+     "outcome_group": "og:4c82f00c7ca7301f",
+     "quantity": [
+      "segment_share",
+      "byd",
+      ""
+     ],
+     "skill_tier": null,
+     "status": "pending",
+     "temporal": "future",
+     "test": "t:9792c0a3576e16548e2b",
+     "weakly_assessed": false
+    }
+   ],
+   "useful_v21": [],
+   "version": "r2_eval.v2.1"
+  },
+  {
+   "as_of": "2026-02-23T23:59:59Z",
+   "calibration": "not assessable: categorical claims (no stated probabilities)",
+   "causal_validity": "not assessed: no identification design (predictive support is not causal evidence)",
+   "contract": "loop.v1",
+   "decision_relevance": {
+    "eligible_protocols": 0,
+    "options_accepted": 2,
+    "options_simulated": 2
+   },
+   "discriminating_resolutions": [],
+   "efficiency": {
+    "cost_usd": 0.006109,
+    "input_tokens": 22010,
+    "output_tokens": 7816
+   },
+   "file": "r2s2b-33f66362ef91/claude_uk_cars_hev_v1_2026-02-23_A_v1_base.json",
+   "hypothesis_quality": {
+    "H1": {
+     "critic_flags_unverified": [],
+     "reason": "segment_mix mg increase as claimed",
+     "status": "consistent"
+    },
+    "H2": {
+     "critic_flags_unverified": [],
+     "reason": "no comparable effect metric",
+     "status": "undetermined"
+    },
+    "H3": {
+     "critic_flags_unverified": [],
+     "reason": "segment_mix ford decrease as claimed",
+     "status": "consistent"
+    },
+    "H4": {
+     "critic_flags_unverified": [],
+     "reason": "no comparable effect metric",
+     "status": "undetermined"
+    }
+   },
+   "investigation_id": "inv:23d4a423e7c3faa7.1",
+   "market_id": "uk_cars_hev_first_registrations",
+   "originality": {
+    "accepted": 4,
+    "original": 0
+   },
+   "pairs": [],
+   "tests": [
+    {
+     "baselines": {
+      "holt": {
+       "point": 0.6703032711669195,
+       "predicts": true
+      },
+      "momentum": {
+       "point": 0.695750640195994,
+       "predicts": true
+      },
+      "persistence": {
+       "point": 0.4184884078179283,
+       "predicts": null
+      },
+      "reference_class": {
+       "predicts": true,
+       "rate_up": 0.6785714285714286
+      }
+     },
+     "basis": "estimated_lag",
+     "committed_baselines": 3,
+     "hit": true,
+     "hypothesis": "c:57ce6b38ebb56bddd9eafcd2",
+     "informative": false,
+     "label": "H1.I1: segment_mix mg above_reference 41.85% over 2025-Q4, 2026-Q1",
+     "leakage_risk": "high",
+     "outcome_group": "og:53374267c5c13408",
+     "quantity": [
+      "segment_mix",
+      "mg",
+      ""
+     ],
+     "skill_tier": "consensus",
+     "status": "resolved",
+     "temporal": "retrospective",
+     "test": "t:d1050502cc524b7729a0",
+     "weakly_assessed": false
+    },
+    {
+     "baselines": {
+      "holt": {
+       "point": 0.09201033069123994,
+       "predicts": true
+      },
+      "momentum": {
+       "point": 0.10179051336151403,
+       "predicts": true
+      },
+      "persistence": {
+       "point": 0.06770184721969676,
+       "predicts": null
+      },
+      "reference_class": {
+       "predicts": true,
+       "rate_up": 0.5051020408163265
+      }
+     },
+     "basis": "estimated_lag",
+     "committed_baselines": 3,
+     "hit": true,
+     "hypothesis": "c:7cb8a66e65358bbbe23bc77f",
+     "informative": false,
+     "label": "H2.I2: segment_share bmw above_reference 6.77% over 2025-Q4, 2026-Q1",
+     "leakage_risk": "high",
+     "outcome_group": "og:638c7547254ea735",
+     "quantity": [
+      "segment_share",
+      "bmw",
+      ""
+     ],
+     "skill_tier": "consensus",
+     "status": "resolved",
+     "temporal": "retrospective",
+     "test": "t:80950755e7cb3b88dacd",
+     "weakly_assessed": false
+    },
+    {
+     "baselines": {
+      "holt": {
+       "point": 0.5108418837449997,
+       "predicts": true
+      },
+      "momentum": {
+       "point": 0.4859592663436628,
+       "predicts": true
+      },
+      "persistence": {
+       "point": 0.565192821426125,
+       "predicts": null
+      },
+      "reference_class": {
+       "predicts": false,
+       "rate_up": 0.6785714285714286
+      }
+     },
+     "basis": "estimated_lag",
+     "committed_baselines": 3,
+     "hit": true,
+     "hypothesis": "c:c92daef5b544b1c2deea3f21",
+     "informative": false,
+     "label": "H3.I3: segment_mix ford below_reference 56.52% over 2025-Q4, 2026-Q1",
+     "leakage_risk": "high",
+     "outcome_group": "og:96396cee4eabf038",
+     "quantity": [
+      "segment_mix",
+      "ford",
+      ""
+     ],
+     "skill_tier": "beats_some",
+     "status": "resolved",
+     "temporal": "retrospective",
+     "test": "t:311773d50d905c87e33a",
+     "weakly_assessed": false
+    },
+    {
+     "baselines": {
+      "holt": {
+       "point": 0.03661351994925391,
+       "predicts": false
+      },
+      "momentum": {
+       "point": 0.023550438790613817,
+       "predicts": true
+      },
+      "persistence": {
+       "point": 0.027175781542471994,
+       "predicts": null
+      },
+      "reference_class": {
+       "predicts": false,
+       "rate_up": 0.5051020408163265
+      }
+     },
+     "basis": "estimated_lag",
+     "committed_baselines": 3,
+     "hit": false,
+     "hypothesis": "c:37d94a29b794d94216659712",
+     "informative": false,
+     "label": "H4.I4: segment_share volkswagen below_reference 2.72% over 2025-Q4, 2026-Q1",
+     "leakage_risk": "high",
+     "outcome_group": "og:dc2b7bfce4cedc61",
+     "quantity": [
+      "segment_share",
+      "volkswagen",
+      ""
+     ],
+     "skill_tier": null,
+     "status": "resolved",
+     "temporal": "retrospective",
+     "test": "t:f53df96fa63de3b898a5",
+     "weakly_assessed": false
+    }
+   ],
+   "useful_v21": [],
+   "version": "r2_eval.v2.1"
+  },
+  {
+   "as_of": "2026-02-23T23:59:59Z",
+   "calibration": "not assessable: categorical claims (no stated probabilities)",
+   "causal_validity": "not assessed: no identification design (predictive support is not causal evidence)",
+   "contract": "loop.v2:extended",
+   "decision_relevance": {
+    "eligible_protocols": 0,
+    "options_accepted": 0,
+    "options_simulated": 0
+   },
+   "discriminating_resolutions": [],
+   "efficiency": {
+    "cost_usd": 0.0078797,
+    "input_tokens": 28662,
+    "output_tokens": 10027
+   },
+   "file": "r2s2b-33f66362ef91/claude_uk_cars_hev_v1_2026-02-23_C_v2_extended.json",
+   "hypothesis_quality": {
+    "H1": {
+     "critic_flags_unverified": [],
+     "reason": "segment_mix mg increase as claimed",
+     "status": "consistent"
+    },
+    "H2": {
+     "critic_flags_unverified": [],
+     "reason": "claims segment_share mg decrease; the evidence shows increase (0.71% to 5.41%)",
+     "status": "contradicted"
+    },
+    "H3": {
+     "critic_flags_unverified": [
+      "BMW's segment share (6.77%) is not clearly rising relative to P4 (2.23%) while total share (6.19%) is roughly flat versus P4 (6.58%); the claim of substitution "
+     ],
+     "reason": "segment_share bmw increase as claimed",
+     "status": "consistent"
+    },
+    "H4": {
+     "critic_flags_unverified": [],
+     "reason": "share bmw decrease as claimed",
+     "status": "consistent"
+    },
+    "H5": {
+     "critic_flags_unverified": [
+      "Ford's segment mix (56.52%) fell from 67.08% but its segment share (10.09%) fell from 14.41%, and units growth is -2.05%; a mix decline with near-flat units doe"
+     ],
+     "reason": "segment_mix ford decrease as claimed",
+     "status": "consistent"
+    },
+    "H6": {
+     "critic_flags_unverified": [],
+     "reason": "claims units_growth ford decrease; the evidence shows increase (-17.91% to -2.05%)",
+     "status": "contradicted"
+    }
+   },
+   "investigation_id": "inv:c9603a0c84807713.1",
+   "market_id": "uk_cars_hev_first_registrations",
+   "originality": {
+    "accepted": 6,
+    "original": 3
+   },
+   "pairs": [
+    {
+     "class": "pure_negation",
+     "contradicted": [
+      "H2"
+     ],
+     "declared_rivals": true,
+     "disputed_quantities": [
+      [
+       "segment_share",
+       "mg",
+       ""
+      ]
+     ],
+     "ids": [
+      "c:5032cdc10a163f685b9d9635",
+      "c:a4f577f2958e3a49b3fbcfa1"
+     ],
+     "pair": [
+      "H1",
+      "H2"
+     ],
+     "plausibility": "not machine-assessable (needs audited judgement)"
+    },
+    {
+     "class": "no_opposition",
+     "contradicted": [],
+     "declared_rivals": true,
+     "disputed_quantities": [],
+     "ids": [
+      "c:d1aa9d9738d86b442d847134",
+      "c:a0343fc8b18031e058352991"
+     ],
+     "pair": [
+      "H3",
+      "H4"
+     ],
+     "plausibility": "not machine-assessable (needs audited judgement)"
+    },
+    {
+     "class": "no_opposition",
+     "contradicted": [
+      "H6"
+     ],
+     "declared_rivals": true,
+     "disputed_quantities": [],
+     "ids": [
+      "c:ccfbe0580750d16e57c47b9f",
+      "c:c3ea82d0405c92843cf70275"
+     ],
+     "pair": [
+      "H5",
+      "H6"
+     ],
+     "plausibility": "not machine-assessable (needs audited judgement)"
+    }
+   ],
+   "tests": [
+    {
+     "baselines": {
+      "holt": {
+       "point": 0.1024868392390492,
+       "predicts": true
+      },
+      "momentum": {
+       "point": 0.08934766264284105,
+       "predicts": true
+      },
+      "persistence": {
+       "point": 0.05411472045693819,
+       "predicts": null
+      },
+      "reference_class": {
+       "predicts": true,
+       "rate_up": 0.5051020408163265
+      }
+     },
+     "basis": "estimated_lag",
+     "committed_baselines": 3,
+     "hit": true,
+     "hypothesis": "c:5032cdc10a163f685b9d9635",
+     "informative": false,
+     "label": "H1.I1: segment_share mg above_reference 5.41% over 2025-Q4, 2026-Q1",
+     "leakage_risk": "high",
+     "outcome_group": "og:fd712eeb1b82f555",
+     "quantity": [
+      "segment_share",
+      "mg",
+      ""
+     ],
+     "skill_tier": "consensus",
+     "status": "resolved",
+     "temporal": "retrospective",
+     "test": "t:a609430bf60a15e094ae",
+     "weakly_assessed": false
+    },
+    {
+     "baselines": {
+      "holt": {
+       "point": 0.1024868392390492,
+       "predicts": false
+      },
+      "momentum": {
+       "point": 0.08934766264284105,
+       "predicts": false
+      },
+      "persistence": {
+       "point": 0.05411472045693819,
+       "predicts": null
+      },
+      "reference_class": {
+       "predicts": false,
+       "rate_up": 0.5051020408163265
+      }
+     },
+     "basis": "estimated_lag",
+     "committed_baselines": 3,
+     "hit": false,
+     "hypothesis": "c:a4f577f2958e3a49b3fbcfa1",
+     "informative": true,
+     "label": "H2.I1: segment_share mg below_reference 5.41% over 2025-Q4, 2026-Q1",
+     "leakage_risk": "high",
+     "outcome_group": "og:fd712eeb1b82f555",
+     "quantity": [
+      "segment_share",
+      "mg",
+      ""
+     ],
+     "skill_tier": null,
+     "status": "resolved",
+     "temporal": "retrospective",
+     "test": "t:32b6ef162a5542f18f30",
+     "weakly_assessed": false
+    },
+    {
+     "baselines": {
+      "momentum": {
+       "point": 0.027364601873758748,
+       "predicts": false
+      },
+      "persistence": {
+       "point": -0.03878718238257571,
+       "predicts": true
+      }
+     },
+     "basis": "estimated_lag",
+     "committed_baselines": 2,
+     "hit": true,
+     "hypothesis": "c:d1aa9d9738d86b442d847134",
+     "informative": false,
+     "label": "H3.I2: segment_share_gap bmw-toyota below_zero 0.00% over 2025-Q4, 2026-Q1",
+     "leakage_risk": "high",
+     "outcome_group": "og:b3d1b5eb321edbe7",
+     "quantity": [
+      "segment_share_gap",
+      "bmw",
+      "toyota"
+     ],
+     "skill_tier": "beats_some",
+     "status": "resolved",
+     "temporal": "retrospective",
+     "test": "t:0c74af5b5fd13a369fe0",
+     "weakly_assessed": false
+    },
+    {
+     "baselines": {
+      "holt": {
+       "point": 0.04589088414677346,
+       "predicts": true
+      },
+      "momentum": {
+       "point": 0.04186677535478658,
+       "predicts": true
+      },
+      "persistence": {
+       "point": 0.05924505357050369,
+       "predicts": null
+      },
+      "reference_class": {
+       "predicts": false,
+       "rate_up": 0.5974025974025974
+      }
+     },
+     "basis": "estimated_lag",
+     "committed_baselines": 3,
+     "hit": true,
+     "hypothesis": "c:d1aa9d9738d86b442d847134",
+     "informative": false,
+     "label": "H3.I3: non_segment_share bmw below_reference 5.92% over 2025-Q4, 2026-Q1",
+     "leakage_risk": "high",
+     "outcome_group": "og:2d6f768728f60a61",
+     "quantity": [
+      "non_segment_share",
+      "bmw",
+      ""
+     ],
+     "skill_tier": "beats_some",
+     "status": "resolved",
+     "temporal": "retrospective",
+     "test": "t:b5c2fe3daf46d44ee3a6",
+     "weakly_assessed": false
+    },
+    {
+     "baselines": {
+      "holt": {
+       "point": 0.059853404073854644,
+       "predicts": true
+      },
+      "momentum": {
+       "point": 0.05899331208314913,
+       "predicts": true
+      },
+      "persistence": {
+       "point": 0.06192662995289487,
+       "predicts": null
+      },
+      "reference_class": {
+       "predicts": false,
+       "rate_up": 0.6142322097378277
+      }
+     },
+     "basis": "estimated_lag",
+     "committed_baselines": 3,
+     "hit": true,
+     "hypothesis": "c:a0343fc8b18031e058352991",
+     "informative": false,
+     "label": "H4.I3: share bmw below_reference 6.19% over 2025-Q4, 2026-Q1",
+     "leakage_risk": "high",
+     "outcome_group": "og:1c646c572c26b6e0",
+     "quantity": [
+      "share",
+      "bmw",
+      ""
+     ],
+     "skill_tier": "beats_some",
+     "status": "resolved",
+     "temporal": "retrospective",
+     "test": "t:6cd64e2a4534bb985188",
+     "weakly_assessed": false
+    },
+    {
+     "baselines": {
+      "holt": {
+       "point": 0.5108418837449997,
+       "predicts": true
+      },
+      "momentum": {
+       "point": 0.4859592663436628,
+       "predicts": true
+      },
+      "persistence": {
+       "point": 0.565192821426125,
+       "predicts": null
+      },
+      "reference_class": {
+       "predicts": false,
+       "rate_up": 0.6785714285714286
+      }
+     },
+     "basis": "estimated_lag",
+     "committed_baselines": 3,
+     "hit": true,
+     "hypothesis": "c:ccfbe0580750d16e57c47b9f",
+     "informative": false,
+     "label": "H5.I4: segment_mix ford below_reference 56.52% over 2025-Q4, 2026-Q1",
+     "leakage_risk": "high",
+     "outcome_group": "og:96396cee4eabf038",
+     "quantity": [
+      "segment_mix",
+      "ford",
+      ""
+     ],
+     "skill_tier": "beats_some",
+     "status": "resolved",
+     "temporal": "retrospective",
+     "test": "t:1de63d888ccdbcb0868a",
+     "weakly_assessed": false
+    }
+   ],
+   "useful_v21": [],
+   "version": "r2_eval.v2.1"
+  },
+  {
+   "as_of": "2025-11-23T23:59:59Z",
+   "calibration": "not assessable: categorical claims (no stated probabilities)",
+   "causal_validity": "not assessed: no identification design (predictive support is not causal evidence)",
+   "contract": "loop.v1",
+   "decision_relevance": {
+    "eligible_protocols": 0,
+    "options_accepted": 3,
+    "options_simulated": 2
+   },
+   "discriminating_resolutions": [],
+   "efficiency": {
+    "cost_usd": 0.0,
+    "input_tokens": 22585,
+    "output_tokens": 7722
+   },
+   "file": "r2r-878aa70df76d/mixed_cached_live_claude_2025-11-23.json",
+   "hypothesis_quality": {
+    "H1": {
+     "critic_flags_unverified": [],
+     "reason": "no comparable effect metric",
+     "status": "undetermined"
+    },
+    "H2": {
+     "critic_flags_unverified": [],
+     "reason": "segment_share ford increase as claimed",
+     "status": "consistent"
+    },
+    "H3": {
+     "critic_flags_unverified": [],
+     "reason": "the explained metric did not move or is missing",
+     "status": "undetermined"
+    },
+    "H4": {
+     "critic_flags_unverified": [],
+     "reason": "segment_share tesla decrease as claimed",
+     "status": "consistent"
+    }
+   },
+   "investigation_id": "inv:d580ddb8686ed831.2",
+   "market_id": "uk_cars_first_registrations",
+   "originality": {
+    "accepted": 4,
+    "original": 1
+   },
+   "pairs": [],
+   "tests": [
+    {
+     "baselines": {
+      "holt": {
+       "point": 0.08087532548508199,
+       "predicts": true
+      },
+      "momentum": {
+       "point": 0.05399374049468342,
+       "predicts": true
+      },
+      "persistence": {
+       "point": 0.03601409177850708,
+       "predicts": null
+      },
+      "reference_class": {
+       "predicts": true,
+       "rate_up": 0.5426008968609866
+      }
+     },
+     "basis": "estimated_lag",
+     "committed_baselines": 3,
+     "hit": true,
+     "hypothesis": "c:e9da0a308d66e8d9013127e5",
+     "informative": false,
+     "label": "H1.I1: segment_share byd above_reference 3.60% over 2025-Q3, 2025-Q4",
+     "leakage_risk": "high",
+     "outcome_group": "og:b50d82203e876216",
+     "quantity": [
+      "segment_share",
+      "byd",
+      ""
+     ],
+     "skill_tier": "consensus",
+     "status": "resolved",
+     "temporal": "retrospective",
+     "test": "t:1272a111afbb9edb0e39",
+     "weakly_assessed": false
+    },
+    {
+     "baselines": {
+      "holt": {
+       "point": 0.08243923555472897,
+       "predicts": true
+      },
+      "momentum": {
+       "point": 0.06075309527989937,
+       "predicts": true
+      },
+      "persistence": {
+       "point": 0.039871363622924386,
+       "predicts": null
+      },
+      "reference_class": {
+       "predicts": true,
+       "rate_up": 0.5426008968609866
+      }
+     },
+     "basis": "estimated_lag",
+     "committed_baselines": 3,
+     "hit": true,
+     "hypothesis": "c:42a739a026fb9b6af2ab0459",
+     "informative": false,
+     "label": "H2.I2: segment_share ford above_reference 3.99% over 2025-Q3, 2025-Q4",
+     "leakage_risk": "high",
+     "outcome_group": "og:c4f7154a7ce60a9a",
+     "quantity": [
+      "segment_share",
+      "ford",
+      ""
+     ],
+     "skill_tier": "consensus",
+     "status": "resolved",
+     "temporal": "retrospective",
+     "test": "t:a44bef82e50c6dc8ea7f",
+     "weakly_assessed": false
+    },
+    {
+     "baselines": {
+      "holt": {
+       "point": 0.09048902357027115,
+       "predicts": true
+      },
+      "momentum": {
+       "point": 0.09319735431453888,
+       "predicts": true
+      },
+      "persistence": {
+       "point": 0.11390778482063459,
+       "predicts": null
+      },
+      "reference_class": {
+       "predicts": false,
+       "rate_up": 0.5426008968609866
+      }
+     },
+     "basis": "estimated_lag",
+     "committed_baselines": 3,
+     "hit": true,
+     "hypothesis": "c:95e496ff8bf11cd3d6370bab",
+     "informative": false,
+     "label": "H4.I4: segment_share tesla below_reference 11.39% over 2025-Q3, 2025-Q4",
+     "leakage_risk": "high",
+     "outcome_group": "og:60360602e4a04c93",
+     "quantity": [
+      "segment_share",
+      "tesla",
+      ""
+     ],
+     "skill_tier": "beats_some",
+     "status": "resolved",
+     "temporal": "retrospective",
+     "test": "t:7d827c89e6b38365a2a8",
+     "weakly_assessed": false
+    }
+   ],
+   "useful_v21": [],
+   "version": "r2_eval.v2.1"
+  },
+  {
+   "as_of": "2026-05-23T23:59:59Z",
+   "calibration": "not assessable: categorical claims (no stated probabilities)",
+   "causal_validity": "not assessed: no identification design (predictive support is not causal evidence)",
+   "contract": "loop.v1",
+   "decision_relevance": {
+    "eligible_protocols": 0,
+    "options_accepted": 4,
+    "options_simulated": 3
+   },
+   "discriminating_resolutions": [],
+   "efficiency": {
+    "cost_usd": 0.0029205999999999998,
+    "input_tokens": 22240,
+    "output_tokens": 6382
+   },
+   "file": "r2r-878aa70df76d/mixed_cached_live_claude_2026-05-23.json",
+   "hypothesis_quality": {
+    "H1": {
+     "critic_flags_unverified": [],
+     "reason": "segment_mix byd decrease as claimed",
+     "status": "consistent"
+    },
+    "H2": {
+     "critic_flags_unverified": [],
+     "reason": "no comparable effect metric",
+     "status": "undetermined"
+    },
+    "H3": {
+     "critic_flags_unverified": [],
+     "reason": "no comparable effect metric",
+     "status": "undetermined"
+    }
+   },
+   "investigation_id": "inv:0dd69e68ada720cb.2",
+   "market_id": "uk_cars_first_registrations",
+   "originality": {
+    "accepted": 3,
+    "original": 1
+   },
+   "pairs": [],
+   "tests": [
+    {
+     "baselines": {
+      "holt": {
+       "point": 0.4989208226229235,
+       "predicts": true
+      },
+      "momentum": {
+       "point": 0.33517709973803556,
+       "predicts": true
+      },
+      "persistence": {
+       "point": 0.5834932445662816,
+       "predicts": null
+      },
+      "reference_class": {
+       "predicts": false,
+       "rate_up": 0.6822916666666666
+      }
+     },
+     "basis": "estimated_lag",
+     "committed_baselines": 3,
+     "hit": true,
+     "hypothesis": "c:1b2468d894816dedcdaed44d",
+     "informative": false,
+     "label": "H1.I1: segment_mix byd below_reference 58.35% over 2026-Q1, 2026-Q2",
+     "leakage_risk": "high",
+     "outcome_group": "og:7d91c7262a27ae86",
+     "quantity": [
+      "segment_mix",
+      "byd",
+      ""
+     ],
+     "skill_tier": "beats_some",
+     "status": "resolved",
+     "temporal": "retrospective",
+     "test": "t:3aabe16c343a4ecf109c",
+     "weakly_assessed": false
+    },
+    {
+     "baselines": {
+      "holt": {
+       "point": 0.12325316150561612,
+       "predicts": true
+      },
+      "momentum": {
+       "point": 0.0944048609393308,
+       "predicts": true
+      },
+      "persistence": {
+       "point": 0.06297004596122352,
+       "predicts": null
+      },
+      "reference_class": {
+       "predicts": true,
+       "rate_up": 0.5355648535564853
+      }
+     },
+     "basis": "estimated_lag",
+     "committed_baselines": 3,
+     "hit": true,
+     "hypothesis": "c:1b2468d894816dedcdaed44d",
+     "informative": false,
+     "label": "H1.I2: segment_share byd increase_vs_L4 6.30% over 2026-Q1, 2026-Q2",
+     "leakage_risk": "high",
+     "outcome_group": "og:90a9060edebee803",
+     "quantity": [
+      "segment_share",
+      "byd",
+      ""
+     ],
+     "skill_tier": "consensus",
+     "status": "resolved",
+     "temporal": "retrospective",
+     "test": "t:3e0cd74adc23bdd9a286",
+     "weakly_assessed": false
+    },
+    {
+     "baselines": {
+      "holt": {
+       "point": 0.11557811852983213,
+       "predicts": true
+      },
+      "momentum": {
+       "point": 0.08950999819150668,
+       "predicts": true
+      },
+      "persistence": {
+       "point": 0.06169369750118865,
+       "predicts": null
+      },
+      "reference_class": {
+       "predicts": true,
+       "rate_up": 0.5355648535564853
+      }
+     },
+     "basis": "estimated_lag",
+     "committed_baselines": 3,
+     "hit": false,
+     "hypothesis": "c:53c4ffd362d2dbc121418825",
+     "informative": false,
+     "label": "H2.I3: segment_share ford increase_vs_L4 6.17% over 2026-Q1, 2026-Q2",
+     "leakage_risk": "high",
+     "outcome_group": "og:aff3cb0aed24fb60",
+     "quantity": [
+      "segment_share",
+      "ford",
+      ""
+     ],
+     "skill_tier": null,
+     "status": "resolved",
+     "temporal": "retrospective",
+     "test": "t:22510c69d74e42fe6654",
+     "weakly_assessed": false
+    }
+   ],
+   "useful_v21": [],
+   "version": "r2_eval.v2.1"
+  }
+ ]
+}

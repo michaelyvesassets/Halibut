@@ -117,6 +117,8 @@ def run_investigation(store, market_path, *, as_of: str | None = None, evaluate_
     market = load_market(market_path)
     spec_sha = hashlib.sha256(market_path.read_bytes()).hexdigest()
     as_of = as_of or market.as_of
+    from .holdout import guard  # noqa: PLC0415  (sealed holdout origins are refused before anything runs)
+    guard(market.id, as_of)
     market = dataclasses.replace(market, as_of=as_of)
     t0 = to_timestamp(as_of)
     t_eval = to_timestamp(evaluate_as_of) if evaluate_as_of else None

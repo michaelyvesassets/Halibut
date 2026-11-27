@@ -34,6 +34,15 @@ def add_investigation_commands(sub) -> None:
                    help="reasoning contract (loop.v1: Step 1, frozen; loop.v2: Step 2)")
     r.add_argument("--measurements", choices=("base", "extended"), default="base",
                    help="loop.v2 only: 'extended' adds non_segment_share and units_growth")
+    se = s.add_parser("secondary-eval", help="secondary evaluation r2_eval.v2.1 of stored experiment results (offline; "
+                                             "frozen scores unchanged)")
+    se.add_argument("experiment_dirs", nargs="+", help="results/<run>/<experiment id> directories")
+    se.add_argument("--markets", default="configs/intel/markets")
+    se.add_argument("--out", help="write the full readout as JSON")
+    ca = s.add_parser("critic-audit-build", help="build a purified, UNAUDITED critic benchmark candidate for human audit")
+    ca.add_argument("market")
+    ca.add_argument("--as-of", required=True)
+    ca.add_argument("--out", required=True)
     s2 = s.add_parser("step2", help="R2 Step 2 pre-registered benchmark (plan offline; --live is PAID and needs approval)")
     s2.add_argument("run", choices=("2a", "2b"))
     s2.add_argument("--live", action="store_true")
@@ -156,6 +165,30 @@ def _inv(args) -> int:
             if not rep["identity_preflight"]["identical"]:
                 return 5
             return 0 if (not args.live or rep["verdict"]["pipeline_ready"]) else 4
+        if args.inv_command == "secondary-eval":
+            from .evaluation_v21 import evaluate_dirs  # noqa: PLC0415
+            rep = evaluate_dirs(store, args.experiment_dirs, args.markets)
+            if args.out:
+                Path(args.out).write_text(json.dumps(rep, indent=1, sort_keys=True, default=str) + "\n")
+            for e in rep["evaluations"]:
+                print(f"{e['file']}: useful_v21 {e['useful_v21']}; pairs "
+                      f"{[(p['pair'], p['class']) for p in e['pairs']]}; contradicted "
+                      f"{[k for k, v in e['hypothesis_quality'].items() if v['status'] == 'contradicted']}")
+            print(json.dumps(rep["aggregate"], indent=1, default=str))
+            return 0
+        if args.inv_command == "critic-audit-build":
+            import dataclasses  # noqa: PLC0415
+            from ..intel.market import load_market  # noqa: PLC0415
+            from ..world.context import build_slice  # noqa: PLC0415
+            from ..world.panel import build_panel  # noqa: PLC0415
+            from . import critic_benchmark as cb  # noqa: PLC0415
+            m = dataclasses.replace(load_market(args.market), as_of=args.as_of)
+            pnl = build_panel(store, m, args.as_of)
+            _, met = build_slice(m, pnl, {"status": "covered", "contract": {}, "gaps": []}, [], extended=True)
+            b = cb.build_v2(pnl, met)
+            Path(args.out).write_text(json.dumps(b, indent=1, sort_keys=True) + "\n")
+            print(f"{args.out}: {len(b['key'])} items, audit status {b['audit']['status']} (needs independent human audit)")
+            return 0
         if args.inv_command == "step2":
             from .step2 import CRITERIA_HASH, run_step2  # noqa: PLC0415
             try:
